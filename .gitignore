@@ -1,0 +1,9 @@
+*.sig
+deprecated/
+Graphs_0.1.m
+NewStuff.m
+BUG reports.txt
+magma_printtolatex.txt
+printing_reading_functions.txt
+printing_reading_functions_nonord.txt
+.directory
