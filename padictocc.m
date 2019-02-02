@@ -24,7 +24,7 @@ intrinsic pAdicToComplexRoots(f::RngUPolElt[FldRat], p::RngIntElt : precpAdic :=
   rtsptau := [rtsp[i^tau] : i in [1..n]];
   //rtsCCtau := [rtsCC[i^tau] : i in [1..n]];
       // it's either this or rtsCCtau!  :)
-  if centralizer then
+  if normalizer then
     return rtsptau, rtsCC, Normalizer(Sn,GCC);
   else
     return rtsptau, rtsCC, _;
@@ -46,5 +46,4 @@ iotapp := hom<L -> Lpp | Roots(MinimalPolynomial(L.1),Lpp)[1][1]>;
 rts1pp := [iotapp(r) : r in rts1L];
 sigmapp := Sym(8)![c[2] : c in [<i,j> : i,j in [1..8] | IsWeaklyZero(rts1pp[i]-rts2pp[j])]];
 sigmaCC := Sym(8)![c[2] : c in [<i,j> : i,j in [1..8] | IsWeaklyZero(rts1CC[i]-rts2CC[j])]];
-sigmaCC^-1*sigmapp in Normalizer(Sn,Gp);
 */
