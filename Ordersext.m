@@ -7,9 +7,10 @@ freeze;
 /////////////////////////////////////////////////////
 
 import "usefulfunctions.m": AllPossibilities;
+declare verbose Ordersext, 1;
 
 /*
-version 0.13->0.14: there is no bug in IsIsomorphic2. The issue is in the function IsPrincipal, see PicardGroup_0.4.m 
+version 0.13->0.14: there is no bug in IsIsomorphic2. The issue is in the function IsPrincipal, see PicardGroup_0.4.m
 version 0.12->0.13: bug in WKICM_bar corrected (reported by Christophe Ritzhentaler)
 version 0.11->0.12: SplittingAlgebra has been modified. In particular we do not use the in-built function SplittingField(K) because it is much slower then factoring DefiningPolynomial(SplittingField(f))
 version 0.10->0.11: the part about complex multiplication has been moved to the AbelianVarieties_0.3.
@@ -62,15 +63,15 @@ intrinsic ICM(S::AlgAssVOrd) -> SeqEnum
 intrinsic IsBass(S::AlgAssVOrd) -> BoolElt
 intrinsic IsClifford(S::AlgAssVOrd) -> BoolElt
 intrinsic EquationOrder(A::AlgAss) -> AlgAssVOrd
-intrinsic ColonIdeal(I::AlgAssVOrdIdl,J::AlgAssVOrdIdl)->AlgAssVOrdIdl  
-intrinsic ColonIdeal(O::AlgAssVOrd,J::AlgAssVOrdIdl)->AlgAssVOrdIdl  
-intrinsic ColonIdeal(I::AlgAssVOrdIdl,O::AlgAssVOrd)->AlgAssVOrdIdl  
+intrinsic ColonIdeal(I::AlgAssVOrdIdl,J::AlgAssVOrdIdl)->AlgAssVOrdIdl
+intrinsic ColonIdeal(O::AlgAssVOrd,J::AlgAssVOrdIdl)->AlgAssVOrdIdl
+intrinsic ColonIdeal(I::AlgAssVOrdIdl,O::AlgAssVOrd)->AlgAssVOrdIdl
 intrinsic Inverse(I::AlgAssVOrdIdl) ->AlgAssVOrdIdl
 intrinsic Conductor(O::AlgAssVOrd) ->AlgAssVOrdIdl
 intrinsic IsWeakEquivalent(I::AlgAssVOrdIdl,J::AlgAssVOrdIdl)->BoolElt
-intrinsic IsWeakEquivalent(O1::AlgAssVOrd,O2::AlgAssVOrd)->BoolElt  
-intrinsic IsWeakEquivalent(O::AlgAssVOrd,J::AlgAssVOrdIdl)->BoolElt  
-intrinsic IsWeakEquivalent(J::AlgAssVOrdIdl,O::AlgAssVOrd)->BoolElt  
+intrinsic IsWeakEquivalent(O1::AlgAssVOrd,O2::AlgAssVOrd)->BoolElt
+intrinsic IsWeakEquivalent(O::AlgAssVOrd,J::AlgAssVOrdIdl)->BoolElt
+intrinsic IsWeakEquivalent(J::AlgAssVOrdIdl,O::AlgAssVOrd)->BoolElt
 intrinsic IsInvertible(I::AlgAssVOrdIdl) ->AlgAssVOrdIdl
 intrinsic IsGorenstein(O::AlgAssVOrd)->BoolElt
 intrinsic OrthogonalIdempotents(A::AlgAss)->SeqEnum
@@ -141,8 +142,8 @@ intrinsic IsPrime(I::AlgAssVOrdIdl) -> BoolElt
 end intrinsic;
 
 intrinsic '!'(T::AlgAssVOrd,I::AlgAssVOrdIdl) -> AlgAssVOrdIdl
-{given an S-ideal I and an order T, returns the extension IT as a T-ideal. Note that if T is in S, then IT=I}     
-     S:=Order(I);     
+{given an S-ideal I and an order T, returns the extension IT as a T-ideal. Note that if T is in S, then IT=I}
+     S:=Order(I);
      return ideal<T|ZBasis(I)>;
 end intrinsic;
 
@@ -230,14 +231,14 @@ intrinsic ChineseRemainderTheorem(I::AlgAssVOrdIdl,J::AlgAssVOrdIdl,a::AlgAssElt
     temp:=Zbasis_S[1];
     Zbasis_S[1]:=One(K);
     if pos ne 1 then Zbasis_S[pos]:=temp; end if;
-assert Order(Zbasis_S) eq S;    
+assert Order(Zbasis_S) eq S;
     M:=Matrix(Zbasis_S);
     A:=ChangeRing(Matrix(ZBasis(I))*M^-1,Integers()); //am I doing the right base change????
     B:=ChangeRing(Matrix(ZBasis(J))*M^-1,Integers()); //am I doing the right base change????
     I_min:=MinimalInteger(I);
     J_min:=MinimalInteger(J);
     g,c1,d1:=XGCD(I_min,J_min);
-assert I_min*One(K) in I and J_min*One(K) in J;    
+assert I_min*One(K) in I and J_min*One(K) in J;
     if g ne 1 then
           C:=VerticalJoin(A,B);
           H,U:=HermiteForm(C); //U*C = H;
@@ -266,7 +267,7 @@ end intrinsic;
 intrinsic ResidueRing(S::AlgAssVOrd,I::AlgAssVOrdIdl) -> GpAb , Map
 {given an integral ideal I of S, returns the abelian group S/I and the epimorphism pi:S -> S/I (with inverse map). Important: the domain of pi is the Algebra of S, since the elements of S are usually expressed al elements of A. For eg Parent(Random(S)) = Algebra(S)}
     require IsFiniteEtale(Algebra(I)): "the algebra of definition must be finite and etale over Q";
-    require Order(I) eq S and IsIntegral(I): "I must be an integral ideal os S";   
+    require Order(I) eq S and IsIntegral(I): "I must be an integral ideal os S";
     A:=Algebra(S);
     N:=Degree(A);
     F:=FreeAbelianGroup(N);
@@ -284,7 +285,7 @@ intrinsic ResidueRing(S::AlgAssVOrd,I::AlgAssVOrdIdl) -> GpAb , Map
 	clmn_vec_y:=Transpose(Matrix(Vector(Eltseq(y))));
 	y_inA:=&+[ZBasis(S)[i]*Eltseq(clmn_vec_y)[i] : i in [1..N]];
 	return y_inA;
-    end function; 
+    end function;
     StoF:=map< A -> F | x :-> S_to_F(x), y :-> F_to_S(y)>;
     rel:=[F ! Eltseq(x) : x in Rows(Transpose(matS^-1 * matP))];
     Q,q:=quo<F|rel>; //Q=S/I
@@ -334,7 +335,7 @@ assert d*I subset S;
 	return false,y;
 	break y;
       end if; end for;
-    end if;  
+    end if;
 end intrinsic;
 
 intrinsic 'eq'(I::AlgAssVOrdIdl,S::AlgAssVOrd)->BoolElt
@@ -342,7 +343,7 @@ intrinsic 'eq'(I::AlgAssVOrdIdl,S::AlgAssVOrd)->BoolElt
     if I eq ideal<S|One(S)> then
 	assert Index(S,I) eq 1;
 	return true;
-    else 
+    else
 	assert Index(S,I) ne 1;
 	return false;
     end if;
@@ -388,7 +389,7 @@ end intrinsic;
 
 intrinsic Index(J::AlgAssVOrdIdl, I::AlgAssVOrdIdl) -> FldRatElt
 {given and ideal I of an order S returns [J:I] = [J:J cap I]/[I : J cap I] }
-    require Order(I) eq Order(J): "the ideals must be of the same order";  
+    require Order(I) eq Order(J): "the ideals must be of the same order";
     matJ:=Matrix(ZBasis(J));
     matI:=Matrix(ZBasis(I));
     matJcapI:=Matrix(ZBasis(ideal<Order(I)|One(Order(I))> meet I));
@@ -397,7 +398,7 @@ end intrinsic;
 
 intrinsic Index(S::AlgAssVOrd, I::AlgAssVOrdIdl) -> FldRatElt
 {given and ideal I of an order S returns [S:I] = [S:S cap I]/[I : S cap I] }
-    require Order(I) eq S: "the ideal must be of the appropriate order";  
+    require Order(I) eq S: "the ideal must be of the appropriate order";
     return Index(ideal<S|One(S)>,I);
 end intrinsic;
 
@@ -416,7 +417,7 @@ intrinsic Automorphisms(A::AlgAss) -> SeqEnum[Maps]
 end intrinsic;
 
 intrinsic HomsToC(A::AlgAss)->SeqEnum[Map]
-{returns Hom(A,\C) as a sequence of maps} 
+{returns Hom(A,\C) as a sequence of maps}
     require IsFiniteEtale(A): "the algebra of definition must be finite and etale over Q";
     CC:=ComplexField();
     images:=function(x)
@@ -472,7 +473,7 @@ intrinsic FindOverOrders(E::AlgAssVOrd,O::AlgAssVOrd)-> SeqEnum
             S:=Order([&+[O_ZBasis[i]*x[i] : i in [1..Degree(Algebra(O))]] : x in coeff] cat E_ZBasis);
             if not exists{T : T in seqOO | S eq T} then Append(~seqOO,S); end if;
         end while;
-        Exclude(~seqOO,O); Append(~seqOO,O); //in this way O is the last of the list    
+        Exclude(~seqOO,O); Append(~seqOO,O); //in this way O is the last of the list
 assert E in seqOO and O in seqOO;
         return seqOO;
      end if;
@@ -489,7 +490,7 @@ assert IsMaximal(O);
       L:=A`NumberFields[i,1];
       mL:=A`NumberFields[i,2];
       IL:=IasProd[i];
-assert IsMaximal(Order(IL));
+      assert IsMaximal(Order(IL));
       facL:=Factorization(IL);
       for p in facL do
         genPinA:=[mL(x) : x in Basis(p[1],L)] cat [F[2](One(F[1])) : F in A`NumberFields | F[1] ne L];
@@ -497,8 +498,8 @@ assert IsMaximal(Order(IL));
         Append(~fac,<P,p[2]>);
       end for;
     end for;
-assert I eq &*[p[1]^p[2] : p in fac];
-    return fac;    
+    assert I eq &*[p[1]^p[2] : p in fac];
+    return fac;
 end function;
 
 intrinsic Factorization(I::AlgAssVOrdIdl) -> Tup
@@ -507,7 +508,7 @@ intrinsic Factorization(I::AlgAssVOrdIdl) -> Tup
      fS:=Conductor(S);
      require IsIntegral(I) and I ne ideal<S|One(S)>: "the argument must be a proper integral ideal";
      require IsCoprime(fS,I): "the ideal must be coprime with the conductor of the order of definition";
-     require assigned Algebra(I)`NumberFields :"it must be a product of number fields";     
+     require assigned Algebra(I)`NumberFields :"it must be a product of number fields";
      O:=MaximalOrder(S);
      IO:=O ! I;
      facO:=factorizationMaximalOrder(IO);
@@ -527,13 +528,13 @@ intrinsic WKICM_bar(S::AlgAssVOrd) -> SeqEnum
 //TODO : prime per prime;
     require IsFiniteEtale(Algebra(S)): "the algebra of definition must be finite and etale over Q";
     if IsGorenstein(S) then return [ideal<S|One(S)>];
-    else    
+    else
       A:=Algebra(S);
       degA:=Degree(A);
       seqWk_bar:=[];
       St:=TraceDualIdeal(S);
       T:=&meet([ T : T in FindOverOrders(S) | IsInvertible(T ! St) ]);
-//this construction of T is conjectural, hence the next assert.      
+//this construction of T is conjectural, hence the next assert.
 assert IsInvertible(T ! St);
       T_ZBasis:=ZBasis(T);
       ff:=ColonIdeal(S,ideal<S|T_ZBasis>);
@@ -550,19 +551,19 @@ assert IsInvertible(T ! St);
             H := ExtractGroup(subg);
             NextSubgroup(~subg);
             geninF:=[(f(QP ! x))@@q : x in Generators(H)];
-            coeff:=[Eltseq(x) : x in geninF];            
+            coeff:=[Eltseq(x) : x in geninF];
             I:=ideal<S| [&+[T_ZBasis[i]*x[i] : i in [1..degA]] : x in coeff] cat ff_ZBasis>;
             if MultiplicatorRing(I) eq S and not exists{J : J in seqWk_bar | IsWeakEquivalent(I,J)} then Append(~seqWk_bar,I); end if;
       end while;
     return seqWk_bar;
-    end if; 
+    end if;
 end intrinsic;
 
 intrinsic WKICM(E::AlgAssVOrd)->SeqEnum
 {computes the Weak equivalence class monoid of E}
   A:=Algebra(E);
   require IsFiniteEtale(A): "the algebra of definition must be finite and etale over Q";
-  if assigned A`MaximalOrder then O:=A`MaximalOrder; else O:=MaximalOrder(A); A`MaximalOrder:=O; end if;  
+  if assigned A`MaximalOrder then O:=A`MaximalOrder; else O:=MaximalOrder(A); A`MaximalOrder:=O; end if;
   if assigned E`OverOrders then seqOO:=E`OverOrders; else seqOO:=FindOverOrders(E); E`OverOrders:=seqOO; end if;
   return &cat[[ideal<E | ZBasis(I)> : I in WKICM_bar(S)] : S in seqOO ];
 end intrinsic;
@@ -616,7 +617,7 @@ intrinsic EquationOrder(A::AlgAss) -> AlgAssVOrd
   return E;
 end intrinsic;
 
-intrinsic ColonIdeal(I::AlgAssVOrdIdl,J::AlgAssVOrdIdl)->AlgAssVOrdIdl  
+intrinsic ColonIdeal(I::AlgAssVOrdIdl,J::AlgAssVOrdIdl)->AlgAssVOrdIdl
 {computes the colon ideal (I:J) (as an O-ideal) of two O-ideals}
 // require IsFiniteEtale(Algebra(I)): "the algebra of definition must be finite and etale over Q";
   O := Order(I);
@@ -627,14 +628,14 @@ intrinsic ColonIdeal(I::AlgAssVOrdIdl,J::AlgAssVOrdIdl)->AlgAssVOrdIdl
   return IJ;
 end intrinsic;
 
-intrinsic ColonIdeal(O::AlgAssVOrd,J::AlgAssVOrdIdl)->AlgAssVOrdIdl  
+intrinsic ColonIdeal(O::AlgAssVOrd,J::AlgAssVOrdIdl)->AlgAssVOrdIdl
 {computes the colon ideal (1*O:J) (as an O-ideal)}
   require Order(J) eq O : "the ideals must be of the same order";
   I:=ideal<O|One(O)>;
   return ColonIdeal(I,J);
 end intrinsic;
 
-intrinsic ColonIdeal(I::AlgAssVOrdIdl,O::AlgAssVOrd)->AlgAssVOrdIdl  
+intrinsic ColonIdeal(I::AlgAssVOrdIdl,O::AlgAssVOrd)->AlgAssVOrdIdl
 {computes the colon ideal (I:1*O) (as an O-ideal)}
   require Order(I) eq O : "the ideals must be of the same order";
   J:=ideal<O|One(O)>;
@@ -672,20 +673,20 @@ intrinsic IsWeakEquivalent(I::AlgAssVOrdIdl,J::AlgAssVOrdIdl)->BoolElt
   end if;
 end intrinsic;
 
-intrinsic IsWeakEquivalent(O1::AlgAssVOrd,O2::AlgAssVOrd)->BoolElt  
+intrinsic IsWeakEquivalent(O1::AlgAssVOrd,O2::AlgAssVOrd)->BoolElt
 { check if the two orders are weakly equivalent, that is equal }
     require IsFiniteEtale(Algebra(O1)): "the algebra of definition must be finite and etale over Q";
     return O1 eq O2;
 end intrinsic;
 
-intrinsic IsWeakEquivalent(O::AlgAssVOrd,J::AlgAssVOrdIdl)->BoolElt  
+intrinsic IsWeakEquivalent(O::AlgAssVOrd,J::AlgAssVOrdIdl)->BoolElt
 { checks if the second argument is weakly equivalent to the first argument }
     require IsFiniteEtale(Algebra(O)): "the algebra of definition must be finite and etale over Q";
     I:=ideal<O|One(O)>;
     return IsWeakEquivalent(I,J);
 end intrinsic;
 
-intrinsic IsWeakEquivalent(J::AlgAssVOrdIdl,O::AlgAssVOrd)->BoolElt  
+intrinsic IsWeakEquivalent(J::AlgAssVOrdIdl,O::AlgAssVOrd)->BoolElt
 { checks if the second argument is weakly equivalent to the first argument }
     require IsFiniteEtale(Algebra(O)): "the algebra of definition must be finite and etale over Q";
     I:=ideal<O|One(O)>;
@@ -713,7 +714,7 @@ intrinsic OrthogonalIdempotents(A::AlgAss)->SeqEnum
 end intrinsic;
 
 intrinsic AssociativeAlgebra(f::RngUPolElt) -> AlgAss
-{given a integer polynomial f generates the Associative algebra over Q given by the factors of f with multiplicity} 
+{given a integer polynomial f generates the Associative algebra over Q given by the factors of f with multiplicity}
   QQ:=RANF_protected;
   f_fac:=Factorization(f);
   num_fields:=[NumberField(g[1]) : j in [1..g[2]] , g in f_fac];
@@ -721,7 +722,7 @@ intrinsic AssociativeAlgebra(f::RngUPolElt) -> AlgAss
 end intrinsic;
 
 intrinsic AssociativeAlgebra(S::SeqEnum[FldNum]) -> AlgAss
-{given given a sequence of number fields, it returns the associative algebra given by the product of the number field} 
+{given given a sequence of number fields, it returns the associative algebra given by the product of the number field}
   QQ:=RANF_protected;
   num_fields:=S;
   deg:=&+[Degree(Ai): Ai in S];
@@ -775,7 +776,7 @@ intrinsic SplittingAlgebra(A::AlgAss) -> AlgAss, Map
         Append(~split_fields_embeddings,l);
     end for;
     AA:=AssociativeAlgebra(split_fields);
-    assert #A`NumberFields eq #AA`NumberFields;    
+    assert #A`NumberFields eq #AA`NumberFields;
     map_AtoAA:=map< A -> AA | x :-> &+[AA`NumberFields[i][2](split_fields_embeddings[i](Components(x)[i])) : i in [1..#AA`NumberFields]]>;
     return AA, map_AtoAA;
 end intrinsic;
@@ -786,7 +787,7 @@ intrinsic SplittingAlgebra(A::AlgAss) -> AlgAss, Map
 { given a product of number fields A, returns the product of the splitting fields and a map from A }
     require IsFiniteEtale(A): "the algebra of definition must be finite and etale over Q";
     AA:=AssociativeAlgebra([SplittingField(L[1]) : L in A`NumberFields]);
-    assert #A`NumberFields eq #AA`NumberFields;    
+    assert #A`NumberFields eq #AA`NumberFields;
     map_AtoAA:=map< A -> AA | x :-> &+[AA`NumberFields[i][2](AA`NumberFields[i][1] ! Components(x)[i]) : i in [1..#AA`NumberFields]]>;
     return AA, map_AtoAA;
 end intrinsic;
@@ -819,9 +820,9 @@ intrinsic '^'(I::AlgAssVOrdIdl,n::RngIntElt) -> AlgAssVOrdIdl
       for i in [2..#squares_id] do
            output:=output*squares_id[i];
       end for;
-      return output;      
+      return output;
   end function;
-  
+
   if n eq 0 then
       return ideal<Order(I)|One(Order(I))>;
   else
@@ -842,17 +843,19 @@ intrinsic IsProductOfOrders(O::AlgAssVOrd)->BoolElt, Tup
   test:=forall{x : x in idem | x in O};
   O_asProd:=<>;
   if test then
-    for i in [1..#A`NumberFields] do
-	  L:=A`NumberFields[i];
-gen_L:=[(x*idem[i])@@L[2]: x in ZBasis(O)];
-          O_L:=Order(gen_L);
-          Append(~O_asProd,O_L);
-    end for;
-    return true,O_asProd;
-  else return false,<>; end if;
+      for i in [1..#A`NumberFields] do
+        L:=A`NumberFields[i];
+        gen_L:=[(x*idem[i])@@L[2]: x in ZBasis(O)];
+        O_L:=Order(gen_L);
+        Append(~O_asProd,O_L);
+      end for;
+      return true, O_asProd;
+    else
+      return false,<>;
+  end if;
 end intrinsic;
 
-intrinsic IsProductOfIdeals(I::AlgAssVOrdIdl)->BoolElt, Tup
+intrinsic IsProductOfIdeals(I::AlgAssVOrdIdl) -> BoolElt, Tup
 {return if the argument is a product of ideals in a product of number fields, and if so return also the sequence of these ideals (in the appropriate orders)}
 
   O:=MultiplicatorRing(I);
@@ -861,15 +864,17 @@ intrinsic IsProductOfIdeals(I::AlgAssVOrdIdl)->BoolElt, Tup
   test,O_asProd:=IsProductOfOrders(O);
   I_asProd:=<>;
   if test then
-  idem:=OrthogonalIdempotents(A);
-     for i in [1..#A`NumberFields] do
-	  L:=A`NumberFields[i];
-          gen_L:=[(x*idem[i])@@L[2]: x in ZBasis(I)];
-          I_L:=ideal<O_asProd[i]|gen_L>;
-          Append(~I_asProd,I_L);
-     end for;
-    return true,I_asProd;
-  else return false,<>; end if;
+    idem:=OrthogonalIdempotents(A);
+    for i in [1..#A`NumberFields] do
+      L:=A`NumberFields[i];
+      gen_L:=[(x*idem[i])@@L[2]: x in ZBasis(I)];
+      I_L:=ideal<O_asProd[i]|gen_L>;
+      Append(~I_asProd,I_L);
+    end for;
+    return true, I_asProd;
+  else
+    return false,<>;
+  end if;
 end intrinsic;
 
 intrinsic IsIsomorphic2(I::AlgAssVOrdIdl, J::AlgAssVOrdIdl) -> BoolElt, AlgAssElt
@@ -878,12 +883,12 @@ intrinsic IsIsomorphic2(I::AlgAssVOrdIdl, J::AlgAssVOrdIdl) -> BoolElt, AlgAssEl
     test:=IsWeakEquivalent(I,J); //if so I=(I:J)*J and (I:J) is invertible in its MultiplicatorRing
     if test then
       S:=MultiplicatorRing(I);
-//assert MultiplicatorRing(J) eq S;    
+//assert MultiplicatorRing(J) eq S;
       IS:=ideal<S| ZBasis(I)>;
-      JS:=ideal<S| ZBasis(J)>;    
+      JS:=ideal<S| ZBasis(J)>;
       CIJ:=ColonIdeal(IS,JS);
       test2,x:= IsPrincipal(CIJ);
-      if test2 then 
+      if test2 then
             return test2,x;
       else return false, _ ;
       end if;
@@ -962,7 +967,7 @@ end intrinsic;
 //////////////////////////////////////////////////////////////////////////////////////////
 
 intrinsic 'in'(a::RngElt, I::AlgAssVOrdIdl) -> BoolElt
-  {Return true iff a is in I. Here I must be an ideal (or fractional ideal) of an order 
+  {Return true iff a is in I. Here I must be an ideal (or fractional ideal) of an order
    in an associative algebra.}
 //overwrites the same fuction in ../package/Algebra/AlgAss/ideals-jv.m
   A:= Algebra(I);
@@ -996,7 +1001,7 @@ function IsOrder(O);
         s := gi*S[i];
         t := gj*S[j];
           if not s*t in O then
-          printf "i = %o\nj = %o\ngi = %o\ngj = %o\nS[i] = %o\nS[j] = %o\nst = %o\n", 
+          printf "i = %o\nj = %o\ngi = %o\ngj = %o\nS[i] = %o\nS[j] = %o\nst = %o\n",
                  i, j, gi, gj, S[i], S[j], s*t;
           isRing := false;
           break i;
@@ -1012,7 +1017,7 @@ function order_over(Z_F, S, I : Check := true)
   A := Universe(S);
   F := BaseRing(A);
   n := Dimension(A);
-  if (A!1 notin S) then 
+  if (A!1 notin S) then
     Append(~S, 1);
     Append(~I, 1*Z_F);
   end if;
@@ -1023,7 +1028,7 @@ function order_over(Z_F, S, I : Check := true)
   I := CoefficientIdeals(P);
   M := ChangeRing(Matrix(P),F);
   S := [A ! Eltseq(M[i]) : i in [1..Nrows(M)]];
-  
+
   P_old:=P;
   repeat
       P_old:=P;
@@ -1032,7 +1037,7 @@ function order_over(Z_F, S, I : Check := true)
       I:=CoefficientIdeals(P_old);
       for i,j in [1..#S] do
           s:=S[i]; id_i:=I[i];
-          t:=S[j]; id_j:=I[j];         
+          t:=S[j]; id_j:=I[j];
           M:=VerticalJoin(M,Matrix(F,1,n,Eltseq(s*t)));
           Append(~I,id_i*id_j);
           M:=VerticalJoin(M,Matrix(F,1,n,Eltseq(t*s)));
@@ -1044,22 +1049,22 @@ function order_over(Z_F, S, I : Check := true)
       rk:=Rank(M_new);
       M_new:=Matrix( Rows(M_new)[1..rk] );
       I_new:=CoefficientIdeals(P)[1..rk];
-      P:=PseudoMatrix(I_new,M_new);      
+      P:=PseudoMatrix(I_new,M_new);
   until P eq P_old;
-  
-  error if Rank(M_new) ne n, 
+
+  error if Rank(M_new) ne n,
          "The given elements don't generate a lattice of full rank";
   M := MatrixRing(F,n) ! M_new;
   I:=I_new;
   O := Order(A, M, I);
-  
+
   assert IsOrder(O);
   return O;
 end function;
 
 intrinsic Order(S::SeqEnum[AlgAssVElt[FldAlg]], I::SeqEnum[RngOrdFracIdl] : Check := true) -> AlgAssVOrd
-  {Returns the order which has pseudobasis given by the basis elements S 
-   and the coefficient ideals I}  
+  {Returns the order which has pseudobasis given by the basis elements S
+   and the coefficient ideals I}
 
   A := Universe(S);
   F := BaseRing(A);
@@ -1070,7 +1075,7 @@ intrinsic Order(S::SeqEnum[AlgAssVElt[FldAlg]], I::SeqEnum[RngOrdFracIdl] : Chec
     I := [ideal<Z_F | 1> : i in [1..#S]];
   end if;
 
-  require R cmpeq Z_F or R cmpeq FieldOfFractions(Z_F) where R is Ring(Universe(I)) : 
+  require R cmpeq Z_F or R cmpeq FieldOfFractions(Z_F) where R is Ring(Universe(I)) :
         "Ideals in argument 2 must be of the ring of integers of the base ring of argument 1";
   require not ISA(Type(A), AlgMatV) : "Argument 1 must not contain elements of a matrix algebra";
   return order_over(Z_F, S, I : Check := Check);
@@ -1079,10 +1084,10 @@ end intrinsic;
 intrinsic '+'(O1::AlgAssVOrd[RngOrd], O2::AlgAssVOrd[RngOrd]) -> AlgAssVOrd
   {Computes the sum O1+O2, the smallest order containing both O1 and O2.}
 
-  require Algebra(O1) cmpeq Algebra(O2) : 
+  require Algebra(O1) cmpeq Algebra(O2) :
     "Orders must be contained in the same algebra";
 
-//what follows is the WRONG original code: it's the sum of O1 and O2 as modules, not the smallest order containing O1 and O2!!!!!!!    
+//what follows is the WRONG original code: it's the sum of O1 and O2 as modules, not the smallest order containing O1 and O2!!!!!!!
 //   P := VerticalJoin(PseudoMatrix(O1), PseudoMatrix(O2));
 //   P := HermiteForm(P);
 //   O := Order(Algebra(O1), P);
@@ -1091,7 +1096,7 @@ intrinsic '+'(O1::AlgAssVOrd[RngOrd], O2::AlgAssVOrd[RngOrd]) -> AlgAssVOrd
   n:=#b1;
   assert #b2 eq n;
   O:=Order(&cat[[b1[i]*b2[j] , b2[j]*b1[i]] : i,j in [1..n]]);
-  
+
   if assigned O1`ChangeRingMap then
     O`ChangeRingMap := O1`ChangeRingMap;
   end if;
@@ -1106,7 +1111,7 @@ end intrinsic;
 
 intrinsic '*'(I::AlgAssVOrdIdl[RngOrd], J::AlgAssVOrdIdl[RngOrd]) -> AlgAssVOrdIdl, AlgAssVOrdIdl
   {Product of ideals I and J.}
-  
+
   A:=Algebra(I);
   require IsFiniteEtale(A): "Arguments must be ideals of orders in an Finite Etale Algebra over Q";
   O:=Order(I);
@@ -1128,35 +1133,117 @@ intrinsic '*'(I::AlgAssVOrdIdl[RngOrd], J::AlgAssVOrdIdl[RngOrd]) -> AlgAssVOrdI
   return IJ;
 end intrinsic;
 
+intrinsic IdealsOfIndex(I::RngOrdIdl, N::RngIntElt) -> SeqEnum[RngOrdIdl]
+  {Given an ideal I in the Dedekind domain, returns all the ideals of index N}
+  if N eq 1 then
+    return [I];
+  end if;
+  O := Order(I);
+  OK := MaximalOrder(NumberField(O));
+  index_OK_O := Index(OK, O);
+  index_OK_IOK := Index(OK, ideal<OK|Basis(I)>);
+  assert GCD(index_OK_O, N) eq 1;
+  k :=index_OK_O * Norm(I) * N / index_OK_IOK;
+  k :=  Integers()!k;
+  print "k = ", k;
+  Js := IdealsUpTo(k, OK);
+  result := [];
+  // Js are ordered by norm, and we only care about the ones with Norm = N * norm_I
+  for J in Reverse(Js) do
+    if Norm(J) eq k then
+      Append(~result, (O meet J) meet I);
+    else
+      break;
+    end if;
+  end for;
+  return result;
+end intrinsic;
+
+intrinsic IdealsOfIndex(I::RngOrdFracIdl, N::RngIntElt) -> SeqEnum[RngOrdFracIdl]
+  {Given an ideal I in the Dedekind domain, returns all the ideals of index N}
+  vprintf Ordersext : "IdealsOfIndex Frac\n";
+  if N eq 1 then
+    return [I];
+  end if;
+  d := Denominator(I);
+  dI := Order(I)!!(d*I);
+  vprintf Ordersext: "%o\n", Type(dI);
+  Js := IdealsOfIndex(dI, N);
+  return [J/d : J in Js];
+end intrinsic;
+
+intrinsic IdealsOfIndexProduct(Is::Tup, N::RngIntElt) -> SeqEnum[Tup]
+  {Given a list of ideals representing the ideal I as a product, returns all the ideals of index N}
+  vprintf Ordersext : "IdealsOfIndexProduct\n";
+  if #Is eq 1 then
+    return [<elt> : elt in IdealsOfIndex(Is[1], N)];
+  end if;
+  result := [];
+  for d in Divisors(N) do
+    J1 := IdealsOfIndex(Is[1], Integers()!(N/d));
+    Jk := $$(<Is[i] : i in [2..#Is]>, d);
+    if #J1 ge 0 and #Jk ge 0 then
+      for c in CartesianProduct(J1, Jk) do
+        assert #c[2] eq #Jk;
+        Append(~result, <c[1]> cat c[2]);
+      end for;
+    end if;
+  end for;
+  return result;
+end intrinsic;
 
 intrinsic IdealsOfIndex(I::AlgAssVOrdIdl[RngOrd], N::RngIntElt) -> SeqEnum[AlgAssVOrdIdl]
 {Given an ideal I and integer returns all the subideals of index N}
-  // this is extremely NAIVE!!!
-  S := MultiplicatorRing(I);
-  zbasis := ZBasis(I);
-  r := #zbasis;
-  F := FreeAbelianGroup(r);
-  // converte it to a Finite presented group
-  FP, f := FPGroup(F); //f:FP->F
-
-  // all subrgroups of index N of ZZ^r
-  subg := LowIndexProcess(FP, <N, N>); // k in [N, N]
-  while not IsEmpty(subg) do
-    // pulling back the abstract subgroup of index N to J
-    H := ExtractGroup(subg);
-    NextSubgroup(~subg);
-    geninF := [f(FP ! x) : x in Generators(H)];
-    coeff := [Eltseq(x) : x in geninF];
-    // H is a subgroup of J of index N, but as fractional ideal the index might not be N
-    K := ideal<S| [&+[zbasis[i]*x[i] : i in [1..r]] : x in coeff]>;
+  if N eq 1 then
+    return [I];
+  end if;
+  test, dec := IsProductOfIdeals(I);
+  test := false;
+  if test then
+    Js := IdealsOfIndexProduct(dec, N);
+    O := Order(I);
+    A := Algebra(O);
     result := [];
-    if Order(K) eq Order(I) then
-      if Index(I, K) eq N then
-        assert K subset I;
-        Append(~result, K);
+    for J in Js do
+      assert #J eq #dec;
+      assert #J eq #A`NumberFields;
+      gen_inA := [];
+      for i := 1 to #J do
+        L := A`NumberFields[i];
+        gen_inA := gen_inA cat [L[2](y) : y in Basis(J[i], L[1])];
+      end for;
+      Append(~result, ideal<Order(I) | gen_inA>);
+    end for;
+    return result;
+  else
+    // this is extremely NAIVE!!!
+    S := MultiplicatorRing(I);
+    zbasis := ZBasis(I);
+    r := #zbasis;
+    F := FreeAbelianGroup(r);
+    // converte it to a Finite presented group
+    FP, f := FPGroup(F); //f:FP->F
+
+    // all subrgroups of index N of ZZ^r
+    subg := LowIndexProcess(FP, <N, N>); // k in [N, N]
+    while not IsEmpty(subg) do
+      // pulling back the abstract subgroup of index N to J
+      H := ExtractGroup(subg);
+      NextSubgroup(~subg);
+      geninF := [f(FP ! x) : x in Generators(H)];
+      coeff := [Eltseq(x) : x in geninF];
+      // H is a subgroup of J of index N, but as fractional ideal the index might not be N
+      K := ideal<S| [&+[zbasis[i]*x[i] : i in [1..r]] : x in coeff]>;
+      result := [];
+      if Order(K) eq Order(I) then
+        if Index(I, K) eq N then
+          assert K subset I;
+          Append(~result, K);
+        end if;
       end if;
-    end if;
-  end while;
-  return result;
+    end while;
+    print "#result =", #result;
+    return result;
+  end if;
 end intrinsic;
 
