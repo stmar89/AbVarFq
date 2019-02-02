@@ -1128,3 +1128,35 @@ intrinsic '*'(I::AlgAssVOrdIdl[RngOrd], J::AlgAssVOrdIdl[RngOrd]) -> AlgAssVOrdI
   return IJ;
 end intrinsic;
 
+
+intrinsic IdealsOfIndex(I::AlgAssVOrdIdl[RngOrd], N::RngIntElt) -> SeqEnum[AlgAssVOrdIdl]
+{Given an ideal I and integer returns all the subideals of index N}
+  // this is extremely NAIVE!!!
+  S := MultiplicatorRing(I);
+  zbasis := ZBasis(I);
+  r := #zbasis;
+  F := FreeAbelianGroup(r);
+  // converte it to a Finite presented group
+  FP, f := FPGroup(F); //f:FP->F
+
+  // all subrgroups of index N of ZZ^r
+  subg := LowIndexProcess(FP, <N, N>); // k in [N, N]
+  while not IsEmpty(subg) do
+    // pulling back the abstract subgroup of index N to J
+    H := ExtractGroup(subg);
+    NextSubgroup(~subg);
+    geninF := [f(FP ! x) : x in Generators(H)];
+    coeff := [Eltseq(x) : x in geninF];
+    // H is a subgroup of J of index N, but as fractional ideal the index might not be N
+    K := ideal<S| [&+[zbasis[i]*x[i] : i in [1..r]] : x in coeff]>;
+    result := [];
+    if Order(K) eq Order(I) then
+      if Index(I, K) eq N then
+        assert K subset I;
+        Append(~result, K);
+      end if;
+    end if;
+  end while;
+  return result;
+end intrinsic;
+
