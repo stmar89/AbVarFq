@@ -379,7 +379,7 @@ intrinsic ProdEqOrders(A::AlgAss)->AlgAssVOrd
 end intrinsic;
 
 intrinsic Index(S::AlgAssVOrd, T::AlgAssVOrd) -> RngIntElt
-{given two orders T \subset S, returns [T:S] = #S/T }
+{given two orders T \subset S, returns [S:T] = #S/T }
     require T subset S :"the first argument must be a subset of the second";
     matS:=Matrix(ZBasis(S));
     matT:=Matrix(ZBasis(T));
@@ -387,12 +387,10 @@ intrinsic Index(S::AlgAssVOrd, T::AlgAssVOrd) -> RngIntElt
 end intrinsic;
 
 intrinsic Index(J::AlgAssVOrdIdl, I::AlgAssVOrdIdl) -> FldRatElt
-{given and ideal I of an order S returns [J:I] = [J:J cap I]/[I : J cap I] }
+{given fractional ideals J and I defined over the same order returns [J:I] = [J:J cap I]/[I : J cap I]}
     require Order(I) eq Order(J): "the ideals must be of the same order";  
-    matJ:=Matrix(ZBasis(J));
-    matI:=Matrix(ZBasis(I));
-    matJcapI:=Matrix(ZBasis(ideal<Order(I)|One(Order(I))> meet I));
-    return Abs(Rationals() ! (Determinant(matI*matJcapI^-1) / Determinant(matJ*matJcapI^-1)));
+    mat:=Matrix(Coordinates(ZBasis(I),ZBasis(J));
+    return Abs(Rationals() ! Determinant(mat));
 end intrinsic;
 
 intrinsic Index(S::AlgAssVOrd, I::AlgAssVOrdIdl) -> FldRatElt
