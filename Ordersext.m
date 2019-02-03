@@ -379,7 +379,7 @@ intrinsic ProdEqOrders(A::AlgAss)->AlgAssVOrd
 end intrinsic;
 
 intrinsic Index(S::AlgAssVOrd, T::AlgAssVOrd) -> RngIntElt
-{given two orders T \subset S, returns [T:S] = #S/T }
+{given two orders T \subset S, returns [S:T] = #S/T }
     require T subset S :"the first argument must be a subset of the second";
     matS:=Matrix(ZBasis(S));
     matT:=Matrix(ZBasis(T));
@@ -387,12 +387,10 @@ intrinsic Index(S::AlgAssVOrd, T::AlgAssVOrd) -> RngIntElt
 end intrinsic;
 
 intrinsic Index(J::AlgAssVOrdIdl, I::AlgAssVOrdIdl) -> FldRatElt
-{given and ideal I of an order S returns [J:I] = [J:J cap I]/[I : J cap I] }
+{given fractional ideals J and I defined over the same order returns [J:I] = [J:J cap I]/[I : J cap I]}
     require Order(I) eq Order(J): "the ideals must be of the same order";  
-    matJ:=Matrix(ZBasis(J));
-    matI:=Matrix(ZBasis(I));
-    matJcapI:=Matrix(ZBasis(ideal<Order(I)|One(Order(I))> meet I));
-    return Abs(Rationals() ! (Determinant(matI*matJcapI^-1) / Determinant(matJ*matJcapI^-1)));
+    mat:=Matrix(Coordinates(ZBasis(I),ZBasis(J));
+    return Abs(Rationals() ! Determinant(mat));
 end intrinsic;
 
 intrinsic Index(S::AlgAssVOrd, I::AlgAssVOrdIdl) -> FldRatElt
@@ -1126,5 +1124,37 @@ intrinsic '*'(I::AlgAssVOrdIdl[RngOrd], J::AlgAssVOrdIdl[RngOrd]) -> AlgAssVOrdI
   P := PseudoMatrix(CoefficientIdeals(P), Matrix(P) * Matrix(PseudoMatrix(O))^-1 );
   IJ := ideal<O | P>;
   return IJ;
+end intrinsic;
+
+
+intrinsic IdealsOfIndex(I::AlgAssVOrdIdl[RngOrd], N::RngIntElt) -> SeqEnum[AlgAssVOrdIdl]
+{Given an ideal I and integer returns all the subideals of index N}
+  // this is extremely NAIVE!!!
+  S := MultiplicatorRing(I);
+  zbasis := ZBasis(I);
+  r := #zbasis;
+  F := FreeAbelianGroup(r);
+  // converte it to a Finite presented group
+  FP, f := FPGroup(F); //f:FP->F
+
+  // all subrgroups of index N of ZZ^r
+  subg := LowIndexProcess(FP, <N, N>); // k in [N, N]
+  while not IsEmpty(subg) do
+    // pulling back the abstract subgroup of index N to J
+    H := ExtractGroup(subg);
+    NextSubgroup(~subg);
+    geninF := [f(FP ! x) : x in Generators(H)];
+    coeff := [Eltseq(x) : x in geninF];
+    // H is a subgroup of J of index N, but as fractional ideal the index might not be N
+    K := ideal<S| [&+[zbasis[i]*x[i] : i in [1..r]] : x in coeff]>;
+    result := [];
+    if Order(K) eq Order(I) then
+      if Index(I, K) eq N then
+        assert K subset I;
+        Append(~result, K);
+      end if;
+    end if;
+  end while;
+  return result;
 end intrinsic;
 
