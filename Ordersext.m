@@ -1135,23 +1135,22 @@ end intrinsic;
 
 intrinsic IdealsOfIndex(I::RngOrdIdl, N::RngIntElt) -> SeqEnum[RngOrdIdl]
   {Given an ideal I in the Dedekind domain, returns all the ideals of index N}
+  vprintf Ordersext : "IdealsOfIndex Int\n";
   if N eq 1 then
     return [I];
   end if;
   O := Order(I);
   OK := MaximalOrder(NumberField(O));
   index_OK_O := Index(OK, O);
-  index_OK_IOK := Index(OK, ideal<OK|Basis(I)>);
   assert GCD(index_OK_O, N) eq 1;
-  k :=index_OK_O * Norm(I) * N / index_OK_IOK;
-  k :=  Integers()!k;
-  print "k = ", k;
-  Js := IdealsUpTo(k, OK);
+  Js := IdealsUpTo(N, OK);
   result := [];
   // Js are ordered by norm, and we only care about the ones with Norm = N * norm_I
   for J in Reverse(Js) do
-    if Norm(J) eq k then
-      Append(~result, (O meet J) meet I);
+    if Norm(J) eq N then
+      K := (O meet J) * I;
+      assert K subset I;
+      Append(~result, K);
     else
       break;
     end if;
@@ -1167,7 +1166,6 @@ intrinsic IdealsOfIndex(I::RngOrdFracIdl, N::RngIntElt) -> SeqEnum[RngOrdFracIdl
   end if;
   d := Denominator(I);
   dI := Order(I)!!(d*I);
-  vprintf Ordersext: "%o\n", Type(dI);
   Js := IdealsOfIndex(dI, N);
   return [J/d : J in Js];
 end intrinsic;
@@ -1192,13 +1190,16 @@ intrinsic IdealsOfIndexProduct(Is::Tup, N::RngIntElt) -> SeqEnum[Tup]
   return result;
 end intrinsic;
 
-intrinsic IdealsOfIndex(I::AlgAssVOrdIdl[RngOrd], N::RngIntElt) -> SeqEnum[AlgAssVOrdIdl]
+intrinsic IdealsOfIndex(I::AlgAssVOrdIdl[RngOrd], N::RngIntElt : Al := "Default") -> SeqEnum[AlgAssVOrdIdl]
 {Given an ideal I and integer returns all the subideals of index N}
   if N eq 1 then
     return [I];
   end if;
-  test, dec := IsProductOfIdeals(I);
-  test := false;
+  if Al eq "Naive" then
+    test := false;
+  else
+    test, dec := IsProductOfIdeals(I);
+  end if;
   if test then
     Js := IdealsOfIndexProduct(dec, N);
     O := Order(I);
@@ -1216,6 +1217,8 @@ intrinsic IdealsOfIndex(I::AlgAssVOrdIdl[RngOrd], N::RngIntElt) -> SeqEnum[AlgAs
     end for;
     return result;
   else
+    result := [];
+    vprintf Ordersext : "Naive version!!\n";
     // this is extremely NAIVE!!!
     S := MultiplicatorRing(I);
     zbasis := ZBasis(I);
@@ -1233,16 +1236,14 @@ intrinsic IdealsOfIndex(I::AlgAssVOrdIdl[RngOrd], N::RngIntElt) -> SeqEnum[AlgAs
       geninF := [f(FP ! x) : x in Generators(H)];
       coeff := [Eltseq(x) : x in geninF];
       // H is a subgroup of J of index N, but as fractional ideal the index might not be N
-      K := ideal<S| [&+[zbasis[i]*x[i] : i in [1..r]] : x in coeff]>;
-      result := [];
-      if Order(K) eq Order(I) then
-        if Index(I, K) eq N then
-          assert K subset I;
-          Append(~result, K);
+      J := ideal<S| [&+[zbasis[i]*x[i] : i in [1..r]] : x in coeff]>;
+      //if Order(J) eq Order(I) then
+        if Index(I, J) eq N then
+          assert J subset I;
+          Append(~result, J);
         end if;
-      end if;
+      //end if;
     end while;
-    print "#result =", #result;
     return result;
   end if;
 end intrinsic;
