@@ -2,6 +2,7 @@
 
 freeze;
 
+declare verbose AbelianVarieties, 1;
 /////////////////////////////////////////////////////
 // Abelian varieties with squarefree polynomial, polarizations for the ordinary case and automorphisms
 // Stefano Marseglia, Stockholm University, stefanom@math.su.se
@@ -105,6 +106,7 @@ end intrinsic;
 
 intrinsic IsogeniesMany(IS::SeqEnum[AlgAssVOrdIdl], J::AlgAssVOrdIdl, N::RngIntElt) -> BoolElt, SeqEnum[AlgAssElt]
   {returns if the abelian variety has an isogeny of degree N and if so it returns also all the non isomorphic isogenous varieties and the isomorphism}
+  vprintf AbelianVarieties : "IsogeniesMany\n";
   isogenies_of_degree_N := [* [* *] : i in [1..#IS] *];
   for K in IdealsOfIndex(J, N) do
     for i := 1 to #IS do
