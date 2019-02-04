@@ -390,7 +390,7 @@ end intrinsic;
 intrinsic Index(J::AlgAssVOrdIdl, I::AlgAssVOrdIdl) -> FldRatElt
 {given fractional ideals J and I defined over the same order returns [J:I] = [J:J cap I]/[I : J cap I]}
     require Order(I) eq Order(J): "the ideals must be of the same order";
-    mat:=Matrix(Coordinates(ZBasis(I),ZBasis(J));
+    mat := Matrix(Coordinates(ZBasis(I), ZBasis(J)));
     return Abs(Rationals() ! Determinant(mat));
 end intrinsic;
 
@@ -1197,6 +1197,15 @@ intrinsic IdealsOfIndex(I::AlgAssVOrdIdl[RngOrd], N::RngIntElt : Al := "Default"
     test := false;
   else
     test, dec := IsProductOfIdeals(I);
+    for J in dec do
+      O := Order(J);
+      OK := MaximalOrder(NumberField(O));
+      index_OK_O := Index(OK, O);
+      if GCD(index_OK_O, N) ne 1 then
+        test :=false;
+        break;
+      end if;
+    end for;
   end if;
   if test then
     Js := IdealsOfIndexProduct(dec, N);
