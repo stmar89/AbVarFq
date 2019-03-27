@@ -124,14 +124,18 @@ declare attributes AlgAssVOrd:OverOrders;
 
 intrinsic PrimesAbove(I::AlgAssVOrdIdl) -> SeqEnum[AlgAssVOrdIdl]
 {given an integral S-ideal, returns the sequence of maximal ideals P of S above I}
-     require IsIntegral(I): "the ideal must be integral";
-     S:=Order(I);
-     O:=MaximalOrder(S);
-     IO:=O!I;
-     fac:=Factorization(IO);
-     primes:= Setseq({ S meet (S!PO[1]) : PO in fac });
-     assert forall{P : P in primes | I subset P};
-     return primes;
+	require IsIntegral(I): "the ideal must be integral";
+	S:=Order(I);
+	if One(S) in I then
+		return [];
+	else
+		O:=MaximalOrder(S);
+		IO:=O!I;
+		fac:=Factorization(IO);
+		primes:= Setseq({ S meet (S!PO[1]) : PO in fac });
+		assert forall{P : P in primes | I subset P};
+		return primes;
+	end if;
 end intrinsic;
 
 intrinsic IsPrime(I::AlgAssVOrdIdl) -> BoolElt
