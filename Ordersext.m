@@ -130,7 +130,7 @@ intrinsic PrimesAbove(I::AlgAssVOrdIdl) -> SeqEnum[AlgAssVOrdIdl]
      IO:=O!I;
      fac:=Factorization(IO);
      primes:= Setseq({ S meet (S!PO[1]) : PO in fac });
-assert forall{P : P in primes | I subset P};
+     assert forall{P : P in primes | I subset P};
      return primes;
 end intrinsic;
 
@@ -480,7 +480,7 @@ end intrinsic;
 function factorizationMaximalOrder(I)
 //given an ideal of the maximal order of an algebra, returns the factorization into a product of prime ideals
     O:=Order(I);
-assert IsMaximal(O);
+    assert IsMaximal(O);
     A:=Algebra(O);
     _,IasProd:=IsProductOfIdeals(I);
     fac:=[]; //this will be the factorization of I
@@ -503,11 +503,11 @@ end function;
 intrinsic Factorization(I::AlgAssVOrdIdl) -> Tup
 {given a proper integral S-ideal I coprime with the conductor of S (hence invertible in S), returns its factorization into a product of primes of S}
      S:=Order(I);
+     require IsIntegral(I) and I ne ideal<S|One(S)>: "the argument must be a proper integral ideal";
      if IsMaximal(S) then
 	     return factorizationMaximalOrder(I);
      else
 	     fS:=Conductor(S);
-	     require IsIntegral(I) and I ne ideal<S|One(S)>: "the argument must be a proper integral ideal";
 	     require IsCoprime(fS,I): "the ideal must be coprime with the conductor of the order of definition";
 	     require assigned Algebra(I)`NumberFields :"it must be a product of number fields";
 	     O:=MaximalOrder(S);
@@ -520,7 +520,7 @@ intrinsic Factorization(I::AlgAssVOrdIdl) -> Tup
 		expP:=&+([ pO[2] : pO in facO | (S meet (S!pO[1])) eq P ]);
 		Append(~facS, <P,expP>);
 	     end for;
-     assert I eq &*([ p[1]^p[2] : p in facS ]);
+    	      assert I eq &*([ p[1]^p[2] : p in facS ]);
 	     return facS;
      end if;
 end intrinsic;
