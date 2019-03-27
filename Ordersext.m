@@ -503,22 +503,26 @@ end function;
 intrinsic Factorization(I::AlgAssVOrdIdl) -> Tup
 {given a proper integral S-ideal I coprime with the conductor of S (hence invertible in S), returns its factorization into a product of primes of S}
      S:=Order(I);
-     fS:=Conductor(S);
-     require IsIntegral(I) and I ne ideal<S|One(S)>: "the argument must be a proper integral ideal";
-     require IsCoprime(fS,I): "the ideal must be coprime with the conductor of the order of definition";
-     require assigned Algebra(I)`NumberFields :"it must be a product of number fields";
-     O:=MaximalOrder(S);
-     IO:=O ! I;
-     facO:=factorizationMaximalOrder(IO);
-     primesO:=[ p[1] : p in facO ];
-     primesS:=Setseq({ S meet (S!PO) : PO in primesO }); //this should cancel the doubles
-     facS:=<>;
-     for P in primesS do
-        expP:=&+([ pO[2] : pO in facO | (S meet (S!pO[1])) eq P ]);
-        Append(~facS, <P,expP>);
-     end for;
-assert I eq &*([ p[1]^p[2] : p in facS ]);
-     return facS;
+     if IsMaximal(S) then
+	     return factorizationMaximalOrder(I);
+     else
+	     fS:=Conductor(S);
+	     require IsIntegral(I) and I ne ideal<S|One(S)>: "the argument must be a proper integral ideal";
+	     require IsCoprime(fS,I): "the ideal must be coprime with the conductor of the order of definition";
+	     require assigned Algebra(I)`NumberFields :"it must be a product of number fields";
+	     O:=MaximalOrder(S);
+	     IO:=O ! I;
+	     facO:=factorizationMaximalOrder(IO);
+	     primesO:=[ p[1] : p in facO ];
+	     primesS:=Setseq({ S meet (S!PO) : PO in primesO }); //this should cancel the doubles
+	     facS:=<>;
+	     for P in primesS do
+		expP:=&+([ pO[2] : pO in facO | (S meet (S!pO[1])) eq P ]);
+		Append(~facS, <P,expP>);
+	     end for;
+     assert I eq &*([ p[1]^p[2] : p in facS ]);
+	     return facS;
+     end if;
 end intrinsic;
 
 intrinsic WKICM_bar(S::AlgAssVOrd) -> SeqEnum
