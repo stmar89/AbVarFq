@@ -21,9 +21,14 @@ intrinsic pAdicToComplexRoots(f::RngUPolElt[FldRat], p::RngIntElt : precpAdic :=
   
   Sn := Sym(n);
   _, tau := IsConjugate(Sn,Gp,GCC);
+  //rtsptau := [rtsp[i^(tau)] : i in [1..n]];
   rtsptau := [rtsp[i^(tau^-1)] : i in [1..n]];
-  //rtsCCtau := [rtsCC[i^tau] : i in [1..n]];
       // it's either this or rtsCCtau!  :)
+      // I thought it should be i^tau, 
+      // because the tau above gives Gp^tau = tau^-1*Gp*tau = GCC, so
+      // for the action we want (i^tau)^(tau^-1*sigma*tau) = (i^sigma)^tau. 
+      // But we need to take tau^-1 to get integral relative invariants below,
+      // so I must be misunderstanding something.
 
   G := GCC;
   NGmodG, mN := quo<Normalizer(Sn,G) | G>;
@@ -53,16 +58,28 @@ end intrinsic;
 /*
 Attach("padictocc.m");
 _<x> := PolynomialRing(Rationals());
-f := x^8 - 5*x^7 + 12*x^6 - 20*x^5 + 29*x^4 - 40*x^3 + 48*x^2 - 40*x + 16;
-p := 2;
+f := x^8 - 5*x^7 + 12*x^6 - 20*x^5 + 29*x^4 - 40*x^3 + 48*x^2 - 40*x + 16;  p := 2;
+// f := x^6 + 2*x^4 + 11*x^3 + 10*x^2 + 125;  p := 5;
 
+n := Degree(f);
 L := SplittingField(f);
 rts1L := [r[1] : r in Roots(f,L)];
 rts1CC := [Evaluate(r,InfinitePlaces(L)[1]) : r in rts1L];  // some choice of complex embedding
-rts2pp, rts2CC, G := pAdicToComplexRoots(f,p);
+precCC := Precision(Universe(rts1CC));
+rts2pp, rts2CC, G := pAdicToComplexRoots(f,p : precpAdic := 20, precCC := precCC);
 Lpp := FieldOfFractions(Universe(rts2pp));
 iotapp := hom<L -> Lpp | Roots(MinimalPolynomial(L.1),Lpp)[1][1]>;
 rts1pp := [iotapp(r) : r in rts1L];
-sigmapp := Sym(8)![c[2] : c in [<i,j> : i,j in [1..8] | IsWeaklyZero(rts1pp[i]-rts2pp[j])]];
-sigmaCC := Sym(8)![c[2] : c in [<i,j> : i,j in [1..8] | IsWeaklyZero(rts1CC[i]-rts2CC[j])]];
+sigmapp := Sym(n)![c[2] : c in [<i,j> : i,j in [1..n] | IsWeaklyZero(rts1pp[i]-rts2pp[j])]];
+sigmaCC := Sym(n)![c[2] : c in [<i,j> : i,j in [1..n] | Abs(rts1CC[i]-rts2CC[j]) lt 10^(-9/10*precCC)]];
+sigmaCC^-1*sigmapp in G;
+
+rts1Ltau := [rts1L[i^(sigmaCC^-1)] : i in [1..n]];
+rts1CCtau := [Evaluate(r,InfinitePlaces(L)[1]) : r in rts1Ltau];
+rts1pptau := [iotapp(r) : r in rts1Ltau];
+sigmapptau := Sym(n)![c[2] : c in [<i,j> : i,j in [1..n] | IsWeaklyZero(rts1pptau[i]-rts2pp[j])]];
+sigmaCCtau := Sym(n)![c[2] : c in [<i,j> : i,j in [1..n] | Abs(rts1CCtau[i]-rts2CC[j]) lt 10^(-9/10*precCC)]];
+sigmapptau;
+sigmaCCtau;
+sigmapptau in G;
 */
