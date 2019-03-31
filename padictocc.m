@@ -12,10 +12,12 @@ intrinsic pAdicToComplexRoots(f::RngUPolElt[FldRat], p::RngIntElt : precpAdic :=
    padic and complex precision.}
 
   n := Degree(f);
-  Gp, rtsp, datp := GaloisGroup(f : Prime := p);
   if precpAdic ne 0 then
     // refine padic roots
-    rtsp := [GaloisRoot(f,i,datp : Prec := precpAdic) : i in [1..n]];
+    // rtsp := [GaloisRoot(f,i,datp : Prec := precpAdic) : i in [1..n]];
+    Gp, rtsp, datp := GaloisGroup(f : Prime := p, Prec := precpAdic);
+  else
+    Gp, rtsp, datp := GaloisGroup(f : Prime := p);
   end if;
   GCC, rtsCC, datCC := GaloisGroup(f : Type := "Complex", Prec := precCC);
   
