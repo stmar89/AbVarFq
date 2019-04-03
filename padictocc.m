@@ -45,7 +45,8 @@ intrinsic pAdicToComplexRoots(f::RngUPolElt[FldRat], p::RngIntElt : precpAdic :=
   assert #SequenceToSet(pvals) eq #rhos;   // possible precision issue
     // if not, need to increase p-adic precision or 
     // possibly make a change of variables in f to land in a nonempty Zariski open subset
-  pval := Integers()!pvals[1];  // assumes invariant is integral
+  pval := Roots(PowerRelation(pvals[1]/1,1),Integers())[1][1];  
+    // assumes invariant is integral
   
   CCvals := [Abs(Evaluate(Finv,[rtsCC[i^rho] : i in [1..n]])-pval) : rho in rhos];
   minval, minind := Min(CCvals);
