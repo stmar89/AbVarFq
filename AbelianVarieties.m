@@ -121,21 +121,20 @@ end intrinsic;
 
 intrinsic Isogenies(I::AlgAssVOrdIdl, J::AlgAssVOrdIdl, N::RngIntElt)->BoolElt, SeqEnum[AlgAssElt]
   {returns if the abelian variety has an isogeny of degree N and if so it returns also all the non isomorphic isogenous varieties and the isomorphism}
-  require MultiplicatorRing(I) eq MultiplicatorRing(J):  "the MultiplicatorRing's are not the same";
+  require MultiplicatorRing(I) eq MultiplicatorRing(J):  "the MultiplicatorRing's are not the same"; //only horizontal isogenies?
   potential_isogenies_of_degree_N := IsogeniesMany([I], J, N);
   return #potential_isogenies_of_degree_N[1] ge 1, potential_isogenies_of_degree_N[1];
 end intrinsic;
 
 intrinsic IsPolarized(I0::AlgAssVOrdIdl, phi::SeqEnum[Map], N::RngIntElt)->BoolElt, SeqEnum[AlgAssElt]
   {returns if the abelian variety has a polarization of degree N and if so it returns also all the non isomorphic polarizations}
-  //31 Jan 2018.
   require IsFiniteEtale(Algebra(I0)): "the algebra of definition must be finite and etale over Q";
   S := MultiplicatorRing(I0);
   I := ideal<S|ZBasis(I0)>;
   A := Algebra(S);
-  RR := RealField();
+  prec:=Precision(Codomain(phi[1]));
+  RR := RealField(prec); //precision added
   Itbar := ComplexConjugate(TraceDualIdeal(I));
-  assert ideal<S meet ComplexConjugate(S) | ZBasis(Itbar)> eq ideal<S meet ComplexConjugate(S) | ZBasis(TraceDualIdeal(ComplexConjugate(I)))>;
 
   boolean, isogenies_of_degree_N := Isogenies(I, Itbar, N);
   if not boolean then
@@ -156,7 +155,7 @@ intrinsic IsPolarized(I0::AlgAssVOrdIdl, phi::SeqEnum[Map], N::RngIntElt)->BoolE
     for uu in UqBinS do
       pol := (x*(A ! uu));
       assert (pol*I) eq J;
-      assert (pol*I) subset Itbar;
+      assert (J) subset Itbar;
       //pol is a polarization if totally imaginary and \Phi-positive
       C := [g(pol): g in phi];
       if (ComplexConjugate(pol) eq (-pol)) and (forall{c : c in C | Im(c) gt (RR ! 0)}) then
@@ -195,21 +194,21 @@ require IsWeil(w): "the input must be a Weil polynomial";
      return l;
 end intrinsic;
 
-intrinsic IsWeil(f::RngUPolElt) -> BoolElt,RngIntElt
-{Returns whether f is a q-WeilPolynomial and q, where q is a prime power polynomial. A polynomial is q-Weil if all the roots have complex absolute value q^(1/2)}
+intrinsic IsWeil(f::RngUPolElt : prec:=30) -> BoolElt,RngIntElt
+{Returns whether f is a q-WeilPolynomial and q, where q is a prime power polynomial. A polynomial is q-Weil if all the roots have complex absolute value q^(1/2). The check is done with precision "prec" given as optional parameter (default precision is 30)}
 
-  require BaseRing(Parent(f)) eq Integers() and IsEven(Degree(f)): "the input must be an integral polynomial of even degree";
-  roots:=Roots(f,ComplexField());
-  q:=roots[1,1]*ComplexConjugate(roots[1,1]);
-  if not IsReal(q) then
-      return false,_;
-  else
-      qq:=Round(RealField() ! q);
-      if Abs(qq-q) lt 10^-5 and forall{r : r in roots | Abs(r[1]*ComplexConjugate(r[1]) - q) lt 10^-5  } then //the precision should be enough.
-          return true,qq;
-      else return false,_;
-      end if;
-  end if;
+require forall{c :c in Coefficients(f) | IsIntegral(c)} and IsEven(Degree(f)): "the input must be an integral polynomial of even degree";
+roots:=Roots(f,ComplexField(prec));
+q:=Integers() ! (Coefficients(f)[1]^(2/Degree(f)));
+if not IsPrimePower(q) then
+	return false,_;
+else
+	if forall{r : r in roots | Abs(r[1]*ComplexConjugate(r[1]) - q) lt 10^(2-prec)} then
+		return true,q;
+	else 
+		return false,_;
+	end if;
+end if;
 end intrinsic;
 
 intrinsic IsOrdinary(f::RngUPolElt) -> BoolElt
@@ -221,18 +220,19 @@ require test:"the input must be a q-Weil polynomial for some prime power q";
   return IsCoprime(coeff[deg div 2 +1],q);
 end intrinsic;
 
-intrinsic IsCharacteristicPoly(f::RngUPolElt) -> BoolElt,RngIntElt
+intrinsic IsCharacteristicPoly(f::RngUPolElt : Precision:=100) -> BoolElt,RngIntElt
 {Given an irreducible q-Weil polynomial f, returns the exponent e, such that there exists a simple abelian variety over \F_q with characteristic polynomial of the Frobenius equal to f^e.
 This abelian variety exists and it is uniquely determined up to \F_q-isogeny by Honda-Tate theory. For the method used, see [Wat69, paragraph before the last theorem on page 527].}
-  testWeil,q:=IsWeil(f);
+  
+  testWeil,q:=IsWeil(f : prec:=Precision);
 require IsIrreducible(f) and testWeil: "the input must be an irreducible q-Weil polynomial";
   fac:=Factorization(q);
   p:=fac[1,1]; d:=fac[1,2]; //q=p^d, with p a prime
-  Qp:=pAdicField(p);
+  Qp:=pAdicField(p,Precision);
   Rp<y>:=PolynomialRing(Qp);
   g:= Rp ! f;
   gfact:=[h[1] : h in Factorization(g)];
-  if #RealRoots(f,RealField(),10) gt 0 then
+  if #RealRoots(f,RealField(Precision),10^(2-Precision)) gt 0 then
     e:=LCM(  [Denominator((Valuation(Coefficients(h)[1])/d)) : h in gfact] cat [2]  ); //the extra 1/2 comes from the real prime, see the reference.
   else
     e:=LCM(  [Denominator((Valuation(Coefficients(h)[1])/d)) : h in gfact]  );
@@ -246,18 +246,19 @@ intrinsic AutomorphismsPol(I::AlgAssVOrdIdl) -> GpAb
     return TorsionSubgroup(UnitGroup2(MultiplicatorRing(I)));
 end intrinsic;
 
-cm_type_internal:=function(A)
+cm_type_internal:=function(A,prec)
+// "prec" is a precision parameter
 	P<x>:=PolynomialRing(Integers());
 	fA:=P!DefiningPolynomial(A);
 	q:=Integers() ! ( Coefficients(fA)[1]^(2/Degree(fA)) );
-	p:=Factorization(q)[1,1];
-	M:=NumberField(P!DefiningPolynomial(SplittingField(fA)));
-	frob_in_M:=[[-Coefficients(h[1])[1] : h in Factorization(PolynomialRing(M)!DefiningPolynomial(L[1])) ] : L in A`NumberFields ];
+	_,p:=IsPrimePower(q);
+	M:=NumberField(P!DefiningPolynomial(SplittingField(fA))); //this is the compositum
+	frob_in_M:=[[-Coefficients(h[1])[1] : h in Factorization(PolynomialRing(M)!DefiningPolynomial(L[1])) ] : L in A`NumberFields ]; //conjugates of the Frobenius in M
 	//here we use Montes algorithm. One need to Attach +IdealsNF.m !!!!
 	Factorization(ideal(M,p));
 	PM:=M`PrimeIdeals[p,1]; // we choose a prime of M above p
-	Cvalues_p_pos:=[ [Conjugates(c)[1] : c in fr | PValuation(c,PM) gt 0]  : fr in frob_in_M ]; // note that the function PValuation is also from the +IdealsNF.m package
-	homsA:=HomsToC(A);
+	Cvalues_p_pos:=[ [Conjugates(c : Precision:=prec)[1] : c in fr | PValuation(c,PM) gt 0]  : fr in frob_in_M ]; // note that the function PValuation is also from the +IdealsNF.m package
+	homsA:=HomsToC(A : Precision:=prec);
 	all_cm_types:=[ListToSequence(cm) : cm in AllPossibilities([ [homsA[2*k-1],homsA[2*k]] : k in [1..Degree(fA) div 2 ]])];
 	FA:=PrimitiveElement(A);
 
@@ -271,7 +272,7 @@ cm_type_internal:=function(A)
 		Append(~cm_values,cm_values0[deg_prev+1..deg_prev+deg1]);
 		deg_prev:=deg_prev+deg1;
 	  end for;
-	  if forall{ i : i in [1..#cm_values] | forall{ d : d in cm_values[i] | exists{ c : c in Cvalues_p_pos[i] | Abs(d-c) lt 10^-8  } } } then
+	  if forall{ i : i in [1..#cm_values] | forall{ d : d in cm_values[i] | exists{ c : c in Cvalues_p_pos[i] | Abs(d-c) lt 10^(2-prec) } } } then
 	      Append(~cm_p_pos,cm);
 	  end if;
 	end for;
@@ -280,11 +281,11 @@ cm_type_internal:=function(A)
       return cm_p_pos;
 end function;
 
-intrinsic CMType(A::AlgAss : TestOrdinary:=true)->SeqEnum[Maps]
-{given a product of CM number fields A=Q[x]/(f), where f is q-Weil polynomial, returns a subset of HomsToC consisting of one map A->C per conjugate pair such that the induced p-adic valuation v on \bar(Q_p) in C is such that v(a)>0, where a is a root of f. If f is ordinary then it should return only one output. Otherwise more.}
+intrinsic CMType(A::AlgAss : Precision:=30 , TestOrdinary:=true)->SeqEnum[Maps]
+{given a product of CM number fields A=Q[x]/(f), where f is q-Weil polynomial, returns a subset of HomsToC consisting of one map A->C per conjugate pair such that the induced p-adic valuation v on \bar(Q_p) in C is such that v(a)>0, where a is a root of f. If f is ordinary then it should return only one output. Otherwise more. The precision of the computations is set by the optional parameter "Precision" (Default Value 30).}
   f:=DefiningPolynomial(A);
-  q:=Integers() ! ( Coefficients(f)[1]^(2/Degree(f)) );
-  require &and[ Abs(Abs(x[1])-Sqrt(q)) lt 10^(-10)  : x in Roots(f,ComplexField())]: "the defining polynomial must be a q-Weil polynomial";
+  test_Weil,q:=IsWeil(f);
+  require test_Weil: "the defining polynomial must be a q-Weil polynomial";
   if TestOrdinary then
     require IsOrdinary(f): "The isogeny class is not ordinary";
   end if;
@@ -292,6 +293,6 @@ intrinsic CMType(A::AlgAss : TestOrdinary:=true)->SeqEnum[Maps]
   else
       require IsFiniteEtale(A): "the algebra of definition must be finite and etale over Q";
       require HasComplexConjugate(A): "it must be a product of CM number fields";
-      return cm_type_internal(A);
+      return cm_type_internal(A, Precision);
   end if;
 end intrinsic;

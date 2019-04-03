@@ -418,16 +418,16 @@ intrinsic Automorphisms(A::AlgAss) -> SeqEnum[Maps]
     return output;
 end intrinsic;
 
-intrinsic HomsToC(A::AlgAss)->SeqEnum[Map]
-{returns Hom(A,\C) as a sequence of maps}
+intrinsic HomsToC(A::AlgAss : Precision:=30)->SeqEnum[Map]
+{returns Hom(A,\C) as a sequence of maps. The precision of \C is given by the optional parameter "Precision". Default value is 30}
     require IsFiniteEtale(A): "the algebra of definition must be finite and etale over Q";
-    CC:=ComplexField();
+    CC:=ComplexField(Precision);
     images:=function(x)
-        return &cat[[CC ! z : z in Conjugates(y)] :y in Components(x)];
+	return &cat[[CC ! z : z in Conjugates(y : Precision:=Precision)] :y in Components(x)];
     end function;
     maps:=< map< A -> CC | x:-> images(x)[k] > : k in [1..Degree(A)] >;
     f:=&*[DefiningPolynomial(L[1]) : L in A`NumberFields];
-assert &and [ Abs(Evaluate(f,g(PrimitiveElement(A)))) lt 10^(-10) : g in maps];
+assert &and [ Abs(Evaluate(f,g(PrimitiveElement(A)))) lt 10^-10 : g in maps];
     return maps;
 end intrinsic;
 
