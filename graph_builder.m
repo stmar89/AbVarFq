@@ -2,6 +2,8 @@
 //AttachSpec("packages.spec"); 
 
 /*
+by Taylor Dupuy
+
 1) Enumerate the lattice of orders between R=ZZ[F,V] and OK as a graph
 
 2) For each S in Order, compute Weak Equivalence classes for S
