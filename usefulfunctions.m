@@ -2,7 +2,8 @@
 
 /////////////////////////////////////////////////////
 // useful functions for the otehr packages
-// Stefano Marseglia, Stockholm University, stefanom@math.su.se
+// Stefano Marseglia, Utrecht University, s.marseglia@uu.nl
+// http://www.staff.science.uu.nl/~marse004/
 /////////////////////////////////////////////////////
 
 /*

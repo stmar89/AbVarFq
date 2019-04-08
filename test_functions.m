@@ -2,7 +2,8 @@
 
 /////////////////////////////////////////////////////
 // test functions for the other packages
-// Stefano Marseglia, Stockholm University, stefanom@math.su.se
+// Stefano Marseglia, Utrecht University, s.marseglia@uu.nl
+// http://www.staff.science.uu.nl/~marse004/
 /////////////////////////////////////////////////////
 
 intrinsic RunTests() -> BoolElt
