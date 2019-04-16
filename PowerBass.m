@@ -69,7 +69,7 @@ intrinsic IsBassIsomorphic(bc1::Tup,bc2::Tup)->BoolElt,AlgAssElt
 	assert forall{i : i in [1..N] | Algebra(bc1[i]) eq Algebra(bc2[i])};    
 	S1i:=MultiplicatorRing(bc1[1]);
 	S2i:=MultiplicatorRing(bc2[1]);
-    	for i in [1..N] do
+	for i in [1..N-1] do
 		S1i_next:=MultiplicatorRing(bc1[i+1]);
 		S2i_next:=MultiplicatorRing(bc2[i+1]);
 		if i lt N then
