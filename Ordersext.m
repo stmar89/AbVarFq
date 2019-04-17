@@ -980,47 +980,49 @@ intrinsic 'subset'(I1 :: AlgAssVOrdIdl, I2 :: AlgAssVOrdIdl) -> BoolElt
 	return ((I1 meet I2) eq I1);
 end intrinsic;
 
-function IdealsOfIndex(I,N)
-// Given an ideal I in an order O in a number field and a positive integer N, with N coprime with the conductor, returns all the ideals J contained in I with index [I:J]=N.
-// If N>1 the we require I to be invertible in O (we do not test it! since it is not implement for non-maximal orders)}
-// 
-// by Edgar Costa, modified by Stefano (since we cannot check all the required hyp I have changed into a function. The hyp on I (being invertible is checked in the intrinsic below)
-	vprintf Ordersext : "IdealsOfIndex Int\n";
+intrinsic IdealsOfIndex(I::RngOrdIdl, N::RngIntElt) -> SeqEnum[RngOrdIdl]
+{Given an ideal I in an order O in a number field and a positive integer N, with N coprime with the conductor, returns all the ideals J contained in I with index [I:J]=N.}
+//by Edgar Costa
+vprintf Ordersext : "IdealsOfIndex Int\n";
 	if N eq 1 then
 		return [I];
 	end if;
-	d := Denominator(I);
 	O := Order(I);
-	I := Order(I)!!(d*I);
-	//assert IsIvertible(I); //not implement for non-maximal O :(
-	ff:=Conductor(O);
 	OK := MaximalOrder(NumberField(O));
-	ffOK:=OK !! ff;
 	index_OK_O := Index(OK, O);
-	//require N gt 0 and GCD(index_OK_O, N) eq 1: "N must be a positive integer coprime with the conductor of O";
-	//N is coprime with the conductor ff iff N is coprime with ind=[OK:O]. 
-	//Pf: ff meet Z = exp(OK/O)=e and e|ind and ind|e^k for some k.
-	Js := IdealsUpTo(N, OK); //IdealsUpTo works only for maximal orders.
+	assert N gt 0 and GCD(index_OK_O, N) eq 1;
+	Js := IdealsUpTo(N, OK);
+	ff:=OK !! Conductor(O);
+	assert forall{J : J in Js | J+ff eq 1*OK}; //I am not sure how the function IdealsUpTo is written
 	result := [];
+	// Js are ordered by norm, and we only care about the ones with Norm = N * norm_I
 	for J in Reverse(Js) do
 		if Norm(J) eq N then
-			assert J + ffOK eq 1*OK; //J should be coprime with the conductor. I added this assert because I couldn't check the code of IdealsUpTo
-			K := (O meet J) * I; // OK/J=O/(J meet O)=I/K, where the second isomorphism holds because I is invertible in O (no need I to be coprime with ff).
-			assert K subset I;
+			K := (O meet J) * I; // OK/J=O/(J meet O)=I/K, where the second isomorphism holds because (J meet O) is invertible in O, since it is coprime with ff.
 			Append(~result, K);
 		else
 			break; //the other ideals in Js will have norm < N.
 		end if;
 	end for;
-	return [J/d : J in result]; //we reintroduce the denominator d.
-end function;
+	return result;
+end intrinsic;
 
-function IdealsOfIndexProduct(Is, N)
-// Given a list Is of ideals representing the ideal I as a product and positive integer N, returns all the ideals of index N.
-// N has to be coprime with the conductor.
-// If N>1 then I should be invertible (and hence all ideals in Is should be invertible). This we cannot check since it is implemented only for maximal orders.
-//
-// by Edgar Costa, modified by Stefano (since we cannot check all the required hyp I have changed into a function. The hyp on I (being invertible is checked in the intrinsic below)
+intrinsic IdealsOfIndex(I::RngOrdFracIdl, N::RngIntElt) -> SeqEnum[RngOrdFracIdl]
+{Given an ideal I in an order O in a number field and a positive integer N, with N coprime with the conductor, returns all the ideals J contained in I with index [I:J]=N.}
+//by Edgar Costa
+	vprintf Ordersext : "IdealsOfIndex Frac\n";
+	if N eq 1 then
+		return [I];
+	end if;
+	d := Denominator(I);
+	dI := Order(I)!!(d*I);
+	Js := IdealsOfIndex(dI, N);
+	return [J/d : J in Js];
+end intrinsic;
+
+intrinsic IdealsOfIndexProduct(Is::Tup, N::RngIntElt) -> SeqEnum[Tup]
+{Given a list Is of ideals representing the ideal I as a product and positive integer N, returns all the ideals of index N. N has to be coprime with the conductor.}
+//by Edgar Costa
 	vprintf Ordersext : "IdealsOfIndexProduct\n";
 	if #Is eq 1 then
 		return [<elt> : elt in IdealsOfIndex(Is[1], N)];
@@ -1037,20 +1039,17 @@ function IdealsOfIndexProduct(Is, N)
 		end if;
 	end for;
 	return result;
-end function;
+end intrinsic;
 
 intrinsic IdealsOfIndex(I::AlgAssVOrdIdl[RngOrd], N::RngIntElt : Al := "Default") -> SeqEnum[AlgAssVOrdIdl]
-{Given an O-ideal I in O and integer N returns all the subideals of index N
- The function is very fast if N=1 or, N is coprime to the conductor of O and I is invertible in O. If this conditions are not satisfied a slow algorithm is used which doesn't require additional hypothesis.
+{Given an O-ideal I in O and integer N returns all the subideals J of I with index [I:J]=N.
+ The function is very fast if N is coprime to the conductor of O. If this conditions are not satisfied a slow algorithm is used which doesn't require additional hypothesis.
  One can force the slow-naive by setting the vararg Al:="Naive".}
-//by Stefano Marseglia and Edgar Costa
+//by Edgar Costa
 	if N eq 1 then
 		return [I];
 	end if;
 	if Al eq "Naive" then
-		test := false;
-	elif not IsWeakEquivalent(I,1*Order(I)) //I is not invertible
-	then
 		test := false;
 	else
 		test, dec := IsProductOfIdeals(I);
@@ -1077,13 +1076,15 @@ intrinsic IdealsOfIndex(I::AlgAssVOrdIdl[RngOrd], N::RngIntElt : Al := "Default"
 				L := A`NumberFields[i];
 				gen_inA := gen_inA cat [L[2](y) : y in Basis(J[i], L[1])];
 			end for;
-			Append(~result, ideal<Order(I) | gen_inA>);
+			JA:= ideal<Order(I) | gen_inA>;
+			assert Index(I,JA) eq N;
+			Append(~result,JA);
 		end for;
 		return result;
 	else
 		result := [];
 		vprintf Ordersext : "Naive version!!\n";
-		// this is extremely NAIVE, but it always works.
+		// this is extremely NAIVE!!!
 		S := MultiplicatorRing(I);
 		zbasis := ZBasis(I);
 		r := #zbasis;
