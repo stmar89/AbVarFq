@@ -89,9 +89,10 @@ intrinsic IsPrincPolarized(I::AlgAssVOrdIdl , phi::SeqEnum[Map])->BoolElt, SeqEn
 	end if;
 end intrinsic;
 
-intrinsic IsogeniesMany(IS::SeqEnum[AlgAssVOrdIdl], J::AlgAssVOrdIdl, N::RngIntElt) -> BoolElt, SeqEnum[AlgAssElt]
-{returns if the abelian variety has an isogeny of degree N and if so it returns also all the non isomorphic isogenous varieties and the isomorphism}
-//by Edgar Costa
+intrinsic IsogeniesMany(IS::SeqEnum[AlgAssVOrdIdl], J::AlgAssVOrdIdl, N::RngIntElt) -> BoolElt, List
+{Given a sequence of source abelian varieties IS, a target abelian varity J and a positive integet N, it returns for each I in IS if there exist an isogeny I->J of degree N. 
+ For each I in IS, if there exists and isogeny I->J, it is also returned a list of pairs [*x,K*] where K=xI subset J (up to isomorphism).}
+//by Edgar Costa, modified by Stefano
 	vprintf AbelianVarieties : "IsogeniesMany\n";
 	isogenies_of_degree_N := [* [* *] : i in [1..#IS] *];
 	for K in IdealsOfIndex(J, N) do
@@ -105,12 +106,12 @@ intrinsic IsogeniesMany(IS::SeqEnum[AlgAssVOrdIdl], J::AlgAssVOrdIdl, N::RngIntE
 	return isogenies_of_degree_N;
 end intrinsic;
 
-intrinsic Isogenies(I::AlgAssVOrdIdl, J::AlgAssVOrdIdl, N::RngIntElt)->BoolElt, SeqEnum[AlgAssElt]
-{returns if the abelian variety has an isogeny of degree N and if so it returns also all the non isomorphic isogenous varieties and the isomorphism}
-//by Edgar Costa
-	require MultiplicatorRing(I) eq MultiplicatorRing(J):  "the MultiplicatorRing's are not the same"; //only horizontal isogenies?
-	potential_isogenies_of_degree_N := IsogeniesMany([I], J, N);
-	return #potential_isogenies_of_degree_N[1] ge 1, potential_isogenies_of_degree_N[1];
+intrinsic Isogenies(I::AlgAssVOrdIdl, J::AlgAssVOrdIdl, N::RngIntElt)->BoolElt, List
+{Given a source abelian variety I, a target abelian varity J and a positive integet N, it returns if there exist an isogeny I->J of degree N.
+ If so it is also returned a list of pairs [*x,K*] where K=xI subset J (up to isomorphism).}
+//by Edgar Costa, modified by Stefano
+	isogenies_of_degree_N := IsogeniesMany([I], J, N);
+	return #isogenies_of_degree_N[1] ge 1, isogenies_of_degree_N[1];
 end intrinsic;
 
 intrinsic IsPolarized(I0::AlgAssVOrdIdl, phi::SeqEnum[Map], N::RngIntElt)->BoolElt, SeqEnum[AlgAssElt]
