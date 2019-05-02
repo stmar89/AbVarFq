@@ -980,10 +980,30 @@ intrinsic 'subset'(I1 :: AlgAssVOrdIdl, I2 :: AlgAssVOrdIdl) -> BoolElt
 	return ((I1 meet I2) eq I1);
 end intrinsic;
 
+
+intrinsic IdealsOfIndex(O::RngOrd, N::RngIntElt) -> SeqEnum[RngOrdIdl]
+{Given an Order, retuns all the ideals of index N in that order}
+  vprintf Ordersext : "IdealsOfIndex RngOrd Int\n";
+  if N eq 1 then
+		return [O];
+	end if;
+  Js := IdealsUpTo(N, O);
+	result := [];
+	// Js are ordered by norm, and we only care about the ones with Norm = N * norm_I
+  for J in Reverse(Js) do
+		if Norm(J) eq N then
+			Append(~result, J);
+    else
+      break;  //the other ideals in Js will have norm < N.
+    end if;
+  end for;
+  return result;
+end intrinsic;
+
 intrinsic IdealsOfIndex(I::RngOrdIdl, N::RngIntElt) -> SeqEnum[RngOrdIdl]
 {Given an ideal I in an order O in a number field and a positive integer N, with N coprime with the conductor, returns all the ideals J contained in I with index [I:J]=N.}
 //by Edgar Costa
-vprintf Ordersext : "IdealsOfIndex Int\n";
+vprintf Ordersext : "IdealsOfIndex RngOrdIdl\n";
 	if N eq 1 then
 		return [I];
 	end if;
@@ -991,18 +1011,13 @@ vprintf Ordersext : "IdealsOfIndex Int\n";
 	OK := MaximalOrder(NumberField(O));
 	index_OK_O := Index(OK, O);
 	assert N gt 0 and GCD(index_OK_O, N) eq 1;
-	Js := IdealsUpTo(N, OK);
+	Js := IdealsOfIndex(OK, N);
 	ff:=OK !! Conductor(O);
-	assert forall{J : J in Js | J+ff eq 1*OK}; //I am not sure how the function IdealsUpTo is written
-	result := [];
-	// Js are ordered by norm, and we only care about the ones with Norm = N * norm_I
-	for J in Reverse(Js) do
-		if Norm(J) eq N then
-			K := (O meet J) * I; // OK/J=O/(J meet O)=I/K, where the second isomorphism holds because (J meet O) is invertible in O, since it is coprime with ff.
-			Append(~result, K);
-		else
-			break; //the other ideals in Js will have norm < N.
-		end if;
+	assert forall{J : J in Js | J+ff eq 1*OK};
+  result := [];
+	for J in Js do
+    K := (O meet J) * I; // OK/J=O/(J meet O)=I/K, where the second isomorphism holds because (J meet O) is invertible in O, since it is coprime with ff.
+    Append(~result, K);
 	end for;
 	return result;
 end intrinsic;
