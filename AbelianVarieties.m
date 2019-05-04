@@ -189,7 +189,7 @@ intrinsic IsWeil(f::RngUPolElt : Precision:=30) -> BoolElt,RngIntElt
 	if not IsPrimePower(q) then
 		return false,_;
 	else
-		if forall{r : r in roots | Abs(r[1]*ComplexConjugate(r[1]) - q) lt 10^(2-Precision)} then
+		if forall{r : r in roots | Abs(r[1]*ComplexConjugate(r[1]) - q) lt 10^(-(Precision/2))} then
 			return true,q;
 		else 
 			return false,_;
