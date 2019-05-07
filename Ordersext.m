@@ -105,6 +105,7 @@ declare attributes AlgAss:NumberFields;
 declare attributes AlgAss:isFiniteEtale;
 declare attributes AlgAss:CMType;
 declare attributes AlgAssVOrd:OverOrders;
+declare attributes AlgAssVOrd:Index;
 
 intrinsic PrimesAbove(I::AlgAssVOrdIdl) -> SeqEnum[AlgAssVOrdIdl]
 {given an integral S-ideal, returns the sequence of maximal ideals P of S above I}
@@ -377,13 +378,22 @@ intrinsic ProdEqOrders(A::AlgAss)->AlgAssVOrd
 	return Order(gen_inA);
 end intrinsic;
 
-intrinsic Index(S::AlgAssVOrd, T::AlgAssVOrd) -> RngIntElt
+intrinsic Index(T::AlgAssVOrd) -> RngIntElt
+{given an order T computes its index with respect to the basis of the algebra of T as a free Z-module}
+  if not assigned T`Index then
+    matT:=Matrix(ZBasis(T));
+    T`Index := Abs(Integers() ! (Determinant(matT)));
+  end if;
+  return T`Index;
+end intrinsic;
+
+intrinsic Index(S::AlgAssVOrd, T::AlgAssVOrd) -> Any
 {given two orders T \subset S, returns [S:T] = #S/T }
-  // TODO return Index(T)/Index(S) ?
-	require T subset S :"the first argument must be a subset of the second";
-	matS:=Matrix(ZBasis(S));
-	matT:=Matrix(ZBasis(T));
-	return Abs( Integers() ! Determinant(matT*matS^-1));
+  elt := Index(T)/Index(S);
+  if IsCoercible(Integers(), elt) then
+    elt := Integers() ! elt;
+  end if;
+  return elt;
 end intrinsic;
 
 intrinsic Index(J::AlgAssVOrdIdl, I::AlgAssVOrdIdl) -> FldRatElt
@@ -1007,14 +1017,15 @@ end intrinsic;
 intrinsic 'subset'(O1 :: AlgAssVOrd, O2 :: AlgAssVOrd) -> BoolElt
 {Checks if the first argument is inside the second.}
 	require Algebra(O1) cmpeq Algebra(O2) : "The orders must be in the same algebra.";
-	assert (O1+O2 eq O2) eq (O1 meet O2 eq O1);
-	return ((O1 meet O2) eq O1);
+  mat := Matrix(Coordinates(ZBasis(O1), ZBasis(O2)));
+  return &and[IsCoercible(Integers(), elt) : elt in Eltseq(mat)];
 end intrinsic;
 
 intrinsic 'subset'(I1 :: AlgAssVOrdIdl, I2 :: AlgAssVOrdIdl) -> BoolElt
 {Checks if the first argument is inside the second. The ideals need to be fractional}
 	require Order(I1) eq Order(I2) : "The ideals must be in the same order.";
-	return ((I1 meet I2) eq I1);
+  mat := Matrix(Coordinates(ZBasis(I1), ZBasis(I2)));
+  return &and[IsCoercible(Integers(), elt) : elt in Eltseq(mat)];
 end intrinsic;
 
 
