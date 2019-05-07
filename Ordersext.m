@@ -23,7 +23,7 @@ intrinsic IsZeroDivisor2(x::AlgAssElt) -> BoolElt
 intrinsic Random(I::AlgAssVOrdIdl) -> AlgAssElt
 intrinsic CoprimeRepresentative(I::AlgAssVOrdIdl,J::AlgAssVOrdIdl) -> AlgAssElt
 intrinsic ChineseRemainderTheorem(I::AlgAssVOrdIdl,J::AlgAssVOrdIdl,a::AlgAssElt,b::AlgAssElt)-> AlgAssElt
-intrinsic ResidueRing(S::AlgAssVOrd,I::AlgAssVOrdIdl) -> GpAb , Map //WORK IN PROGRESS
+intrinsic ResidueRing(S::AlgAssVOrd,I::AlgAssVOrdIdl) -> GrpAb , Map //WORK IN PROGRESS
 intrinsic 'meet'(I::AlgAssVOrdIdl, S::AlgAssVOrd) -> AlgAssVOrdIdl
 intrinsic 'meet'(S::AlgAssVOrd,I::AlgAssVOrdIdl) -> AlgAssVOrdIdl
 intrinsic IsCoprime(I::AlgAssVOrdIdl,J::AlgAssVOrdIdl) -> BoolElt
@@ -260,7 +260,7 @@ intrinsic ChineseRemainderTheorem(I::AlgAssVOrdIdl,J::AlgAssVOrdIdl,a::AlgAssElt
 	return e;
 end intrinsic;
 
-intrinsic ResidueRing(S::AlgAssVOrd,I::AlgAssVOrdIdl) -> GpAb , Map
+intrinsic ResidueRing(S::AlgAssVOrd,I::AlgAssVOrdIdl) -> GrpAb , Map
 {given an integral ideal I of S, returns the abelian group S/I and the epimorphism pi:S -> S/I (with inverse map). Important: the domain of pi is the Algebra of S, since the elements of S are usually expressed al elements of A. For eg Parent(Random(S)) = Algebra(S)}
 	require IsFiniteEtale(Algebra(I)): "the algebra of definition must be finite and etale over Q";
 	require Order(I) eq S and IsIntegral(I): "I must be an integral ideal os S";
@@ -1027,11 +1027,11 @@ intrinsic IdealsOfIndex(O::RngOrd, N::RngIntElt) -> SeqEnum[RngOrdIdl]
 	result := [];
 	// Js are ordered by norm, and we only care about the ones with Norm = N * norm_I
   for J in Reverse(Js) do
-		if Norm(J) eq N then
-			Append(~result, J);
-    else
-      break;  //the other ideals in Js will have norm < N.
-    end if;
+	if Norm(J) eq N then
+		Append(~result, J);
+    	else
+      		break;  //the other ideals in Js will have norm < N.
+    	end if;
   end for;
   return result;
 end intrinsic;
@@ -1050,10 +1050,10 @@ vprintf Ordersext : "IdealsOfIndex RngOrdIdl\n";
 	Js := IdealsOfIndex(OK, N);
 	ff:=OK !! Conductor(O);
 	assert forall{J : J in Js | J+ff eq 1*OK};
-  result := [];
+  	result := [];
 	for J in Js do
-    K := (O meet J) * I; // OK/J=O/(J meet O)=I/K, where the second isomorphism holds because (J meet O) is invertible in O, since it is coprime with ff.
-    Append(~result, K);
+    		K := (O meet J) * I; // OK/J=O/(J meet O)=I/K, where the second isomorphism holds because (J meet O) is invertible in O, since it is coprime with ff.
+    		Append(~result, K);
 	end for;
 	return result;
 end intrinsic;
