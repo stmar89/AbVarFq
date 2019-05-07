@@ -337,7 +337,7 @@ assert d*I subset S;
 end intrinsic;
 
 intrinsic 'eq'(I::AlgAssVOrdIdl,S::AlgAssVOrd)->BoolElt
-{return if I eq S. I needs to be an indeal of S}
+{return if I eq S. I needs to be an ideal of S}
 	if I eq ideal<S|One(S)> then
 		assert Index(S,I) eq 1;
 		return true;
@@ -379,6 +379,7 @@ end intrinsic;
 
 intrinsic Index(S::AlgAssVOrd, T::AlgAssVOrd) -> RngIntElt
 {given two orders T \subset S, returns [S:T] = #S/T }
+  // TODO return Index(T)/Index(S) ?
 	require T subset S :"the first argument must be a subset of the second";
 	matS:=Matrix(ZBasis(S));
 	matT:=Matrix(ZBasis(T));
@@ -434,7 +435,7 @@ intrinsic FindOverOrders(E::AlgAssVOrd)->SeqEnum
 		require IsFiniteEtale(A): "the algebra of definition must be finite and etale over Q";
 		if assigned A`MaximalOrder then
 			O:=A`MaximalOrder;
-		else 
+    else
 			O:=MaximalOrder(A);
 			A`MaximalOrder:=O;
 		end if;
