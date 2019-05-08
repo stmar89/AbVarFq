@@ -23,7 +23,7 @@ intrinsic IsZeroDivisor2(x::AlgAssElt) -> BoolElt
 intrinsic Random(I::AlgAssVOrdIdl) -> AlgAssElt
 intrinsic CoprimeRepresentative(I::AlgAssVOrdIdl,J::AlgAssVOrdIdl) -> AlgAssElt
 intrinsic ChineseRemainderTheorem(I::AlgAssVOrdIdl,J::AlgAssVOrdIdl,a::AlgAssElt,b::AlgAssElt)-> AlgAssElt
-intrinsic ResidueRing(S::AlgAssVOrd,I::AlgAssVOrdIdl) -> GpAb , Map //WORK IN PROGRESS
+intrinsic ResidueRing(S::AlgAssVOrd,I::AlgAssVOrdIdl) -> GrpAb , Map //WORK IN PROGRESS
 intrinsic 'meet'(I::AlgAssVOrdIdl, S::AlgAssVOrd) -> AlgAssVOrdIdl
 intrinsic 'meet'(S::AlgAssVOrd,I::AlgAssVOrdIdl) -> AlgAssVOrdIdl
 intrinsic IsCoprime(I::AlgAssVOrdIdl,J::AlgAssVOrdIdl) -> BoolElt
@@ -105,6 +105,7 @@ declare attributes AlgAss:NumberFields;
 declare attributes AlgAss:isFiniteEtale;
 declare attributes AlgAss:CMType;
 declare attributes AlgAssVOrd:OverOrders;
+declare attributes AlgAssVOrd:Index;
 
 intrinsic PrimesAbove(I::AlgAssVOrdIdl) -> SeqEnum[AlgAssVOrdIdl]
 {given an integral S-ideal, returns the sequence of maximal ideals P of S above I}
@@ -260,7 +261,7 @@ intrinsic ChineseRemainderTheorem(I::AlgAssVOrdIdl,J::AlgAssVOrdIdl,a::AlgAssElt
 	return e;
 end intrinsic;
 
-intrinsic ResidueRing(S::AlgAssVOrd,I::AlgAssVOrdIdl) -> GpAb , Map
+intrinsic ResidueRing(S::AlgAssVOrd,I::AlgAssVOrdIdl) -> GrpAb , Map
 {given an integral ideal I of S, returns the abelian group S/I and the epimorphism pi:S -> S/I (with inverse map). Important: the domain of pi is the Algebra of S, since the elements of S are usually expressed al elements of A. For eg Parent(Random(S)) = Algebra(S)}
 	require IsFiniteEtale(Algebra(I)): "the algebra of definition must be finite and etale over Q";
 	require Order(I) eq S and IsIntegral(I): "I must be an integral ideal os S";
@@ -337,7 +338,7 @@ assert d*I subset S;
 end intrinsic;
 
 intrinsic 'eq'(I::AlgAssVOrdIdl,S::AlgAssVOrd)->BoolElt
-{return if I eq S. I needs to be an indeal of S}
+{return if I eq S. I needs to be an ideal of S}
 	if I eq ideal<S|One(S)> then
 		assert Index(S,I) eq 1;
 		return true;
@@ -377,12 +378,22 @@ intrinsic ProdEqOrders(A::AlgAss)->AlgAssVOrd
 	return Order(gen_inA);
 end intrinsic;
 
-intrinsic Index(S::AlgAssVOrd, T::AlgAssVOrd) -> RngIntElt
+intrinsic Index(T::AlgAssVOrd) -> FldRatElt
+{given an order T computes its index with respect to the basis of the algebra of T as a free Z-module}
+  if not assigned T`Index then
+    matT:=Matrix(ZBasis(T));
+    T`Index := Abs(Rationals() ! Determinant(matT));
+  end if;
+  return T`Index;
+end intrinsic;
+
+intrinsic Index(S::AlgAssVOrd, T::AlgAssVOrd) -> Any
 {given two orders T \subset S, returns [S:T] = #S/T }
-	require T subset S :"the first argument must be a subset of the second";
-	matS:=Matrix(ZBasis(S));
-	matT:=Matrix(ZBasis(T));
-	return Abs( Integers() ! Determinant(matT*matS^-1));
+  elt := Index(T)/Index(S);
+  if IsCoercible(Integers(), elt) then
+    elt := Integers() ! elt;
+  end if;
+  return elt;
 end intrinsic;
 
 intrinsic Index(J::AlgAssVOrdIdl, I::AlgAssVOrdIdl) -> FldRatElt
@@ -435,7 +446,7 @@ intrinsic FindOverOrders(E::AlgAssVOrd)->SeqEnum
 		require IsFiniteEtale(A): "the algebra of definition must be finite and etale over Q";
 		if assigned A`MaximalOrder then
 			O:=A`MaximalOrder;
-		else 
+    else
 			O:=MaximalOrder(A);
 			A`MaximalOrder:=O;
 		end if;
@@ -1006,14 +1017,15 @@ end intrinsic;
 intrinsic 'subset'(O1 :: AlgAssVOrd, O2 :: AlgAssVOrd) -> BoolElt
 {Checks if the first argument is inside the second.}
 	require Algebra(O1) cmpeq Algebra(O2) : "The orders must be in the same algebra.";
-	assert (O1+O2 eq O2) eq (O1 meet O2 eq O1);
-	return ((O1 meet O2) eq O1);
+  mat := Matrix(Coordinates(ZBasis(O1), ZBasis(O2)));
+  return &and[IsCoercible(Integers(), elt) : elt in Eltseq(mat)];
 end intrinsic;
 
 intrinsic 'subset'(I1 :: AlgAssVOrdIdl, I2 :: AlgAssVOrdIdl) -> BoolElt
 {Checks if the first argument is inside the second. The ideals need to be fractional}
 	require Order(I1) eq Order(I2) : "The ideals must be in the same order.";
-	return ((I1 meet I2) eq I1);
+  mat := Matrix(Coordinates(ZBasis(I1), ZBasis(I2)));
+  return &and[IsCoercible(Integers(), elt) : elt in Eltseq(mat)];
 end intrinsic;
 
 
@@ -1027,11 +1039,11 @@ intrinsic IdealsOfIndex(O::RngOrd, N::RngIntElt) -> SeqEnum[RngOrdIdl]
 	result := [];
 	// Js are ordered by norm, and we only care about the ones with Norm = N * norm_I
   for J in Reverse(Js) do
-		if Norm(J) eq N then
-			Append(~result, J);
-    else
-      break;  //the other ideals in Js will have norm < N.
-    end if;
+	if Norm(J) eq N then
+		Append(~result, J);
+    	else
+      		break;  //the other ideals in Js will have norm < N.
+    	end if;
   end for;
   return result;
 end intrinsic;
@@ -1050,10 +1062,10 @@ vprintf Ordersext : "IdealsOfIndex RngOrdIdl\n";
 	Js := IdealsOfIndex(OK, N);
 	ff:=OK !! Conductor(O);
 	assert forall{J : J in Js | J+ff eq 1*OK};
-  result := [];
+  	result := [];
 	for J in Js do
-    K := (O meet J) * I; // OK/J=O/(J meet O)=I/K, where the second isomorphism holds because (J meet O) is invertible in O, since it is coprime with ff.
-    Append(~result, K);
+    		K := (O meet J) * I; // OK/J=O/(J meet O)=I/K, where the second isomorphism holds because (J meet O) is invertible in O, since it is coprime with ff.
+    		Append(~result, K);
 	end for;
 	return result;
 end intrinsic;
