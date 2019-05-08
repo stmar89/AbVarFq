@@ -1,7 +1,5 @@
 
 /*
- * by Taylor Dupuy
- *
 THIS CODE USES STEFANO MARSEGLIA'S LIBRARY TO GENERATE ISOGENY GRAPHS OF CURVES. 
 TO RUN IT, OPEN A MAGMA TERMINAL AND EXECUTE
     load "C:/Users/tdupuy/Dropbox/computing/AbVarFq/graph_example.m"
@@ -23,7 +21,7 @@ IF YOU WANT TO SEE THESE EMAIL ME.
 TAYLOR DUPUY 02/02/2019
 
 /*
-//
+
 
 
 AttachSpec("C:/Users/tdupuy/Dropbox/computing/AbVarFq/packages.spec");
