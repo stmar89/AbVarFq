@@ -378,11 +378,11 @@ intrinsic ProdEqOrders(A::AlgAss)->AlgAssVOrd
 	return Order(gen_inA);
 end intrinsic;
 
-intrinsic Index(T::AlgAssVOrd) -> RngIntElt
+intrinsic Index(T::AlgAssVOrd) -> FldRatElt
 {given an order T computes its index with respect to the basis of the algebra of T as a free Z-module}
   if not assigned T`Index then
     matT:=Matrix(ZBasis(T));
-    T`Index := Abs(Integers() ! (Determinant(matT)));
+    T`Index := Abs(Rationals() ! Determinant(matT));
   end if;
   return T`Index;
 end intrinsic;
