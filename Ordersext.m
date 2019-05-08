@@ -101,11 +101,27 @@ RunTests:=procedure();
 
 RANF_protected:=RationalsAsNumberField();
 
-declare attributes AlgAss:NumberFields;
-declare attributes AlgAss:isFiniteEtale;
-declare attributes AlgAss:CMType;
-declare attributes AlgAssVOrd:OverOrders;
-declare attributes AlgAssVOrd:Index;
+declare attributes AlgAss : NumberFields;
+declare attributes AlgAss : isFiniteEtale;
+declare attributes AlgAss : CMType;
+declare attributes AlgAssVOrd : OverOrders;
+declare attributes AlgAssVOrd : OneIdeal;
+declare attributes AlgAssVOrd : Index;
+//alternative to declare attributes AlgAssVOrdIdl:Index;
+AlgAssVOrdIdlData2 := recformat<
+  // magma internal, see orders-jv.m
+  Jprimes:List, // list of tuples <JJ,b,n> containing output of Jprime
+  Index:FldRatElt // to store the index
+  >;
+
+
+intrinsic OneIdeal(S::AlgAssVOrd) -> AlgAssVOrdIdl
+{given an S returns ideal<S|One(S)> which will be cached}
+  if not assigned S`OneIdeal then
+    S`OneIdeal := ideal<S | One(S)>;
+  end if;
+  return S`OneIdeal;
+end intrinsic;
 
 intrinsic PrimesAbove(I::AlgAssVOrdIdl) -> SeqEnum[AlgAssVOrdIdl]
 {given an integral S-ideal, returns the sequence of maximal ideals P of S above I}
@@ -302,8 +318,7 @@ end intrinsic;
 intrinsic 'meet'(S::AlgAssVOrd,I::AlgAssVOrdIdl) -> AlgAssVOrdIdl
 {given an ideal I of S, return S cap I}
 	require Order(I) eq S: "the second argument must be an ideal of the first argument";
-	idS:=ideal<S|One(S)>;
-	output:=idS meet I;
+	output := OneIdeal(S) meet I;
 	return output;
 end intrinsic;
 
@@ -320,7 +335,7 @@ intrinsic IsIntegral(I::AlgAssVOrdIdl) -> BoolElt, RngIntElt
 {returns wheter the ideal I of S is integral, that is I \subseteq S, and a minimal integer d such that (d)*I \subseteq S.}
 	require IsFiniteEtale(Algebra(I)): "the algebra of definition must be finite and etale over Q";
 	S:=Order(I);
-	d:=Index(I,S meet I);
+	d:=Index(I, S meet I);
 assert Denominator(d) eq 1;
 assert d*I subset S;
 	d:=Integers() ! d;
@@ -329,7 +344,7 @@ assert d*I subset S;
 	else
 		for y in Divisors(d) do
 			if (y*I) subset S then
-				assert Denominator(Index(S,(y*I))) eq 1;
+				assert Denominator(Index(S, (y*I))) eq 1;
 				return false,y;
 				break y;
 			end if;
@@ -337,18 +352,16 @@ assert d*I subset S;
 	end if;
 end intrinsic;
 
-intrinsic 'eq'(I::AlgAssVOrdIdl,S::AlgAssVOrd)->BoolElt
+intrinsic 'eq'(I::AlgAssVOrdIdl, S::AlgAssVOrd) -> BoolElt
 {return if I eq S. I needs to be an ideal of S}
-	if I eq ideal<S|One(S)> then
-		assert Index(S,I) eq 1;
-		return true;
-	else
-		assert Index(S,I) ne 1;
+  if Index(S, I) eq 1 then
+	  return I eq OneIdeal(S);
+  else
 		return false;
 	end if;
 end intrinsic;
 
-intrinsic 'eq'(S::AlgAssVOrd,I::AlgAssVOrdIdl)->BoolElt
+intrinsic 'eq'(S::AlgAssVOrd,I::AlgAssVOrdIdl) -> BoolElt
 {return if I eq S. I needs to be an indeal of S}
 	return I eq S;
 end intrinsic;
@@ -356,15 +369,13 @@ end intrinsic;
 intrinsic 'subset'(S::AlgAssVOrd,I::AlgAssVOrdIdl) -> BoolElt
 {given an ideal I of S, return if S subseteq I}
 	require Order(I) eq S: "the second argument must be an ideal of the first argument";
-	idS:=ideal<S|One(S)>;
-	return idS subset I;
+	return OneIdeal(S) subset I;
 end intrinsic;
 
 intrinsic 'subset'(I::AlgAssVOrdIdl,S::AlgAssVOrd) -> BoolElt
 {given an ideal I of S, return if I subseteq S}
 	require Order(I) eq S: "the first argument must be an ideal of the second argument";
-	idS:=ideal<S|One(S)>;
-	return I subset idS;
+	return I subset OneIdeal(S);
 end intrinsic;
 
 intrinsic ProdEqOrders(A::AlgAss)->AlgAssVOrd
@@ -396,17 +407,33 @@ intrinsic Index(S::AlgAssVOrd, T::AlgAssVOrd) -> Any
   return elt;
 end intrinsic;
 
+
+intrinsic Index(T::AlgAssVOrdIdl) -> FldRatElt
+{given an ideal T computes its index with respect to the basis of the algebra of T as a free Z-module}
+  if not assigned T`PackageAttributes then
+    T`PackageAttributes := rec< AlgAssVOrdIdlData2 | >;
+  elif (not "Index" in Names(T`PackageAttributes)) and assigned T`PackageAttributes`Jprimes then
+    Jprimes := T`PackageAttributes`Jprimes;
+    T`PackageAttributes := rec< AlgAssVOrdIdlData2 | >;
+    T`PackageAttributes`Jprimes := Jprimes;
+  end if;
+  if not assigned T`PackageAttributes`Index then
+    matT := Matrix(ZBasis(T));
+    T`PackageAttributes`Index := Abs(Rationals() ! Determinant(matT));
+  end if;
+  return T`PackageAttributes`Index;
+end intrinsic;
+
 intrinsic Index(J::AlgAssVOrdIdl, I::AlgAssVOrdIdl) -> FldRatElt
 {given fractional ideals J and I defined over the same order returns [J:I] = [J:J cap I]/[I : J cap I]}
 	require Order(I) eq Order(J): "the ideals must be of the same order";
-	mat := Matrix(Coordinates(ZBasis(I), ZBasis(J)));
-	return Abs(Rationals() ! Determinant(mat));
+  return Index(I)/Index(J);
 end intrinsic;
 
 intrinsic Index(S::AlgAssVOrd, I::AlgAssVOrdIdl) -> FldRatElt
 {given and ideal I of an order S returns [S:I] = [S:S cap I]/[I : S cap I] }
 	require Order(I) eq S: "the ideal must be of the appropriate order";
-	return Index(ideal<S|One(S)>,I);
+	return Index(OneIdeal(S), I);
 end intrinsic;
 
 intrinsic Automorphisms(A::AlgAss) -> SeqEnum[Maps]
@@ -525,7 +552,7 @@ end function;
 intrinsic Factorization(I::AlgAssVOrdIdl) -> Tup
 {given a proper integral S-ideal I coprime with the conductor of S (hence invertible in S), returns its factorization into a product of primes of S}
 	S:=Order(I);
-	require IsIntegral(I) and I ne ideal<S|One(S)>: "the argument must be a proper integral ideal";
+	require IsIntegral(I) and I ne OneIdeal(S): "the argument must be a proper integral ideal";
 	if IsMaximal(S) then
 		return factorizationMaximalOrder(I);
 	else
@@ -552,7 +579,7 @@ intrinsic WKICM_bar(S::AlgAssVOrd) -> SeqEnum
 //TODO : prime per prime;
 	require IsFiniteEtale(Algebra(S)): "the algebra of definition must be finite and etale over Q";
 	if IsGorenstein(S) then
-		return [ideal<S|One(S)>];
+		return [OneIdeal(S)];
 	else
 		A:=Algebra(S);
 		degA:=Degree(A);
@@ -688,15 +715,13 @@ end intrinsic;
 intrinsic ColonIdeal(O::AlgAssVOrd,J::AlgAssVOrdIdl)->AlgAssVOrdIdl
 {computes the colon ideal (1*O:J) (as an O-ideal)}
 	require Order(J) eq O : "the ideals must be of the same order";
-	I:=ideal<O|One(O)>;
-	return ColonIdeal(I,J);
+	return ColonIdeal(OneIdeal(O), J);
 end intrinsic;
 
 intrinsic ColonIdeal(I::AlgAssVOrdIdl,O::AlgAssVOrd)->AlgAssVOrdIdl
 {computes the colon ideal (I:1*O) (as an O-ideal)}
 	require Order(I) eq O : "the ideals must be of the same order";
-	J:=ideal<O|One(O)>;
-	return ColonIdeal(I,J);
+	return ColonIdeal(I, OneIdeal(O));
 end intrinsic;
 
 intrinsic Inverse(I::AlgAssVOrdIdl) ->AlgAssVOrdIdl
@@ -730,7 +755,7 @@ intrinsic IsWeakEquivalent(I::AlgAssVOrdIdl,J::AlgAssVOrdIdl)->BoolElt
 		JS:=ideal<S|ZBasis(J)>;
 		CIJ:=ColonIdeal(IS,JS);
 		CJI:=ColonIdeal(JS,IS);
-		test:=ideal<S|One(S)> eq (CIJ*CJI); //note that this test does not depend on the order of definition of the ideals.
+		test := OneIdeal(S) eq (CIJ*CJI); //note that this test does not depend on the order of definition of the ideals.
 		return test;
 		end if;
 end intrinsic;
@@ -744,15 +769,13 @@ end intrinsic;
 intrinsic IsWeakEquivalent(O::AlgAssVOrd,J::AlgAssVOrdIdl)->BoolElt
 { checks if the second argument is weakly equivalent to the first argument }
 	require IsFiniteEtale(Algebra(O)): "the algebra of definition must be finite and etale over Q";
-	I:=ideal<O|One(O)>;
-	return IsWeakEquivalent(I,J);
+	return IsWeakEquivalent(OneIdeal(O), J);
 end intrinsic;
 
 intrinsic IsWeakEquivalent(J::AlgAssVOrdIdl,O::AlgAssVOrd)->BoolElt
 { checks if the second argument is weakly equivalent to the first argument }
 	require IsFiniteEtale(Algebra(O)): "the algebra of definition must be finite and etale over Q";
-	I:=ideal<O|One(O)>;
-	return IsWeakEquivalent(I,J);
+	return IsWeakEquivalent(OneIdeal(O), J);
 end intrinsic;
 
 intrinsic IsInvertible(I::AlgAssVOrdIdl) ->AlgAssVOrdIdl
@@ -877,7 +900,7 @@ intrinsic '^'(I::AlgAssVOrdIdl,n::RngIntElt) -> AlgAssVOrdIdl
 	power_positive:=function(I,n)
 		id:=I;
 		bin_exp:=IntegerToSequence(n,2);
-		squares_id:=[ideal<S|One(S)>];
+		squares_id:=[OneIdeal(S)];
 		for i in [1..#bin_exp] do
 			if bin_exp[i] eq 1 then
 				Append(~squares_id,id);
@@ -892,7 +915,7 @@ intrinsic '^'(I::AlgAssVOrdIdl,n::RngIntElt) -> AlgAssVOrdIdl
 	end function;
 
 	if n eq 0 then
-		return ideal<Order(I)|One(Order(I))>;
+		return OneIdeal(Order(I));
 	else
 		if n gt 0 then
 			return power_positive(I,n);
@@ -995,8 +1018,7 @@ end intrinsic;
 intrinsic TraceDualIdeal(O::AlgAssVOrd) -> AlgAssVOrdIdl
 { returns the trace dual ideal of an order in an associative algebra }
 	require IsFiniteEtale(Algebra(O)): "the algebra of definition must be finite and etale over Q";
-	I:=ideal<O|One(O)>;
-	return TraceDualIdeal(I);
+	return TraceDualIdeal(OneIdeal(O));
 end intrinsic;
 
 intrinsic IsFractionalIdl(I::AlgAssVOrdIdl) -> BoolElt
