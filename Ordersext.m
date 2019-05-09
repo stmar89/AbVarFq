@@ -183,16 +183,9 @@ intrinsic MinimalInteger(I::AlgAssVOrdIdl) -> RngIntElt
 {returns the smallest integer contained in the ideal I}
 	require IsFiniteEtale(Algebra(I)): "the algebra of definition must be finite and etale over Q";
 	require IsIntegral(I): "the ideal must be integral";
-	S:=Order(I);
-	ind:=Integers() ! Index(S,I);
-	divs:=Divisors(ind);
-	for i in [1..#divs-1] do
-		if divs[i] in I and not divs[i+1] in I then
-			return divs[i];
-		end if;
-	end for;
-	assert divs[#divs] in I;
-	return divs[#divs];
+	coord:=Coordinates([One(Algebra(I))],ZBasis(I))[1];
+	min:=LCM([ Denominator(c) : c in Eltseq(coord)]);
+	return min;
 end intrinsic;
 
 intrinsic ListToSequence(L::List)->SeqEnum
@@ -244,14 +237,15 @@ intrinsic ChineseRemainderTheorem(I::AlgAssVOrdIdl,J::AlgAssVOrdIdl,a::AlgAssElt
 	if pos ne 1 then
 		Zbasis_S[pos]:=temp;
 	end if;
-	assert Order(Zbasis_S) eq S;
+	//assert Order(Zbasis_S) eq S;
 	M:=Matrix(Zbasis_S);
-	A:=ChangeRing(Matrix(ZBasis(I))*M^-1,Integers());
-	B:=ChangeRing(Matrix(ZBasis(J))*M^-1,Integers());
+	Minv:=M^-1;
+	A:=ChangeRing(Matrix(ZBasis(I))*Minv,Integers());
+	B:=ChangeRing(Matrix(ZBasis(J))*Minv,Integers());
 	I_min:=MinimalInteger(I);
 	J_min:=MinimalInteger(J);
 	g,c1,d1:=XGCD(I_min,J_min);
-	assert I_min*One(K) in I and J_min*One(K) in J;
+	//assert I_min*One(K) in I and J_min*One(K) in J;
 	if g ne 1 then
 		C:=VerticalJoin(A,B);
 		H,U:=HermiteForm(C); //U*C = H;
@@ -328,9 +322,10 @@ intrinsic IsCoprime(I::AlgAssVOrdIdl,J::AlgAssVOrdIdl) -> BoolElt
 	S:=Order(J);
 	require Order(I) eq S: "the ideals must be over the same order";
 	require IsIntegral(I) and IsIntegral(J): "the ideals must be integral";
-	return I+J eq S;
+	return (One(S) in I+J);
 end intrinsic;
 
+/* I never use the second output, which is produced very inefficiently, so I removed
 intrinsic IsIntegral(I::AlgAssVOrdIdl) -> BoolElt, RngIntElt
 {returns wheter the ideal I of S is integral, that is I \subseteq S, and a minimal integer d such that (d)*I \subseteq S.}
 	require IsFiniteEtale(Algebra(I)): "the algebra of definition must be finite and etale over Q";
@@ -350,6 +345,13 @@ assert d*I subset S;
 			end if;
 		end for;
 	end if;
+end intrinsic;
+*/
+intrinsic IsIntegral(I::AlgAssVOrdIdl) -> BoolElt
+{returns wheter the ideal I of S is integral, that is I \subseteq S, and a minimal integer d such that (d)*I \subseteq S.}
+	require IsFiniteEtale(Algebra(I)): "the algebra of definition must be finite and etale over Q";
+	S:=Order(I);
+	return I subset S;
 end intrinsic;
 
 intrinsic 'eq'(I::AlgAssVOrdIdl, S::AlgAssVOrd) -> BoolElt
@@ -915,14 +917,14 @@ intrinsic '^'(I::AlgAssVOrdIdl,n::RngIntElt) -> AlgAssVOrdIdl
 	end function;
 
 	if n eq 0 then
-		return OneIdeal(Order(I));
+		return OneIdeal(S);
 	else
 		if n gt 0 then
 			return power_positive(I,n);
 		end if;
 		if n lt 0 then
 			require IsInvertible(I) :"the ideal must be invertible";
-			invI:=ColonIdeal(Order(I),I);
+			invI:=ColonIdeal(S,I);
 			return power_positive(invI,-n);
 		end if;
 	end if;
