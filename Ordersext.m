@@ -271,16 +271,16 @@ intrinsic ResidueRing(S::AlgAssVOrd,I::AlgAssVOrdIdl) -> GrpAb , Map
 	matS:=Transpose(Matrix(ZBasis(S)));
 	matP:=Transpose(Matrix(ZBasis(I)));
 	S_to_F:=function(x)
-	assert Parent(x) eq A;
-	assert x in S;
-	clmn_vec_x:=Transpose(Matrix(x));
-	x_inS:=matS^-1*clmn_vec_x; //column vector of wrt the ZBasis(S)
-	assert N eq #Eltseq(x_inS);
-	return (F ! Eltseq(x_inS)) ;
+		assert Parent(x) eq A;
+		assert x in S;
+		clmn_vec_x:=Transpose(Matrix(x));
+		x_inS:=matS^-1*clmn_vec_x; //column vector of wrt the ZBasis(S)
+		assert N eq #Eltseq(x_inS);
+		return (F ! Eltseq(x_inS)) ;
 	end function;
 	F_to_S:=function(y)
-	clmn_vec_y:=Transpose(Matrix(Vector(Eltseq(y))));
-	y_inA:=&+[ZBasis(S)[i]*Eltseq(clmn_vec_y)[i] : i in [1..N]];
+		clmn_vec_y:=Transpose(Matrix(Vector(Eltseq(y))));
+		y_inA:=&+[ZBasis(S)[i]*Eltseq(clmn_vec_y)[i] : i in [1..N]];
 	return y_inA;
 	end function;
 	StoF:=map< A -> F | x :-> S_to_F(x), y :-> F_to_S(y)>;
@@ -906,7 +906,7 @@ intrinsic '^'(I::AlgAssVOrdIdl,n::RngIntElt) -> AlgAssVOrdIdl
 end intrinsic;
 
 intrinsic IsProductOfOrders(O::AlgAssVOrd)->BoolElt, Tup
-{return if the argument is a product of orders in a product of number fields, and if so return also the sequence of these orders}
+{return if the argument is a product of orders in number fields, and if so return also the sequence of these orders}
 	A:=Algebra(O);
 	require IsFiniteEtale(A): "the algebra of definition must be finite and etale over Q";
 	idem:=OrthogonalIdempotents(A);
@@ -925,8 +925,33 @@ intrinsic IsProductOfOrders(O::AlgAssVOrd)->BoolElt, Tup
 	end if;
 end intrinsic;
 
+/*
+intrinsic IsDecomposable(O::AlgAssVOrd)->BoolElt, Tup
+{return if the argument is a product of orders in sub-algebras, and if so return also the sequence of these orders}
+	A:=Algebra(O);
+	require IsFiniteEtale(A): "the algebra of definition must be finite and etale over Q";
+	non_trivial_idem:=Exclude(Exclude(Idempotents(A),A!0),A!1);
+	non_trivial_idem_in_O:=[x : x in non_trivial_idem | x in O];
+	
+
+	
+	O_asProd:=<>;
+	if test then
+		for i in [1..#A`NumberFields] do
+			L:=A`NumberFields[i];
+			gen_L:=[(x*idem[i])@@L[2]: x in ZBasis(O)];
+			O_L:=Order(gen_L);
+			Append(~O_asProd,O_L);
+		end for;
+		return true, O_asProd;
+	else
+	return false,<>;
+	end if;
+end intrinsic;
+*/
+
 intrinsic IsProductOfIdeals(I::AlgAssVOrdIdl) -> BoolElt, Tup
-{return if the argument is a product of ideals in a product of number fields, and if so return also the sequence of these ideals (in the appropriate orders)}
+{return if the argument is a product of ideals in number fields, and if so return also the sequence of these ideals (in the appropriate orders)}
 	O:=MultiplicatorRing(I);
 	A:=Algebra(O);
 	require IsFiniteEtale(A): "the algebra of definition must be finite and etale over Q";
@@ -1174,6 +1199,13 @@ intrinsic IdealsOfIndex(I::AlgAssVOrdIdl[RngOrd], N::RngIntElt : Al := "Default"
 	end if;
 end intrinsic;
 
+intrinsic Idempotents(A::AlgAss)->SeqEnum
+{returns a sequence containing the ideampotents of the algebra, zero included}
+	ort_idem:=OrthogonalIdempotents(A);
+	cc:=CartesianProduct([[A!0,oi] : oi in ort_idem]);
+	idem:=[&+([cj : cj in c]) : c in cc];
+	return idem;
+end intrinsic;
 
 //////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////
