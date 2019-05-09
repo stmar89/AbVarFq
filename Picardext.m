@@ -92,8 +92,9 @@ residue_class_ring_unit_subgroup_generators:=function(S, F)
 	primes:=[<x, Maximum([y[2]: y in l2 |y[1] eq x])>:x in primes];
 	elts:={};
 	for a in primes do
+		a1a2:=a[1]^a[2];
 		idp:=a[1];
-		rest:=ideal<S|One(S)>;
+		rest:=OneIdeal(S);
 		for b in primes do
 			if b[1] ne idp then
 				rest:=rest*(b[1]^b[2]);
@@ -101,17 +102,18 @@ residue_class_ring_unit_subgroup_generators:=function(S, F)
 		end for;
 		//Compute primitive elt for residue field
 		c:=residue_class_field_primitive_element(idp);
-		c:=ChineseRemainderTheorem(a[1]^a[2],rest,c,One(A));
+		c:=ChineseRemainderTheorem(a1a2,rest,c,One(A));
 		Include(~elts,c);
 		b:=1;
 		while b lt a[2] do
 			M:=ZBasis(idp);
 			M:=[1+x:x in M];
 			for elt in M do
-				c:=ChineseRemainderTheorem((a[1]^a[2]),rest,elt,One(A));
+				c:=ChineseRemainderTheorem((a1a2),rest,elt,One(A));
 				Include(~elts,c);
 			end for;
-			b:=b*2;idp:=idp^2;
+			b:=b*2;
+			idp:=idp^2;
 		end while;
 	end for;
 	assert forall{x : x in elts | x in S and not x in F};
@@ -140,17 +142,17 @@ PicardGroup_prod_internal:=function(O)
 
 	if #G eq 1 then
 		from_G_to_ideals:=function(x)
-			return ideal<O|One(O)>;
+			return OneIdeal(O);
 		end function;
 		from_ideals_to_G:=function(y)
 			assert IsInvertible(y);
 			return Zero(G);
 		end function;
-		codomain:=Parent(ideal<O|One(O)>);
+		codomain:=Parent(OneIdeal(O));
 		return G,map<G -> codomain | x:-> from_G_to_ideals(x) , y:->from_ideals_to_G(y) >;
 	else
 		zerosinO:=[ ideal<O|[ T[4](y) : y in Basis(T[2](Zero(T[1])),T[3])]> : T in groups_maps_fields_maps];
-		assert &+zerosinO eq ideal<O|One(O)>;
+		assert &+zerosinO eq OneIdeal(O);
 		geninO:=[]; //this will contain the the ideals of O corresponding to the generators of G
 		for i in [1..#Generators(G)] do
 			gen:=G.i;
@@ -215,7 +217,7 @@ intrinsic PicardGroup(S::AlgAssVOrd) -> GrpAb, Map
 		GO:=FreeAbelianGroup(0);
 		gens_GO_in_S:=[];
 		mGO_to_S:=function(rep)
-			idS:=ideal<S|One(A)>;
+			idS:=OneIdeal(S);
 			return idS;
 		end function;
 	end if;
@@ -248,7 +250,7 @@ intrinsic PicardGroup(S::AlgAssVOrd) -> GrpAb, Map
 			Append(~generators_ideals,gen_inS);
 		end for;
 	else
-		return P,map<P->[ideal<S|One(S)>] | rep:->ideal<S|One(S)>>;
+		return P,map<P->[OneIdeal(S)] | rep:->OneIdeal(S) >;
 	end if;
 
 	representative_picard_group := function(rep)

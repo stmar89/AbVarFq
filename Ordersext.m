@@ -23,7 +23,7 @@ intrinsic IsZeroDivisor2(x::AlgAssElt) -> BoolElt
 intrinsic Random(I::AlgAssVOrdIdl) -> AlgAssElt
 intrinsic CoprimeRepresentative(I::AlgAssVOrdIdl,J::AlgAssVOrdIdl) -> AlgAssElt
 intrinsic ChineseRemainderTheorem(I::AlgAssVOrdIdl,J::AlgAssVOrdIdl,a::AlgAssElt,b::AlgAssElt)-> AlgAssElt
-intrinsic ResidueRing(S::AlgAssVOrd,I::AlgAssVOrdIdl) -> GpAb , Map //WORK IN PROGRESS
+intrinsic ResidueRing(S::AlgAssVOrd,I::AlgAssVOrdIdl) -> GrpAb , Map //WORK IN PROGRESS
 intrinsic 'meet'(I::AlgAssVOrdIdl, S::AlgAssVOrd) -> AlgAssVOrdIdl
 intrinsic 'meet'(S::AlgAssVOrd,I::AlgAssVOrdIdl) -> AlgAssVOrdIdl
 intrinsic IsCoprime(I::AlgAssVOrdIdl,J::AlgAssVOrdIdl) -> BoolElt
@@ -182,16 +182,9 @@ intrinsic MinimalInteger(I::AlgAssVOrdIdl) -> RngIntElt
 {returns the smallest integer contained in the ideal I}
 	require IsFiniteEtale(Algebra(I)): "the algebra of definition must be finite and etale over Q";
 	require IsIntegral(I): "the ideal must be integral";
-	S:=Order(I);
-	ind:=Integers() ! Index(S,I);
-	divs:=Divisors(ind);
-	for i in [1..#divs-1] do
-		if divs[i] in I and not divs[i+1] in I then
-			return divs[i];
-		end if;
-	end for;
-	assert divs[#divs] in I;
-	return divs[#divs];
+	coord:=Coordinates([One(Algebra(I))],ZBasis(I))[1];
+	min:=LCM([ Denominator(c) : c in Eltseq(coord)]);
+	return min;
 end intrinsic;
 
 intrinsic ListToSequence(L::List)->SeqEnum
@@ -243,14 +236,15 @@ intrinsic ChineseRemainderTheorem(I::AlgAssVOrdIdl,J::AlgAssVOrdIdl,a::AlgAssElt
 	if pos ne 1 then
 		Zbasis_S[pos]:=temp;
 	end if;
-	assert Order(Zbasis_S) eq S;
+	//assert Order(Zbasis_S) eq S;
 	M:=Matrix(Zbasis_S);
-	A:=ChangeRing(Matrix(ZBasis(I))*M^-1,Integers());
-	B:=ChangeRing(Matrix(ZBasis(J))*M^-1,Integers());
+	Minv:=M^-1;
+	A:=ChangeRing(Matrix(ZBasis(I))*Minv,Integers());
+	B:=ChangeRing(Matrix(ZBasis(J))*Minv,Integers());
 	I_min:=MinimalInteger(I);
 	J_min:=MinimalInteger(J);
 	g,c1,d1:=XGCD(I_min,J_min);
-	assert I_min*One(K) in I and J_min*One(K) in J;
+	//assert I_min*One(K) in I and J_min*One(K) in J;
 	if g ne 1 then
 		C:=VerticalJoin(A,B);
 		H,U:=HermiteForm(C); //U*C = H;
@@ -276,7 +270,7 @@ intrinsic ChineseRemainderTheorem(I::AlgAssVOrdIdl,J::AlgAssVOrdIdl,a::AlgAssElt
 	return e;
 end intrinsic;
 
-intrinsic ResidueRing(S::AlgAssVOrd,I::AlgAssVOrdIdl) -> GpAb , Map
+intrinsic ResidueRing(S::AlgAssVOrd,I::AlgAssVOrdIdl) -> GrpAb , Map
 {given an integral ideal I of S, returns the abelian group S/I and the epimorphism pi:S -> S/I (with inverse map). Important: the domain of pi is the Algebra of S, since the elements of S are usually expressed al elements of A. For eg Parent(Random(S)) = Algebra(S)}
 	require IsFiniteEtale(Algebra(I)): "the algebra of definition must be finite and etale over Q";
 	require Order(I) eq S and IsIntegral(I): "I must be an integral ideal os S";
@@ -286,16 +280,16 @@ intrinsic ResidueRing(S::AlgAssVOrd,I::AlgAssVOrdIdl) -> GpAb , Map
 	matS:=Transpose(Matrix(ZBasis(S)));
 	matP:=Transpose(Matrix(ZBasis(I)));
 	S_to_F:=function(x)
-	assert Parent(x) eq A;
-	assert x in S;
-	clmn_vec_x:=Transpose(Matrix(x));
-	x_inS:=matS^-1*clmn_vec_x; //column vector of wrt the ZBasis(S)
-	assert N eq #Eltseq(x_inS);
-	return (F ! Eltseq(x_inS)) ;
+		assert Parent(x) eq A;
+		assert x in S;
+		clmn_vec_x:=Transpose(Matrix(x));
+		x_inS:=matS^-1*clmn_vec_x; //column vector of wrt the ZBasis(S)
+		assert N eq #Eltseq(x_inS);
+		return (F ! Eltseq(x_inS)) ;
 	end function;
 	F_to_S:=function(y)
-	clmn_vec_y:=Transpose(Matrix(Vector(Eltseq(y))));
-	y_inA:=&+[ZBasis(S)[i]*Eltseq(clmn_vec_y)[i] : i in [1..N]];
+		clmn_vec_y:=Transpose(Matrix(Vector(Eltseq(y))));
+		y_inA:=&+[ZBasis(S)[i]*Eltseq(clmn_vec_y)[i] : i in [1..N]];
 	return y_inA;
 	end function;
 	StoF:=map< A -> F | x :-> S_to_F(x), y :-> F_to_S(y)>;
@@ -327,9 +321,10 @@ intrinsic IsCoprime(I::AlgAssVOrdIdl,J::AlgAssVOrdIdl) -> BoolElt
 	S:=Order(J);
 	require Order(I) eq S: "the ideals must be over the same order";
 	require IsIntegral(I) and IsIntegral(J): "the ideals must be integral";
-	return I+J eq S;
+	return (One(S) in I+J);
 end intrinsic;
 
+/* I never use the second output, which is produced very inefficiently, so I removed
 intrinsic IsIntegral(I::AlgAssVOrdIdl) -> BoolElt, RngIntElt
 {returns wheter the ideal I of S is integral, that is I \subseteq S, and a minimal integer d such that (d)*I \subseteq S.}
 	require IsFiniteEtale(Algebra(I)): "the algebra of definition must be finite and etale over Q";
@@ -349,6 +344,13 @@ assert d*I subset S;
 			end if;
 		end for;
 	end if;
+end intrinsic;
+*/
+intrinsic IsIntegral(I::AlgAssVOrdIdl) -> BoolElt
+{returns wheter the ideal I of S is integral, that is I \subseteq S, and a minimal integer d such that (d)*I \subseteq S.}
+	require IsFiniteEtale(Algebra(I)): "the algebra of definition must be finite and etale over Q";
+	S:=Order(I);
+	return I subset S;
 end intrinsic;
 
 intrinsic 'eq'(I::AlgAssVOrdIdl, S::AlgAssVOrd) -> BoolElt
@@ -851,7 +853,7 @@ intrinsic '^'(I::AlgAssVOrdIdl, n::RngIntElt) -> AlgAssVOrdIdl
 	end function;
 
 	if n eq 0 then
-		return OneIdeal(Order(I));
+		return OneIdeal(S);
   elif n eq 1 then
     return I;
   elif n eq 2 then
@@ -862,14 +864,14 @@ intrinsic '^'(I::AlgAssVOrdIdl, n::RngIntElt) -> AlgAssVOrdIdl
 		end if;
 		if n lt 0 then
 			require IsInvertible(I) :"the ideal must be invertible";
-			invI:=ColonIdeal(Order(I),I);
+			invI:=ColonIdeal(S,I);
 			return power_positive(invI,-n);
 		end if;
 	end if;
 end intrinsic;
 
 intrinsic IsProductOfOrders(O::AlgAssVOrd)->BoolElt, Tup
-{return if the argument is a product of orders in a product of number fields, and if so return also the sequence of these orders}
+{return if the argument is a product of orders in number fields, and if so return also the sequence of these orders}
 	A:=Algebra(O);
 	require IsFiniteEtale(A): "the algebra of definition must be finite and etale over Q";
 	idem:=OrthogonalIdempotents(A);
@@ -888,8 +890,33 @@ intrinsic IsProductOfOrders(O::AlgAssVOrd)->BoolElt, Tup
 	end if;
 end intrinsic;
 
+/*
+intrinsic IsDecomposable(O::AlgAssVOrd)->BoolElt, Tup
+{return if the argument is a product of orders in sub-algebras, and if so return also the sequence of these orders}
+	A:=Algebra(O);
+	require IsFiniteEtale(A): "the algebra of definition must be finite and etale over Q";
+	non_trivial_idem:=Exclude(Exclude(Idempotents(A),A!0),A!1);
+	non_trivial_idem_in_O:=[x : x in non_trivial_idem | x in O];
+	
+
+	
+	O_asProd:=<>;
+	if test then
+		for i in [1..#A`NumberFields] do
+			L:=A`NumberFields[i];
+			gen_L:=[(x*idem[i])@@L[2]: x in ZBasis(O)];
+			O_L:=Order(gen_L);
+			Append(~O_asProd,O_L);
+		end for;
+		return true, O_asProd;
+	else
+	return false,<>;
+	end if;
+end intrinsic;
+*/
+
 intrinsic IsProductOfIdeals(I::AlgAssVOrdIdl) -> BoolElt, Tup
-{return if the argument is a product of ideals in a product of number fields, and if so return also the sequence of these ideals (in the appropriate orders)}
+{return if the argument is a product of ideals in number fields, and if so return also the sequence of these ideals (in the appropriate orders)}
 	O:=MultiplicatorRing(I);
 	A:=Algebra(O);
 	require IsFiniteEtale(A): "the algebra of definition must be finite and etale over Q";
@@ -1007,11 +1034,11 @@ intrinsic IdealsOfIndex(O::RngOrd, N::RngIntElt) -> SeqEnum[RngOrdIdl]
 	result := [];
 	// Js are ordered by norm, and we only care about the ones with Norm = N * norm_I
   for J in Reverse(Js) do
-		if Norm(J) eq N then
-			Append(~result, J);
-    else
-      break;  //the other ideals in Js will have norm < N.
-    end if;
+	if Norm(J) eq N then
+		Append(~result, J);
+    	else
+      		break;  //the other ideals in Js will have norm < N.
+    	end if;
   end for;
   return result;
 end intrinsic;
@@ -1030,10 +1057,10 @@ vprintf Ordersext : "IdealsOfIndex RngOrdIdl\n";
 	Js := IdealsOfIndex(OK, N);
 	ff:=OK !! Conductor(O);
 	assert forall{J : J in Js | J+ff eq 1*OK};
-  result := [];
+  	result := [];
 	for J in Js do
-    K := (O meet J) * I; // OK/J=O/(J meet O)=I/K, where the second isomorphism holds because (J meet O) is invertible in O, since it is coprime with ff.
-    Append(~result, K);
+    		K := (O meet J) * I; // OK/J=O/(J meet O)=I/K, where the second isomorphism holds because (J meet O) is invertible in O, since it is coprime with ff.
+    		Append(~result, K);
 	end for;
 	return result;
 end intrinsic;
@@ -1142,6 +1169,13 @@ intrinsic IdealsOfIndex(I::AlgAssVOrdIdl[RngOrd], N::RngIntElt : Al := "Default"
 	end if;
 end intrinsic;
 
+intrinsic Idempotents(A::AlgAss)->SeqEnum
+{returns a sequence containing the ideampotents of the algebra, zero included}
+	ort_idem:=OrthogonalIdempotents(A);
+	cc:=CartesianProduct([[A!0,oi] : oi in ort_idem]);
+	idem:=[&+([cj : cj in c]) : c in cc];
+	return idem;
+end intrinsic;
 
 //////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////

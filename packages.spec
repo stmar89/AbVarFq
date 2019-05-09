@@ -9,4 +9,5 @@ Picardext.m
 padictocc.m
 usefulfunctions.m
 PowerBass.m
+rational_points.m
 }
