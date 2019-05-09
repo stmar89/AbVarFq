@@ -194,9 +194,9 @@ intrinsic PicardGroup(S::AlgAssVOrd) -> GrpAb, Map
 	require IsFiniteEtale(Algebra(S)): "the algebra of definition must be finite and etale over Q";
 	A:=Algebra(S);
 	O:=MaximalOrder(A);
-	GO,gO:=PicardGroup_prod_internal(O);
-	F:=Conductor(S);
-	FO:=ideal<O|ZBasis(F)>;
+        GO,gO:=PicardGroup_prod_internal(O); //C, mC
+        F:=Conductor(S);
+        FO:=ideal<O|ZBasis(F)>; //Fm
 	gens_GO_in_S:=[]; //coprime with FO, in S and then meet S   
 	gens_GO_in_O:=[]; //coprime with FO, in O
 	if #GO gt 1 then
@@ -215,19 +215,18 @@ intrinsic PicardGroup(S::AlgAssVOrd) -> GrpAb, Map
 		end function;
 	else
 		GO:=FreeAbelianGroup(0);
-		gens_GO_in_S:=[];
 		mGO_to_S:=function(rep)
 			idS:=OneIdeal(S);
 			return idS;
 		end function;
 	end if;
 
-	R,r:=ResidueRingUnits(O,FO);
-	Sgens:=residue_class_ring_unit_subgroup_generators(S,F);
-	UO,uO:=UnitGroup2(O);
+        R,r:=ResidueRingUnits(O,FO); // G, mG
+        Sgens:=residue_class_ring_unit_subgroup_generators(S,F); // ogens
+        UO,uO:=UnitGroup2(O); // Um, mUm
 
 	H:=FreeAbelianGroup(#Generators(GO));
-	D, mRD, mHD, mDR, mDH := DirectSum(R,H);    
+        D, mRD, mHD, mDR, mDH := DirectSum(R,H); // D, mGD, mHD, mDG, mDH
 	relDresidue:=[mRD(x@@r) : x in Sgens];
 	relDunits:=[mRD(uO(x)@@r)  : x in Generators(UO)];
 	// glue R and GO
@@ -257,12 +256,31 @@ intrinsic PicardGroup(S::AlgAssVOrd) -> GrpAb, Map
 		repseq := Eltseq(rep);
 		return &*[generators_ideals[i]^repseq[i]:i in [1..#generators_ideals]];
 	end function;
-    
-	//ADD the discete log!
+
+        disc_log_picard_group_inner := function(id)
+            idO := O!!id;
+	    if not IsCoprime(id,F) then
+	        error "PicardGroup: Ideal must be coprime to the conductor";
+	    end if;
+	    GOrep := id@@gO;
+	    is_princ, elt := IsPrincipal(mGO_to_S(-(H!Eltseq(GOrep)))*idO);
+	    if not is_princ then 
+	        error "PicardGroup: Failure in discrete logarithm.";
+	    end if;
+	    return GOrep, elt;
+        end function;
+
+        disc_log_picard_group := function(id)
+            GOrep, elt := disc_log_picard_group_inner(id);
+            Grep := elt@@r;
+            return mDP(mRD(Grep)+mHD(H!Eltseq(GOrep)));
+        end function;
+
 	Codomain:=Parent(representative_picard_group(Zero(P)));
-	p:=map<P -> Codomain | id:->representative_picard_group(id)>;
+        p:=map<P -> Codomain | rep:->representative_picard_group(rep),
+                               id := disc_log_picard_group(id) >;
 	S`PicardGroup:=<P,p>;
-	return P,p;    
+	return P,p;
 end intrinsic;
 
 UnitGroup2_prod_internal:=function(O)
