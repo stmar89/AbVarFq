@@ -91,11 +91,9 @@ RunTests:=procedure();
 */
 
 /*TODO:
--check that in the Edgar's code on IDealsOfIndex there is no requirement on the multiplicatorRing, as that is called in AbelianVarieties.m
 -compare my IsZeroDivisor2 with the already built-in IsUnit
 -IsFiniteEtale is wrong!!! it does not recognize the base ring, on the other hand, when I define an AssociativeAlgebra, I set the test to be true, so it is sort of harmless.
 -Put all the "if assigned ??" in dedicated functions
--Rewrite FindOverOrders as follows: it should be possible to give an optional argument "oo" that contains all the overorders and then the function only creates the Poset, i.e. assignes the S'OverOrders parameter to speed up the rest of the computation
 -WKICM_bar prime per prime;
 */
 
@@ -113,7 +111,6 @@ AlgAssVOrdIdlData2 := recformat<
   Jprimes:List, // list of tuples <JJ,b,n> containing output of Jprime
   Index:FldRatElt // to store the index
   >;
-
 
 intrinsic OneIdeal(S::AlgAssVOrd) -> AlgAssVOrdIdl
 {given an S returns ideal<S|One(S)> which will be cached}
@@ -950,30 +947,33 @@ intrinsic IsProductOfOrders(O::AlgAssVOrd)->BoolElt, Tup
 	end if;
 end intrinsic;
 
-/*
 intrinsic IsDecomposable(O::AlgAssVOrd)->BoolElt, Tup
-{return if the argument is a product of orders in sub-algebras, and if so return also the sequence of these orders}
+{return if the argument is a product of orders in sub-algebras, and if that's the case returns the minimal idempotents in O}
 	A:=Algebra(O);
 	require IsFiniteEtale(A): "the algebra of definition must be finite and etale over Q";
 	non_trivial_idem:=Exclude(Exclude(Idempotents(A),A!0),A!1);
-	non_trivial_idem_in_O:=[x : x in non_trivial_idem | x in O];
-	
-
-	
-	O_asProd:=<>;
-	if test then
-		for i in [1..#A`NumberFields] do
-			L:=A`NumberFields[i];
-			gen_L:=[(x*idem[i])@@L[2]: x in ZBasis(O)];
-			O_L:=Order(gen_L);
-			Append(~O_asProd,O_L);
-		end for;
-		return true, O_asProd;
-	else
-	return false,<>;
+	nt_idem_in_O:=[x : x in non_trivial_idem | x in O];
+	if #nt_idem_in_O eq 0 then
+		return false,_;
 	end if;
+	//one nt_idem_in_O is in O i.e. O splits.
+	//now we want to find the minimal ideampotents in O
+	idems:={};
+	cc:=CartesianProduct(nt_idem_in_O,nt_idem_in_O);
+	for id in nt_idem_in_O do
+		if not exists{c : c in cc | id eq c[1]+c[2]} then
+			idems:=idems join {id};
+		end if;
+	end for;
+	return true,Setseq(idems);
 end intrinsic;
-*/
+
+
+intrinsic IsDecomposable(I::AlgAssVOrdIdl)->BoolElt, Tup
+{return if the argument is a product of orders in sub-algebras, and if that's the case returns the minimal idempotents in O}
+	S:=MultiplicatorRing(I);
+	return IsDecomposable(S);
+end intrinsic;
 
 intrinsic IsProductOfIdeals(I::AlgAssVOrdIdl) -> BoolElt, Tup
 {return if the argument is a product of ideals in number fields, and if so return also the sequence of these ideals (in the appropriate orders)}
