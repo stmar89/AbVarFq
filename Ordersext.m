@@ -36,8 +36,6 @@ intrinsic ProdEqOrders(A::AlgAss)->AlgAssVOrd
 intrinsic Index(S::AlgAssVOrd, I::AlgAssVOrdIdl) -> RngIntElt
 intrinsic Index(S::AlgAssVOrd, T::AlgAssVOrd) -> RngIntElt
 intrinsic HomsToC(A::AlgAss : Precision:=30)->SeqEnum[Map]
-intrinsic FindOverOrders(E::AlgAssVOrd)->SeqEnum
-intrinsic FindOverOrders(E::AlgAssVOrd,O::AlgAssVOrd)-> SeqEnum
 intrinsic WKICM_bar(S::AlgAssVOrd) -> SeqEnum
 intrinsic WKICM(E::AlgAssVOrd)->SeqEnum
 intrinsic ICM_bar(S::AlgAssVOrd) -> SeqEnum
@@ -465,67 +463,6 @@ intrinsic HomsToC(A::AlgAss : Precision:=30)->SeqEnum[Map]
 	return maps;
 end intrinsic;
 
-intrinsic FindOverOrders(E::AlgAssVOrd)->SeqEnum
-{returns all the overorders of E}
-	if assigned E`OverOrders then
-		return E`OverOrders;
-	else
-		A:=Algebra(E);
-		require IsFiniteEtale(A): "the algebra of definition must be finite and etale over Q";
-		if assigned A`MaximalOrder then
-			O:=A`MaximalOrder;
-    else
-			O:=MaximalOrder(A);
-			A`MaximalOrder:=O;
-		end if;
-		if O eq E then
-			E`OverOrders:=[E];
-			return [E];
-		end if;
-		seq:=FindOverOrders(E,O);
-		for i in [1..#seq] do
-			S:=seq[i];
-			if not assigned S`OverOrders then
-				S`OverOrders := [T : T in seq | S subset T];
-			end if;
-		end for;
-		return seq;
-	end if;
-end intrinsic;
-
-intrinsic FindOverOrders(E::AlgAssVOrd,O::AlgAssVOrd)-> SeqEnum
-{given E subset O, returns the sequence of orders between E and O}
-//15/02/2018 we add the LowIndexProcess
-	require IsFiniteEtale(Algebra(E)): "the algebra of definition must be finite and etale over Q";
-	require E subset O : "the first argument must be a subset of the second";
-	if assigned E`OverOrders then
-		return [S: S in E`OverOrders | S subset O];
-	else
-		F:=FreeAbelianGroup(Degree(O));
-		E_ZBasis:=ZBasis(E);
-		O_ZBasis:=ZBasis(O);
-		rel:=[F ! Eltseq(x) : x in Coordinates(E_ZBasis,ZBasis(O))];
-		Q,q:=quo<F|rel>; //q:F->Q quotient map
-		FP,f:=FPGroup(Q); //f:FP->Q isomorphism
-		N:=#FP;
-		subg:=LowIndexProcess(FP,<1,N>);
-		seqOO:=[];
-		while not IsEmpty(subg) do
-			H := ExtractGroup(subg);
-			NextSubgroup(~subg);
-			geninF:=[(f(FP ! x))@@q : x in Generators(H)];
-			coeff:=[Eltseq(x) : x in geninF];
-			coeff:=[Eltseq(x) : x in geninF];
-			S:=Order([&+[O_ZBasis[i]*x[i] : i in [1..Degree(Algebra(O))]] : x in coeff] cat E_ZBasis);
-			if not exists{T : T in seqOO | S eq T} then
-				Append(~seqOO,S);
-			end if;
-		end while;
-		Exclude(~seqOO,O); Append(~seqOO,O); //in this way O is the last of the list
-		assert E in seqOO and O in seqOO;
-		return seqOO;
-	end if;
-end intrinsic;
 
 function factorizationMaximalOrder(I)
 //given an ideal of the maximal order of an algebra, returns the factorization into a product of prime ideals
@@ -1042,6 +979,9 @@ end intrinsic;
 intrinsic 'subset'(O1 :: AlgAssVOrd, O2 :: AlgAssVOrd) -> BoolElt
 {Checks if the first argument is inside the second.}
 	require Algebra(O1) cmpeq Algebra(O2) : "The orders must be in the same algebra.";
+  if not Index(O2, O1) in Integers() then
+    return false;
+  end if;
   mat := Matrix(Coordinates(ZBasis(O1), ZBasis(O2)));
   return &and[IsCoercible(Integers(), elt) : elt in Eltseq(mat)];
 end intrinsic;
@@ -1049,6 +989,9 @@ end intrinsic;
 intrinsic 'subset'(I1 :: AlgAssVOrdIdl, I2 :: AlgAssVOrdIdl) -> BoolElt
 {Checks if the first argument is inside the second. The ideals need to be fractional}
 	require Order(I1) eq Order(I2) : "The ideals must be in the same order.";
+  if not Index(I2, I1) in Integers() then
+    return false;
+  end if;
   mat := Matrix(Coordinates(ZBasis(I1), ZBasis(I2)));
   return &and[IsCoercible(Integers(), elt) : elt in Eltseq(mat)];
 end intrinsic;

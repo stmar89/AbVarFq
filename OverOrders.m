@@ -1,4 +1,20 @@
 
+intrinsic pMaximalOrder(O::AlgAssVOrd, p::RngIntElt) -> AlgAssVOrd
+{given O, retuns the maximal p over order}
+  if (Norm(Discriminant(O)) mod p^2) ne 0 then
+    return O;
+  end if;
+
+  OO := O;
+  // Theorem 6.1.3 Cohen
+  while true do
+    I := ArithmeticRadical(OO, BaseRing(OO)*p);
+    OO := MultiplicatorRing(I);
+    if OO eq Order(I) then
+      return OO;
+    end if;
+  end while;
+end intrinsic;
 
 intrinsic ResidueField(P::AlgAssVOrdIdl) -> FldFin, Map
 { given P a prime of S, returns a finite field F isomorphic to S/P and a surjection (with inverse) S->F.}
@@ -70,17 +86,20 @@ intrinsic QuotientVS(I::AlgAssVOrd, J::AlgAssVOrd, P::AlgAssVOrdIdl, K::FldFin, 
 end intrinsic;
 
 
-intrinsic MinimalOverOrders(R::AlgAssVOrd : singular_primes:=[], orders:={@ @}) -> SetIndx[AlgAssVOrd]
+intrinsic MinimalOverOrders(R::AlgAssVOrd : singular_primes := [], orders := {@ @}) -> SetIndx[AlgAssVOrd]
 { returns the minimal over orders of R given the singular primes of R }
   if not assigned R`MinimalOverOrders then
-    min_oo := {@ @};
+    min_oo := { };
     if not IsMaximal(R) then
       zbR := ZBasis(R);
-      pp := PrimesAbove(Conductor(R));
-      //FIXME??
-      //pp := [(R!P) meet (ideal<R|1>) : P in singular_primes];
-      //pp := [P : P in pp | Index(P,P^2) ne Index(R,P)]; //only the sing ones
-      //pp := Setseq(Seqset(pp)); //remove duplicates
+      if singular_primes ne [] then
+        pp := [(R!P) meet (ideal<R|1>) : P in singular_primes];
+        pp := [P : P in pp | Index(P, P*P) ne Index(R,P)]; //only the sing ones
+        pp := Setseq(Seqset(pp)); //remove duplicates
+        //assert SequenceToSet(pp) eq SequenceToSet(PrimesAbove(Conductor(R)));
+      else
+        pp := PrimesAbove(Conductor(R));
+      end if;
       for P in pp do
         pot_min_oo := {@ @};
         F, f := ResidueField(P);
@@ -91,7 +110,7 @@ intrinsic MinimalOverOrders(R::AlgAssVOrd : singular_primes:=[], orders:={@ @}) 
         d := Dimension(V);
         //see Proposition 5.3 of Tommy's paper
         if d eq 1 then
-          Include(~min_oo,T);
+          Include(~min_oo, T);
         else
           dims := PrimesUpTo(d);
           subs := Submodules(V : CodimensionLimit := d-1); //only subs of dim a prime number
@@ -100,165 +119,112 @@ intrinsic MinimalOverOrders(R::AlgAssVOrd : singular_primes:=[], orders:={@ @}) 
         //TODO: add special test for W of dim 1, which needs a map idT->V, not implemented yet
           for W in subs do
             S := Order([mVT(w) : w in Basis(W)] cat zbR);
-            if not S in pot_min_oo then
-              Include(~pot_min_oo,S);
-            end if;
+            Include(~pot_min_oo,S);
           end for;
-          //we remove duplicates
+          //we remove non-minimals
           for S in pot_min_oo do
-            if not exists{T : T in pot_min_oo | S ne T and T subset S} then
-              i := Index(orders, S);
-              if i eq 0 then
-                Include(~min_oo, S);
-              else
-                Include(~min_oo, orders[i]);
-              end if;
+            if not exists {T : T in pot_min_oo | S ne T and T subset S} then
+              Include(~min_oo, S);
             end if;
           end for;
         end if;
       end for;
     end if;
-    print "assigning MinimalOverOrders to", Hash(R), #min_oo;
-    R`MinimalOverOrders := min_oo;
+    R`MinimalOverOrders := {@ @};
+    for S in min_oo do
+      i := Index(orders, S);
+      if i eq 0 then
+        Include(~R`MinimalOverOrders, S);
+      else
+        Include(~R`MinimalOverOrders, orders[i]);
+      end if;
+    end for;
   end if;
   return R`MinimalOverOrders;
 end intrinsic;
 
 
 
-intrinsic OverOrders(R::AlgAssVOrd) -> SetIndx[AlgAssVOrd]
+intrinsic FindOverOrders_Minimal(R::AlgAssVOrd) -> SetIndx[AlgAssVOrd]
 { given an order R returns all the over orders }
-  if not assigned R`OverOrders then
-    O := MaximalOrder(Algebra(R));
-    singular_primes := PrimesAbove(O!Conductor(R));
-    queue := {@ R @};
-    done := {@ @};
-    output := {@ @};
-    while #queue gt 0 do
-      output join:= queue;
-      for elt in queue do
-        for elt2 in MinimalOverOrders(elt : singular_primes := singular_primes, orders := output) do
-          Include(~output, elt2);
-        end for;
-        //output join:= MinimalOverOrders(elt : singular_primes := singular_primes, orders := output);
-      end for;
-      done join:= queue;
-      queue := output diff done;
-    end while;
-    R`OverOrders := output;
-  end if;
-	return R`OverOrders;
-end intrinsic;
-
-/*
-intrinsic OverOrders(R::AlgAssVOrd) -> SetIndx[AlgAssVOrd]
-{ given an order R returns all the over orders }
-  if not assigned R`OverOrders then
-    O := MaximalOrder(Algebra(R));
-    singular_primes := PrimesAbove(O!Conductor(R));
-    queue := {@ R @};
-    done := {@ @};
-    output := {@ @};
-    while #queue gt 0 do
-      output join:=queue;
-      for elt in queue do
-        //Include(~output, elt);
-        // create a temporary copy, so we can edit elt`MinimalOverOrders
-        output join:= MinimalOverOrders(elt : singular_primes := singular_primes);
-      end for;
-      done join:= queue;
-      queue := output diff done;
-    end while;
-    R`OverOrders := output;
-  end if;
-	return R`OverOrders;
-end intrinsic;
-*/
-
-
-intrinsic pMaximalOrder(O::AlgAssVOrd, p::RngIntElt) -> AlgAssVOrd
-{given O, retuns the maximal p over order}
-  if (Norm(Discriminant(O)) mod p^2) ne 0 then
-    return O;
-  end if;
-
-  OO := O;
-  // Theorem 6.1.3 Cohen
-  while true do
-    I := ArithmeticRadical(OO, BaseRing(OO)*p);
-    OO := MultiplicatorRing(I);
-    if OO eq Order(I) then
-      return OO;
-    end if;
+  A := Algebra(R);
+  require IsFiniteEtale(A): "the algebra of definition must be finite and etale over Q";
+  //it faster to recompute them
+  // O := MaximalOrder(A);
+  // singular_primes := PrimesAbove(O!Conductor(R));
+  singular_primes := [];
+  queue := {@ R @};
+  done := {@  @};
+  output := {@ @};
+  while #queue gt 0 do
+    output join:=  queue;
+    done join:= queue;
+    for elt in queue do
+      output join:= MinimalOverOrders(elt : singular_primes := singular_primes, orders := output);
+    end for;
+    queue := output diff done;
   end while;
-end intrinsic;
-
-intrinsic FindOverOrders(E::AlgAssVOrd) -> SeqEnum[AlgAssVOrd]
-{returns all the overorders of E}
-	if assigned E`OverOrders then
-		return E`OverOrders;
-	else
-		A := Algebra(E);
-		require IsFiniteEtale(A): "the algebra of definition must be finite and etale over Q";
-		if assigned A`MaximalOrder then
-			O := A`MaximalOrder;
-    else
-			O := MaximalOrder(A);
-			A`MaximalOrder := O;
-		end if;
-		if O eq E then
-			E`OverOrders := [E];
-			return [E];
-		end if;
-		seq := FindOverOrders(E,O);
-		for i in [1..#seq] do
-			S := seq[i];
-			if not assigned S`OverOrders then
-				S`OverOrders := [T : T in seq | S subset T];
-			end if;
-		end for;
-		return seq;
-	end if;
+  return output;
 end intrinsic;
 
 
-/*
-intrinsic FindOverOrders(E::AlgAssVOrd, O::AlgAssVOrd)-> SeqEnum[AlgAssVOrd]
+intrinsic FindOverOrders(E::AlgAssVOrd: alg := "minimal", populateoo_in_oo := false) -> SetIndx[AlgAssVOrd]
+{returns all the overorders of E, and populates }
+  require alg in ["minimal", "naive"]: "only naive and minimal options are supported";
+  if not assigned E`OverOrders then
+    if alg eq "minimal" then
+      E`OverOrders := FindOverOrders_Minimal(E);
+      //for S in E`MinimalOverOrders do
+      //  _ := FindOverOrders(S: alg := "minimal");
+      //end for;
+    elif alg eq "naive" then
+      E`OverOrders := FindOverOrders_Naive(E);
+    end if;
+  end if;
+
+  // there might be a better way to do this
+  // like looping over MaximalUnderOrders
+  if populateoo_in_oo then
+    for i in [1..#E`OverOrders] do
+      S := E`OverOrders[i];
+      if not assigned S`OverOrders then
+        S`OverOrders := {@ T : T in E`OverOrders | S subset T @};
+      end if;
+    end for;
+  end if;
+  return E`OverOrders;
+end intrinsic;
+
+
+
+intrinsic FindOverOrders(E::AlgAssVOrd, O::AlgAssVOrd) -> SetIndx[AlgAssVOrd]
 {given E subset O, returns the sequence of orders between E and O}
 //15/02/2018 we add the LowIndexProcess
 	require IsFiniteEtale(Algebra(E)): "the algebra of definition must be finite and etale over Q";
 	require E subset O : "the first argument must be a subset of the second";
-	if assigned E`OverOrders then
-		return [S: S in E`OverOrders | S subset O];
-	else
-    return FindOverOrdersNaive(E, O);
-    // Goal
-    // return FindOverOrdersLocally(E, O);
-	end if;
+  return {@ S: S in FindOverOrders(E) | S subset O @};
 end intrinsic;
-*/
-/*
-intrinsic FindOverOrdersLocally(O::AlgAssVOrd, M::AlgAssVOrd) -> SeqEnum[AlgAssVOrd]
-{given O subset M, returns the sequence of orders between O and M}
-  orders := [];
 
-  for p in PrimeDivisors( Index(M, O) ) do
-      Append(~orders, FindpOverOrders(O, p, M));
-  end for;
 
-  if #orders eq 0 then
-    return [O];
+
+
+intrinsic FindOverOrders_Naive(E::AlgAssVOrd) -> SetIndx[AlgAssVOrd]
+{returns all the overorders of E}
+  A := Algebra(E);
+  require IsFiniteEtale(A): "the algebra of definition must be finite and etale over Q";
+  if assigned A`MaximalOrder then
+    O := A`MaximalOrder;
+  else
+    O := MaximalOrder(A);
+    A`MaximalOrder := O;
   end if;
-
-  res := [];
-  for gammas in CartesianProduct(orders) do
-    Append(~res, &+[elt : elt in gammas]);
-  end for;
-  return res;
+  if O eq E then
+    return [E];
+  end if;
+  return FindOverOrders_Naive(E,O);
 end intrinsic;
-*/
-/*
-intrinsic FindOverOrdersNaive(E::AlgAssVOrd, O::AlgAssVOrd) -> SeqEnum[AlgAssVOrd]
+
+intrinsic FindOverOrders_Naive(E::AlgAssVOrd, O::AlgAssVOrd) -> SetIndx[AlgAssVOrd]
 {given E subset O, returns the sequence of orders between E and O}
 //15/02/2018 we add the LowIndexProcess
 	require IsFiniteEtale(Algebra(E)): "the algebra of definition must be finite and etale over Q";
@@ -266,44 +232,23 @@ intrinsic FindOverOrdersNaive(E::AlgAssVOrd, O::AlgAssVOrd) -> SeqEnum[AlgAssVOr
   F := FreeAbelianGroup(Degree(O));
   E_ZBasis := ZBasis(E);
   O_ZBasis := ZBasis(O);
-  rel := [F ! Eltseq(x) : x in Coordinates(E_ZBasis,ZBasis(O))];
+  rel := [F ! Eltseq(x) : x in Coordinates(E_ZBasis, ZBasis(O))];
   Q,q := quo<F|rel>; //q:F->Q quotient map
   FP,f := FPGroup(Q); //f:FP->Q isomorphism
   N := #FP;
-  seqOO := [];
   subg := LowIndexProcess(FP,<1,N>);
-  index := -1;
-  subseq := [];
+  seqOO := {@ @};
   while not IsEmpty(subg) do
     H := ExtractGroup(subg);
     NextSubgroup(~subg);
-    indexH := Index(G, H);
-    if indexH ne index then
-      index := indexH;
-      subseq := [];
-    end if;
     geninF := [(f(FP ! x))@@q : x in Generators(H)];
     coeff := [Eltseq(x) : x in geninF];
-    coeff := [Eltseq(x) : x in geninF];
     S := Order([&+[O_ZBasis[i]*x[i] : i in [1..Degree(Algebra(O))]] : x in coeff] cat E_ZBasis);
-    indexS := Index(O, S);
-    if indexS eq index H then
-      if not exists{T : T in subseq | S subset T} then
-        Append(~seqOO,S);
-      end if;
+    if S ne O then
+      Include(~seqOO, S);
     end if;
   end while;
-  Exclude(~seqOO,O); Append(~seqOO,O); //in this way O is the last of the list
+  Include(~seqOO,O); //in this way O is the last of the list
   assert E in seqOO and O in seqOO;
   return seqOO;
 end intrinsic;
-*/
-
-
-
-
-
-
-
-
-
