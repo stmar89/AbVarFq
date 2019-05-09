@@ -895,28 +895,30 @@ intrinsic DefiningPolynomial(A::AlgAss) -> RngUPolElt
 	return &*[DefiningPolynomial(L[1]) : L in A`NumberFields];
 end intrinsic;
 
-intrinsic '^'(I::AlgAssVOrdIdl,n::RngIntElt) -> AlgAssVOrdIdl
+intrinsic '^'(I::AlgAssVOrdIdl, n::RngIntElt) -> AlgAssVOrdIdl
 { compute the nth power of an ideal }
 	S:=Order(I);
-	power_positive:=function(I,n)
-		id:=I;
+	power_positive:=function(I, n)
+		id := I;
+    output := OneIdeal(S);
 		bin_exp:=IntegerToSequence(n,2);
-		squares_id:=[OneIdeal(S)];
 		for i in [1..#bin_exp] do
 			if bin_exp[i] eq 1 then
-				Append(~squares_id,id);
+				output *:= id;
 			end if;
-			id:=id*id;
-		end for;
-		output:=squares_id[1];
-		for i in [2..#squares_id] do
-			output:=output*squares_id[i];
+      if i lt #bin_exp then
+        id := id*id;
+      end if;
 		end for;
 		return output;
 	end function;
 
 	if n eq 0 then
 		return OneIdeal(Order(I));
+  elif n eq 1 then
+    return I;
+  elif n eq 2 then
+    return I * I;
 	else
 		if n gt 0 then
 			return power_positive(I,n);
@@ -1355,6 +1357,11 @@ intrinsic '*'(I::AlgAssVOrdIdl[RngOrd], J::AlgAssVOrdIdl[RngOrd]) -> AlgAssVOrdI
   require A cmpeq Algebra(Order(J)) : "Arguments must be ideals of orders in the same algebra";
   require O cmpeq Order(J) : "Arguments must be ideals of orders in the same algebra";
 //   require IsTwoSidedIdeal(I) and IsTwoSidedIdeal(J): "the ideals must be two-sided";
+  if I eq OneIdeal(Order(I)) then
+    return J;
+  elif J eq OneIdeal(Order(J)) then
+    return I;
+  end if;
 
   // Compute P = pmatrix of I*J, expressed relative to the basis of A
   S := [x*y : x in Basis(I, A), y in Basis(J, A)];
