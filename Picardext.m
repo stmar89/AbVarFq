@@ -173,8 +173,9 @@ PicardGroup_prod_internal:=function(O)
 			return id;
 		end function;
 		inverse_map:=function(id)
-			_,d:=IsIntegral(id);
-			id:=d*id;
+			if not IsIntegral(id) then
+				id:=MakeIntegral(id);
+			end if;
 			test,id_asprod:=IsProductOfIdeals(id);
 			assert test;
 			return &+[g[i](id_asprod[i]@@groups_maps_fields_maps[i,2]) : i in [1..#id_asprod]];
@@ -186,6 +187,30 @@ PicardGroup_prod_internal:=function(O)
 		return G,mapGtoO;
 	end if;
 end function;
+
+IsPrincipal_prod_internal:=function(I)
+//returns if the argument is a principal ideal; if so the function returns also the generator. It works only for products of ideals
+	assert IsMaximal(Order(I)); //this function should be called only for ideals of the maximal order
+	test,I_asProd:=IsProductOfIdeals(I);
+	assert test; //this function should be called only for ideals of the maximal order, hence I is a product
+	S:=Order(I);
+	A:=Algebra(S);
+	gen:=Zero(A);
+	for i in [1..#I_asProd] do
+		IL:=I_asProd[i];
+		L:=A`NumberFields[i];
+		OL,oL:=PicardGroup(Order(IL)); //this is to prevent a bug of the in-built function IsPrincipal (see the changelog)       
+		testL,genL:=IsPrincipal(IL);
+		assert (Zero(OL) eq (IL@@oL)) eq testL;
+		if not testL then
+			return false,_;
+		end if;
+		gen:=gen+L[2](L[1] ! genL);
+	end for;
+	assert ideal<S|gen> eq I;
+	return true,gen;
+end function;
+
 
 intrinsic PicardGroup(S::AlgAssVOrd) -> GrpAb, Map
 {return the PicardGroup of the order S, which is not required to be maximal, and a map from the PicardGroup to a set of representatives of the ideal classes}
@@ -204,8 +229,11 @@ intrinsic PicardGroup(S::AlgAssVOrd) -> GrpAb, Map
 			I:=gO(GO.i);
 			c:=CoprimeRepresentative(I,FO);
 			cI:=c*I;
-			Append(~gens_GO_in_S,ideal<S|ZBasis(cI)> meet S);
-			Append(~gens_GO_in_O,cI);
+assert IsIntegral(cI);
+			cISmeetS:=ideal<S|ZBasis(cI)> meet S;
+assert IsIntegral(cISmeetS);
+			Append(~gens_GO_in_S,cISmeetS);
+			Append(~gens_GO_in_O,cI);//used in building relDglue
 		end for;
 
 		mGO_to_S:=function(rep)  
@@ -213,12 +241,25 @@ intrinsic PicardGroup(S::AlgAssVOrd) -> GrpAb, Map
 			idS:=&*[(gens_GO_in_S[i])^coeff[i] : i in [1..#coeff] ];
 			return idS;
 		end function;
+
+mGO_to_O:=function(rep)  
+	coeff:=Eltseq(rep);
+	idO:=&*[(gens_GO_in_O[i])^coeff[i] : i in [1..#coeff] ];
+	return idO;
+end function;
+
 	else
 		GO:=FreeAbelianGroup(0);
 		mGO_to_S:=function(rep)
 			idS:=OneIdeal(S);
 			return idS;
 		end function;
+
+mGO_to_O:=function(rep)
+	idO:=OneIdeal(O);
+	return idO;
+end function;
+
 	end if;
 
         R,r:=ResidueRingUnits(O,FO); // G, mG
@@ -244,7 +285,7 @@ intrinsic PicardGroup(S::AlgAssVOrd) -> GrpAb, Map
 		generators_ideals:=[];
 		for gen in gens_P_in_D do
 			id1:=ideal<S|ZBasis(ideal<O|r(mDR(gen))>)> meet S;
-			id2:=mGO_to_S(mDH(gen)); //something wrong here!
+			id2:=mGO_to_S(mDH(gen));
 			gen_inS:=id1*id2;
 			Append(~generators_ideals,gen_inS);
 		end for;
@@ -258,12 +299,28 @@ intrinsic PicardGroup(S::AlgAssVOrd) -> GrpAb, Map
 	end function;
 
         disc_log_picard_group_inner := function(id)
-            idO := O!!id;
+assert IsIntegral(id);
+//id:=CoprimeRepresentative(id,F)*id;
+            idO := O!id;
+assert IsIntegral(idO);
 	    if not IsCoprime(id,F) then
 	        error "PicardGroup: Ideal must be coprime to the conductor";
 	    end if;
-	    GOrep := id@@gO;
-	    is_princ, elt := IsPrincipal(mGO_to_S(-(H!Eltseq(GOrep)))*idO);
+	    GOrep := idO@@gO;
+GO;
+GOrep,-GOrep;
+	    Helt:=-(H!Eltseq(GOrep));
+	    Helt;
+	    idrel1:=mGO_to_O(Helt);
+assert IsIntegral(idrel1);
+	    idrel:=(idrel1)*idO;
+assert IsIntegral(idrel);
+	    is_princ, elt := IsPrincipal(idrel);
+	    //is_princ, elt := IsPrincipal(mGO_to_O(-(H!Eltseq(GOrep)))*idO);
+	    //is_princ, elt :=IsPrincipal_prod_internal((O ! mGO_to_S((H!Eltseq(GOrep))))^-1*idO);
+	    //is_princ, elt :=IsPrincipal_prod_internal((O!(mGO_to_S(-(H!Eltseq(GOrep)))))*idO);
+//elt,ZBasis(O);
+assert (1/elt) in O or elt in O;
 	    if not is_princ then 
 	        error "PicardGroup: Failure in discrete logarithm.";
 	    end if;
@@ -272,13 +329,13 @@ intrinsic PicardGroup(S::AlgAssVOrd) -> GrpAb, Map
 
         disc_log_picard_group := function(id)
             GOrep, elt := disc_log_picard_group_inner(id);
-            Grep := elt@@r;
-            return mDP(mRD(Grep)+mHD(H!Eltseq(GOrep)));
+            Rrep := elt@@r;
+            return mDP(mRD(Rrep)+mHD(H!Eltseq(GOrep)));
         end function;
 
-	Codomain:=Parent(representative_picard_group(Zero(P)));
-        p:=map<P -> Codomain | rep:->representative_picard_group(rep),
-                               id := disc_log_picard_group(id) >;
+	cod:=Parent(representative_picard_group(Zero(P)));
+        p:=map<P -> cod | rep:->representative_picard_group(rep),
+       			       id:->disc_log_picard_group(id) >;
 	S`PicardGroup:=<P,p>;
 	return P,p;
 end intrinsic;
@@ -356,28 +413,6 @@ intrinsic UnitGroup2(S::AlgAssVOrd) -> GrpAb, Map
 	return P,p;
 end intrinsic;
 
-IsPrincipal_prod_internal:=function(I)
-//returns if the argument is a principal ideal; if so the function returns also the generator. It works only for products of ideals
-	assert IsMaximal(Order(I)); //this function should be called only for ideals of the maximal order
-	test,I_asProd:=IsProductOfIdeals(I);
-	assert test; //this function should be called only for ideals of the maximal order, hence I is a product
-	S:=Order(I);
-	A:=Algebra(S);
-	gen:=Zero(A);
-	for i in [1..#I_asProd] do
-		IL:=I_asProd[i];
-		L:=A`NumberFields[i];
-		OL,oL:=PicardGroup(Order(IL)); //this is to prevent a bug of the in-built function IsPrincipal (see the changelog)       
-		testL,genL:=IsPrincipal(IL);
-		assert (Zero(OL) eq (IL@@oL)) eq testL;
-		if not testL then
-			return false,_;
-		end if;
-		gen:=gen+L[2](L[1] ! genL);
-	end for;
-	assert ideal<S|gen> eq I;
-	return true,gen;
-end function;
 
 intrinsic IsPrincipal(I1::AlgAssVOrdIdl)->BoolElt, AlgAssElt
 {return if the argument is a principal ideal; if so the function returns also the generator.}
