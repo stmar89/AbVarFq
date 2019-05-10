@@ -7,6 +7,7 @@ freeze;
 /////////////////////////////////////////////////////
 
 import "usefulfunctions.m": AllPossibilities;
+import "sorting/code/sorting.m";
 
 /* LIST of function
 intrinsic ResidueRingUnits(S::AlgAssVOrd,I::AlgAssVOrdIdl) -> GrpAb,Map
@@ -187,8 +188,49 @@ PicardGroup_prod_internal:=function(O)
 	end if;
 end function;
 
-intrinsic PicardGroup(S::AlgAssVOrd) -> GrpAb, Map
-{return the PicardGroup of the order S, which is not required to be maximal, and a map from the PicardGroup to a set of representatives of the ideal classes}
+function CoprimeSplittings(n)
+    if IsPrimePower(n) then
+        return [[n]];
+    else
+        splittings := {[n]};
+        for d in Divisors(n) do
+            if d eq 1 or d eq n then
+                continue;
+            end if;
+            cofactor := Floor(n/d);
+            if Gcd(d, Floor(n/d)) eq 1 then
+                for splitting in $$(cofactor) do
+                    Include(~splittings, Sort([d] cat splitting));
+                end for;
+            end if;
+        end for;
+        return splittings;
+    end if;
+end function;
+
+function InverseLcm(n)
+    // Finds all minimal sets of integers whose lcm is n (minimal for inclusion)
+    results := [];
+    for splitting in CoprimeSplittings(n) do
+        cofactors := [];
+        for i in [1..#splitting] do
+            if #splitting eq 1 then
+                Append(~cofactors, [1]);
+            else
+                other := &*[x : x in splitting | x ne splitting[i]];
+                Append(~cofactors, Divisors(Floor(other/(&*PrimeDivisors(other)))));
+            end if;
+        end for;
+        for cofacs in CartesianProduct(cofactors) do
+            Append(~results, [splitting[i]*cofacs[i] : i in [1..#cofacs]]);
+        end for;
+    end for;
+    return results;
+end function;
+
+intrinsic PicardGroup(S::AlgAssVOrd : LMFDB_generators := false) -> GrpAb, Map
+{return the PicardGroup of the order S, which is not required to be maximal, and a map from the PicardGroup to a set of representatives of the ideal classes.
+    If LMDFB_generators is set, then we iteratively choose to map generators to the "smallest" choice, starting from the largest-order generator.  Here the sorting of ideals is given by the ordering defined by Cremona, Page and Sutherland.}
 	if assigned S`PicardGroup then return S`PicardGroup[1],S`PicardGroup[2]; end if;
 	if IsMaximal(S) then return PicardGroup_prod_internal(S); end if;
 	require IsFiniteEtale(Algebra(S)): "the algebra of definition must be finite and etale over Q";
@@ -252,11 +294,6 @@ intrinsic PicardGroup(S::AlgAssVOrd) -> GrpAb, Map
 		return P,map<P->[OneIdeal(S)] | rep:->OneIdeal(S) >;
 	end if;
 
-	representative_picard_group := function(rep)
-		repseq := Eltseq(rep);
-		return &*[generators_ideals[i]^repseq[i]:i in [1..#generators_ideals]];
-	end function;
-
         disc_log_picard_group_inner := function(id)
             idO := O!!id;
 	    if not IsCoprime(id,F) then
@@ -276,11 +313,143 @@ intrinsic PicardGroup(S::AlgAssVOrd) -> GrpAb, Map
             return mDP(mRD(Grep)+mHD(H!Eltseq(GOrep)));
         end function;
 
+        if LMFDB_generators then
+            gens := []; // minimal norm ideals providing a generating set for P
+            q := 2;
+            p := 2;
+            k := 1;
+            best_of_order := AssociativeArray();
+            primes_above_p := AssociativeArray();
+            prime_list := []; // primes that lift to elements of P that increase our subgroup
+            prime_indexes := [];
+            prime_lifts := [];
+            _, O_asProd := IsProductOfOrders(O);
+            _, F_asProd := IsProductOfIdeals(F);
+            F_indexes := [Index(I) for I in F_asProd];
+            Psub, _ := sub<P|>;
+            while true do
+                if k eq 1 then
+                    for i in [1..#O_asProd] do
+                        OL := O_asProd[i];
+                        FL := F_asProd[i];
+                        if F_indexes[i] mod p eq 0 then
+                            // Remove primes dividing the conductor
+                            primes_above_p[<OL,p>] := [I : I in SplitPrime(OL, p) | One(OL) in I+FL];
+                        else
+                            // Remove the last element, since its lift is automatically in the span of the others
+                            primes_above_p[<OL,p>] := Prune(SplitPrime(OL, p));
+                        end if;
+                    end for;
+                end if;
+                primes_of_norm_q := [];
+                for i in [1..#O_asProd] do
+                    OL := O_asProd[i];
+                    for prime in primes_above_p[<OL,p>] do
+                        if InertiaDegree(prime) eq k then
+                            Oprime_gens := [];
+                            for j in [1..#O_asProd] do
+                                mL := A`NumberFields[i,2];
+                                if i eq j then
+                                    Oprime_gens cat:= [mL(x) : x in Generators(primes[i])];
+                                else
+                                    L := A`NumberFields[i,1];
+                                    Append(~Oprime_gens, One(L));
+                                end if;
+                            end for;
+                            Oprime := Ideal<O | Oprime_gens>;
+                            Append(~primes_of_norm_q, Oprime);
+                        end if;
+                    end for;
+                end for;
+                for i in [1..#primes_of_norm_q] do
+                    prime = primes_of_norm_q[i];
+                    plift := disc_log_picard_group(prime);
+                    if plift in Psub then
+                        continue;
+                    end if;
+                    Append(~prime_list, prime);
+                    Append(~prime_index, Index(prime));
+                    Append(~prime_lifts, plift);
+                    ord := Order(plift);
+                    if not IsDefined(best_of_order, ord) then
+                        best_of_order[ord] := #prime_list;
+                    end if;
+                    Psub := sub<P|Psub,plift>;
+                end for;
+                if Order(Psub) eq Order(P) then
+                    break;
+                end if;
+                while true do
+                    q += 1;
+                    b,p,k := IsPrimePower(q);
+                    if b then
+                        break;
+                    end if;
+                end while;
+            end while;
+            // We've now constructed our factor base of primes
+            Pquo := P;
+            Pgens := Generators(P);
+            for gen_num in [#Pgens..1 by -1] do
+                gen_ord := Order(Pgens[gen_num]);
+                possibilities := [];
+                for orders in InverseLcm(gen_ord) do
+                    if &and[IsDefined(best_of_order, ord): ord in orders] then
+                        Append(~possibilities, [best_of_order[ord]: ord in orders]);
+                    end if;
+                end for;
+                best_norm := Infinity();
+                for poss in possibilities do
+                    cur_norm := &*[prime_index[i] for i in poss];
+                    if cur_norm lt best_norm then
+                        best_norm := cur_norm;
+                        best := [Sort(poss)];
+                    elif cur_norm eq best_norm then
+                        Append(~best, Sort(poss));
+                    end if;
+                end for;
+                best := Sort(best);
+                best := best[1];
+                best_ideal := &*[prime_list[i] : i in best];
+                Insert(~gens, 1, best_ideal);
+                if gen_num eq 1 then
+                    break;
+                end if;
+                best_elt := &+[prime_lifts[i]: i in best];
+                new_prime_list := [];
+                new_prime_index := [];
+                new_prime_lifts := [];
+                best_of_order := AssociativeArray();
+                Pquo, quo_proj := quo<Pquo|best_elt>;
+                Psub, _ := sub<Pquo|>;
+                for i in [1..#prime_list] do
+                    new_lift := quo_proj(prime_lifts[i]);
+                    if new_lift in Psub then
+                        continue;
+                    end if;
+                    Append(~new_prime_list, prime_list[i]);
+                    Append(~new_prime_index, prime_index[i]);
+                    Append(~new_prime_lifts, new_lift);
+                    ord := Order(new_lift);
+                    if not IsDefined(best_of_order, ord) then
+                        best_of_order[ord] := #new_prime_list;
+                    end if;
+                    Psub := sub<P|Psub,new_lift>;
+                end for;
+            end for;
+            generators_ideals := Pgens;
+        end if;
+
+	representative_picard_group := function(rep)
+		repseq := Eltseq(rep);
+		return &*[generators_ideals[i]^repseq[i]:i in [1..#generators_ideals]];
+	end function;
+
 	Codomain:=Parent(representative_picard_group(Zero(P)));
-        p:=map<P -> Codomain | rep:->representative_picard_group(rep),
-                               id := disc_log_picard_group(id) >;
-	S`PicardGroup:=<P,p>;
-	return P,p;
+        pmap:=map<P -> Codomain | rep:->representative_picard_group(rep),
+                                  id := disc_log_picard_group(id) >;
+	S`PicardGroup:=<P,pmap>;
+	return P,pmap;
 end intrinsic;
 
 UnitGroup2_prod_internal:=function(O)

@@ -107,6 +107,7 @@ declare attributes AlgAss : CMType;
 declare attributes AlgAssVOrd : OverOrders;
 declare attributes AlgAssVOrd : OneIdeal;
 declare attributes AlgAssVOrd : Index;
+declare attributes AlgAssVOrd : IsProducOfOrders;
 //alternative to declare attributes AlgAssVOrdIdl:Index;
 AlgAssVOrdIdlData2 := recformat<
   // magma internal, see orders-jv.m
@@ -932,22 +933,25 @@ end intrinsic;
 
 intrinsic IsProductOfOrders(O::AlgAssVOrd)->BoolElt, Tup
 {return if the argument is a product of orders in number fields, and if so return also the sequence of these orders}
-	A:=Algebra(O);
-	require IsFiniteEtale(A): "the algebra of definition must be finite and etale over Q";
-	idem:=OrthogonalIdempotents(A);
-	test:=forall{x : x in idem | x in O};
-	O_asProd:=<>;
-	if test then
+        if not assigned O`IsProductOfOrders then
+            A:=Algebra(O);
+	    require IsFiniteEtale(A): "the algebra of definition must be finite and etale over Q";
+	    idem:=OrthogonalIdempotents(A);
+	    test:=forall{x : x in idem | x in O};
+	    O_asProd:=<>;
+	    if test then
 		for i in [1..#A`NumberFields] do
 			L:=A`NumberFields[i];
 			gen_L:=[(x*idem[i])@@L[2]: x in ZBasis(O)];
 			O_L:=Order(gen_L);
 			Append(~O_asProd,O_L);
 		end for;
-		return true, O_asProd;
-	else
-		return false,<>;
-	end if;
+                O`IsProductOfOrders := <true, O_asProd>;
+	    else
+		O`IsProductOfOrders := <false,<>>;
+	    end if;
+        end if;
+        return O`IsProductOfOrders[1], O`IsProductOfOrders[2];
 end intrinsic;
 
 /*
