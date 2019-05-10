@@ -1,0 +1,3 @@
+[submodule "sorting"]
+	path = sorting
+	url = git@github.com:JohnCremona/sorting.git
