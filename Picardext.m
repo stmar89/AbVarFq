@@ -7,7 +7,6 @@ freeze;
 /////////////////////////////////////////////////////
 
 import "usefulfunctions.m": AllPossibilities;
-import "sorting/code/sorting.m";
 
 /* LIST of function
 intrinsic ResidueRingUnits(S::AlgAssVOrd,I::AlgAssVOrdIdl) -> GrpAb,Map
@@ -377,7 +376,7 @@ intrinsic PicardGroup(S::AlgAssVOrd : LMFDB_generators := false) -> GrpAb, Map
 
         _, O_asProd := IsProductOfOrders(O);
         _, F_asProd := IsProductOfIdeals(F);
-        F_indexes := [Index(I) for I in F_asProd];
+        F_indexes := [Index(I) : I in F_asProd];
         primes_above_p := AssociativeArray(); // <i, p> -> list of primes above p in O_asProd[i]
 
         best_of_order := AssociativeArray(); // order -> j, where prime_list[j] is the smallest prime ideal with specified order in picard group
@@ -421,7 +420,7 @@ intrinsic PicardGroup(S::AlgAssVOrd : LMFDB_generators := false) -> GrpAb, Map
                                 Append(~Oprime_gens, One(L));
                             end if;
                         end for;
-                        Oprime := Ideal<O | Oprime_gens>;
+                        Oprime := ideal<O | Oprime_gens>;
                         Append(~primes_of_norm_q, Oprime);
                     end if;
                 end for;
@@ -465,7 +464,7 @@ intrinsic PicardGroup(S::AlgAssVOrd : LMFDB_generators := false) -> GrpAb, Map
             end for;
             best_norm := Infinity();
             for poss in possibilities do
-                cur_norm := &*[prime_index[i] for i in poss];
+                cur_norm := &*[prime_index[i] : i in poss];
                 if cur_norm lt best_norm then
                     best_norm := cur_norm;
                     best := [Sort(poss)];
@@ -511,8 +510,8 @@ intrinsic PicardGroup(S::AlgAssVOrd : LMFDB_generators := false) -> GrpAb, Map
     end function;
 
     cod:=Parent(representative_picard_group(Zero(P)));
-    pmap:=map<P -> cod | rep:->representative_picard_group(rep),
-                         id := disc_log_picard_group(id) >;
+    pmap:=map<P -> cod | rep :-> representative_picard_group(rep),
+                         id :-> disc_log_picard_group(id) >;
     S`PicardGroup:=<P,pmap>;
     return P,pmap;
 end intrinsic;
