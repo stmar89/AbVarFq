@@ -7,6 +7,7 @@ freeze;
 /////////////////////////////////////////////////////
 
 import "usefulfunctions.m": AllPossibilities;
+import "sorting/code/sorting.m": SplitPrime;
 
 /* LIST of function
 intrinsic ResidueRingUnits(S::AlgAssVOrd,I::AlgAssVOrdIdl) -> GrpAb,Map
@@ -414,7 +415,7 @@ intrinsic PicardGroup(S::AlgAssVOrd : LMFDB_generators := false) -> GrpAb, Map
                             // mL: L -> A
                             mL := A`NumberFields[i,2];
                             if i eq j then
-                                Oprime_gens cat:= [mL(x) : x in Generators(primes[i])];
+                                Oprime_gens cat:= [mL(x) : x in Generators(prime)];
                             else
                                 L := A`NumberFields[i,1];
                                 Append(~Oprime_gens, One(L));
