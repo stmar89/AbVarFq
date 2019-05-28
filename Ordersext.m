@@ -657,19 +657,26 @@ intrinsic OrthogonalIdempotents(A::AlgAss)->SeqEnum
 	return [L[2](One(L[1])) : L in A`NumberFields ];
 end intrinsic;
 
-intrinsic AssociativeAlgebra(f::RngUPolElt) -> AlgAss
+/*intrinsic AssociativeAlgebra(f::RngUPolElt) -> AlgAss
 {given a integer polynomial f generates the Associative algebra over Q given by the factors of f with multiplicity}
 	QQ:=RANF_protected;
 	f_fac:=Factorization(f);
 	num_fields:=[];
 	for g in f_fac do
 		if Degree(g[1]) eq 1 then
-			num_fields:=num_fields cat [QQ : j in [1..g[2]]];
+			num_fields:=num_fields cat [QQ : j in [1..g[2]]];//this is not the best idea!!!
 		else
 			num_fields:=num_fields cat [NumberField(g[1]) : j in [1..g[2]]];
 		end if;
 	end for;
 	return AssociativeAlgebra(num_fields);
+end intrinsic;
+*/
+intrinsic AssociativeAlgebra(f::RngUPolElt) -> AlgAss
+{given a integer polynomial f generates the Associative algebra over Q given by the factors of f with multiplicity}
+  f_fac:=Factorization(f);
+  num_fields:=[NumberField(g[1] : DoLinearExtension := true) : j in [1..g[2]] , g in f_fac];
+  return AssociativeAlgebra(num_fields);
 end intrinsic;
 
 intrinsic AssociativeAlgebra(S::SeqEnum[FldNum]) -> AlgAss

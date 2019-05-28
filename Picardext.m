@@ -116,7 +116,7 @@ residue_class_ring_unit_subgroup_generators:=function(S, F)
 			idp:=idp^2;
 		end while;
 	end for;
-	assert forall{x : x in elts | x in S and not x in F};
+	assert2 forall{x : x in elts | x in S and not x in F};
 	return elts;
 end function;
 
@@ -276,7 +276,7 @@ UnitGroup2_prod_internal:=function(O)
 	U_asProd:=[];
 	u_asProd:=[**];
 	for OL in O_asProd do
-		U,u:=UnitGroup(OL);
+		U,u:=UnitGroup(OL : GRH:=true );
 		Append(~U_asProd,U);
 		Append(~u_asProd,u);
 	end for;
