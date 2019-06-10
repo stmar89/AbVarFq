@@ -68,41 +68,41 @@ end function;
 
 residue_class_ring_unit_subgroup_generators:=function(S, F)
 // determine generators of the subgroup of (S/F)^* as elements of A=Algebra(S)
-    A:=Algebra(S);
-    O:=MaximalOrder(A);
-    Fm:=ideal<O| ZBasis(F)>;
-    l:=Factorization(Fm);
-    l2:=[<ideal<S|ZBasis(x[1])> meet S,x[2]>: x in l]; 
-    primes:={x[1]:x in l2};
-    primes:=[<x, Maximum([y[2]: y in l2 |y[1] eq x])>:x in primes];
-    elts:={};
-    for a in primes do
-        a1a2:=a[1]^a[2];
-        idp:=a[1];
-        rest:=OneIdeal(S);
-        for b in primes do
-            if b[1] ne idp then
-                rest:=rest*(b[1]^b[2]);
-            end if;
-        end for;
-        //Compute primitive elt for residue field
-        c:=residue_class_field_primitive_element(idp);
-        c:=ChineseRemainderTheorem(a1a2,rest,c,One(A));
-        Include(~elts,c);
-        b:=1;
-        while b lt a[2] do
-            M:=ZBasis(idp);
-            M:=[1+x:x in M];
-            for elt in M do
-                c:=ChineseRemainderTheorem((a1a2),rest,elt,One(A));
-                Include(~elts,c);
-            end for;
-            b:=b*2;
-            idp:=idp^2;
-        end while;
-    end for;
-    assert2 forall{x : x in elts | x in S and not x in F};
-    return elts;
+	A:=Algebra(S);
+	O:=MaximalOrder(A);
+	Fm:=ideal<O| ZBasis(F)>;
+	l:=Factorization(Fm);
+	l2:=[<ideal<S|ZBasis(x[1])> meet S,x[2]>: x in l]; 
+	primes:={x[1]:x in l2};
+	primes:=[<x, Maximum([y[2]: y in l2 |y[1] eq x])>:x in primes];
+	elts:={};
+	for a in primes do
+		a1a2:=a[1]^a[2];
+		idp:=a[1];
+		rest:=OneIdeal(S);
+		for b in primes do
+			if b[1] ne idp then
+				rest:=rest*(b[1]^b[2]);
+			end if;
+		end for;
+		//Compute primitive elt for residue field
+		c:=residue_class_field_primitive_element(idp);
+		c:=ChineseRemainderTheorem(a1a2,rest,c,One(A));
+		Include(~elts,c);
+		b:=1;
+		while b lt a[2] do
+			M:=ZBasis(idp);
+			M:=[1+x:x in M];
+			for elt in M do
+				c:=ChineseRemainderTheorem((a1a2),rest,elt,One(A));
+				Include(~elts,c);
+			end for;
+			b:=b*2;
+			idp:=idp^2;
+		end while;
+	end for;
+	assert2 forall{x : x in elts | x in S and not x in F};
+	return elts;
 end function;
 
 PicardGroup_prod_internal:=function(O)
@@ -303,24 +303,24 @@ intrinsic PicardGroup(S::AlgAssVOrd) -> GrpAb, Map
     return P,p;
 end intrinsic;
 
-UnitGroup2_prod_internal:=function(O) //TODO add varargs
-    //returns the UnitGroup of a order which is a produc of orders
-    if assigned O`UnitGroup then return O`UnitGroup[1],O`UnitGroup[2]; end if;
-    assert IsMaximal(O); //this function should be used only for maximal orders
-    test,O_asProd:=IsProductOfOrders(O);
-    assert test; //the order must be a product
-    A:=Algebra(O);
-    idemA:=OrthogonalIdempotents(A);
-    U_asProd:=[];
-    u_asProd:=[**];
-    for OL in O_asProd do
-        U,u:=UnitGroup(OL);
-        Append(~U_asProd,U);
-        Append(~u_asProd,u);
-    end for;
-    Udp,udp,proj_Udp:=DirectSum(U_asProd);
-    gensinA:=[&+[A`NumberFields[j,2](u_asProd[j](proj_Udp[j](Udp.i))) : j in [1..#U_asProd]] : i in [1..#Generators(Udp)] ];
-
+UnitGroup2_prod_internal:=function(O)
+	//returns the UnitGroup of a order which is a produc of orders
+	if assigned O`UnitGroup then return O`UnitGroup[1],O`UnitGroup[2]; end if;
+	assert IsMaximal(O); //this function should be used only for maximal orders
+	test,O_asProd:=IsProductOfOrders(O);
+	assert test; //the order must be a product
+	A:=Algebra(O);
+	idemA:=OrthogonalIdempotents(A);
+	U_asProd:=[];
+	u_asProd:=[**];
+	for OL in O_asProd do
+		U,u:=UnitGroup(OL : GRH:=true );
+		Append(~U_asProd,U);
+		Append(~u_asProd,u);
+	end for;
+	Udp,udp,proj_Udp:=DirectSum(U_asProd);
+	gensinA:=[&+[A`NumberFields[j,2](u_asProd[j](proj_Udp[j](Udp.i))) : j in [1..#U_asProd]] : i in [1..#Generators(Udp)] ];
+  
     rep_inA:=function(rep)
         coeff:=Eltseq(rep);
         return &*[gensinA[i]^coeff[i] : i in [1..#coeff]];
