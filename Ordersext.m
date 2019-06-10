@@ -70,7 +70,6 @@ end intrinsic;
 
 intrinsic '!'(T::AlgAssVOrd,I::AlgAssVOrdIdl) -> AlgAssVOrdIdl
 {given an S-ideal I and an order T, returns the extension IT as a T-ideal. Note that if T is in S, then IT=I}
-	S:=Order(I);
 	return ideal<T|ZBasis(I)>;
 end intrinsic;
 
@@ -266,10 +265,19 @@ assert d*I subset S;
 end intrinsic;
 */
 intrinsic IsIntegral(I::AlgAssVOrdIdl) -> BoolElt
-{returns wheter the ideal I of S is integral, that is I \subseteq S, and a minimal integer d such that (d)*I \subseteq S.}
+{returns wheter the ideal I of S is integral, that is I \subseteq S}
 	require IsFiniteEtale(Algebra(I)): "the algebra of definition must be finite and etale over Q";
 	S:=Order(I);
 	return I subset S;
+end intrinsic;
+
+intrinsic MakeIntegral(I::AlgAssVOrdIdl) -> AlgAssVOrdIdl
+{ginven a fractional S ideal I, returns the ideal d*I when d is the smallest integer such that d*I is integral in S}
+	require IsFiniteEtale(Algebra(I)): "the algebra of definition must be finite and etale over Q";
+	if IsIntegral(I) then return I; end if;
+	S:=Order(I);
+	d:=Denominator(ChangeRing(Matrix(Coordinates(ZBasis(I),ZBasis(S))),Rationals()));
+	return d*I;
 end intrinsic;
 
 intrinsic 'eq'(I::AlgAssVOrdIdl, S::AlgAssVOrd) -> BoolElt
