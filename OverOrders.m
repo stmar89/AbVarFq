@@ -1,6 +1,3 @@
-ciao
-
-
 freeze;
 
 /////////////////////////////////////////////////////
@@ -72,7 +69,7 @@ intrinsic QuotientVS(I::AlgAssVOrdIdl, J::AlgAssVOrdIdl, P::AlgAssVOrdIdl, K::Fl
 	F := FreeAbelianGroup(N);
 	relJ := [F ! cc : cc in Coordinates(ZBasis(J),zbI)];
     rel:=relJ;
-all_rel_i:=[];
+//all_rel_i:=[];
 	mFI := map<F->A| x:->&+[Eltseq(x)[i]*zbI[i] : i in [1..N]]>;
 	mIF := map<A->F| x:-> F ! Eltseq(Coordinates([x],zbI)[1])>;
 	Q0,q0 := quo<F|rel>; //q0:F->Q. Q0 is an "abstract" abelian group isomorphic to I/J.
@@ -89,11 +86,43 @@ all_rel_i:=[];
 		Q, q := quo<F|rel>; //q:F->Q
 	end for;
 	assert IsTrivial(Q);
-    //we create the quotients that will be used for the map mIV
+    //function with HNF
+    zbJ:=ZBasis(J);
+    zbS:=ZBasis(S);
+    gens:=&cat[[ b*z: z in zbS ] : b in bas];
+    mat:=Matrix(gens cat zbJ);
+    den:=Denominator(mat);
+    dmat:=ChangeRing(den*mat,Integers());
+    H,Tr:=HermiteForm(dmat);//Tr*M eq H
+    HI,TrI:=HermiteForm(ChangeRing(den*Matrix(zbI),Integers()));
+    TrI:=ChangeRing(TrI,Rationals());
+    Tr1:=ChangeRing(Matrix(Rows(Tr)[1..#zbI]),Rationals());
+    C:=TrI^-1*Tr1;
+//assert #Rows(Transpose(C)) eq #Rows(dmat);
+    new_coords_zbI:=[];
+    for k in [1..#zbI] do
+        zbIk:=[];
+        for i in [0..d-1] do    
+            coord_i:=&+[C[k,i*N+j]*zbS[j] : j in [1..#zbS]];
+//assert coord_i in S;
+            Append(~zbIk,coord_i);
+        end for;
+//assert (zbI[k] - (&+[zbIk[n]*bas[n] : n in [1..d]])) in J;
+        Append(~new_coords_zbI,zbIk);
+    end for;
+    mIV:=function(x)
+//assert x in I;
+        xinI:=Coordinates([x],zbI)[1];
+//assert forall{c : c in xinI | IsCoercible(Integers(),c)};
+        coords_inS:=[ &+[xinI[i]*new_coords_zbI[i][k]: i in [1..#zbI]]  : k in [1..d]];
+//assert forall{c : c in coords_inS | c in S};
+        coords_inK:=[k(c) : c in coords_inS];
+        return &+[coords_inK[i]*V.i : i in [1..d]];
+    end function;
 	mVI := function(y)
 		return &+[ bas[j]*(Eltseq(y)[j]@@k) : j in [1..d] ];
     end function;
-return V, map<V->A | y:->mVI(y) >;
+    return V, map<A->V | x:->mIV(x), y:->mVI(y) >;
 end intrinsic;
 
 
@@ -114,25 +143,44 @@ if not assigned R`MinimalOverOrders then
       end if;
       for P in pp do
         pot_min_oo := {@ @}; // will contain all potential minimal over-orders.
+        pot_min_oo_2 := {@ @}; // will contain all potential minimal over-orders of dimension ge 2
         F, f := ResidueField(P);
         T := MultiplicatorRing(P);
-        V,mVT := QuotientVS(OneIdeal(T), OneIdeal(R), P, F, f);
+        V,mTV := QuotientVS(OneIdeal(T), OneIdeal(R), P, F, f);
+//assert forall{ v : v in Basis(V) | mTV((v@@mTV)^2) in V };
         d := Dimension(V);
         //see Proposition 5.3 of Tommy's paper
         if d eq 1 then
           Include(~min_oo, T);
         else
+          p:=Characteristic(F);
+          ppow:=hom<V->V | [mTV((v@@mTV)^p) : v in Basis(V)]>;
+          eigen_vals:=Setseq(Eigenvalues(Matrix(ppow)));
+          eigen_spaces:=[Kernel(hom<V->V | [mTV((v@@mTV)^p)-e[1]*v : v in Basis(V)]>)
+                               : e in eigen_vals]; //in this way there are naturally embedded in V
+ //eigen_spaces;
+          subs_1:=[ W: W in &cat[Submodules(E) : E in eigen_spaces] | Dimension(W) eq 1];
+ //#subs_1;
+          for W in subs_1 do //dim eq 1
+            wT:=(W.1)@@mTV;
+            if p eq 2 or mTV(wT^2) in W then //for p eq 2 being a subspace of the eigenspace garantuees that it is mult closed
+                S:=Order([wT] cat zbR);
+                Include(~pot_min_oo,S);
+                Include(~min_oo,S);//necessarly minimal
+            end if;
+          end for;
+
           dims := PrimesUpTo(d);
-          subs := Submodules(V : CodimensionLimit := d-1); //only subs of dim a prime number
-          subs := [W : W in subs | Dimension(W)+1 in dims];
+          subs_2 := Submodules(V : CodimensionLimit := d-2); //only subs of dim a prime number
+          subs_2 := [W : W in subs_2 | Dimension(W)+1 in dims];
           //the +1 comes from using (P:P)/R instead of (P:P)/P, see Remark 5.4
-        //TODO: add special test for W of dim 1
-          for W in subs do
-            S := Order([mVT(w) : w in Basis(W)] cat zbR);
+          for W in subs_2 do //dim at least 2
+            S := Order([(w@@mTV) : w in Basis(W)] cat zbR);
             Include(~pot_min_oo,S);
+            Include(~pot_min_oo_2,S);
           end for;
           //we remove non-minimals
-          for S in pot_min_oo do
+          for S in pot_min_oo_2 do
             if not exists {T : T in pot_min_oo | S ne T and T subset S} then
               Include(~min_oo, S);
             end if;
