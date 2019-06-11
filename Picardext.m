@@ -344,7 +344,7 @@ intrinsic UnitGroup2(S::AlgAssVOrd) -> GrpAb, Map
     require IsFiniteEtale(Algebra(S)): "the algebra of definition must be finite and etale over Q";
     A:=Algebra(S);
     require assigned A`NumberFields: "the order must lie in a product of number fields";
-    O:=MaximalOrder(S);
+    O:=MaximalOrder(Algebra(S));
     UO,uO:=UnitGroup2_prod_internal(O); //TODO add varargs
     F:=Conductor(S);
     FO:=ideal<O|ZBasis(F)>;

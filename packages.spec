@@ -1,6 +1,7 @@
 {
 AbelianVarieties.m
 Ordersext.m
+IdealClassMonoid.m
 OverOrders.m
 IdealsNF.m
 PeriodMatrices.m
