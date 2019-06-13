@@ -6,6 +6,8 @@ freeze;
 // http://www.staff.science.uu.nl/~marse004/
 // and Edgar Costa, MIT
 /////////////////////////////////////////////////////
+declare attributes AlgAssVOrd : MinimalOverOrders;
+declare attributes AlgAssVOrd : OverOrders;
 
 intrinsic pMaximalOrder(O::AlgAssVOrd, p::RngIntElt) -> AlgAssVOrd
 {given O, retuns the maximal p over order}

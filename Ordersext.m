@@ -21,8 +21,6 @@ RANF_protected:=RationalsAsNumberField();
 declare attributes AlgAss : NumberFields;
 declare attributes AlgAss : isFiniteEtale;
 declare attributes AlgAss : CMType;
-declare attributes AlgAssVOrd : MinimalOverOrders;
-declare attributes AlgAssVOrd : OverOrders;
 declare attributes AlgAssVOrd : OneIdeal;
 declare attributes AlgAssVOrd : Index;
 //alternative to declare attributes AlgAssVOrdIdl:Index;
@@ -233,12 +231,14 @@ end intrinsic;
 
 intrinsic 'meet'(I::AlgAssVOrdIdl, S::AlgAssVOrd) -> AlgAssVOrdIdl
 {given an ideal I of S, return S cap I}
+    assert Algebra(I) eq Algebra(S);
     require Order(I) eq S: "the second argument must be an ideal of the first argument";
     return S meet I;
 end intrinsic;
 
 intrinsic 'meet'(S::AlgAssVOrd,I::AlgAssVOrdIdl) -> AlgAssVOrdIdl
 {given an ideal I of S, return S cap I}
+    assert Algebra(I) eq Algebra(S);
     require Order(I) eq S: "the second argument must be an ideal of the first argument";
     output := OneIdeal(S) meet I;
     return output;
@@ -246,6 +246,7 @@ end intrinsic;
 
 intrinsic IsCoprime(I::AlgAssVOrdIdl,J::AlgAssVOrdIdl) -> BoolElt
 {given two integral ideals I and J of an order S, returns whether I+J=R}
+    assert Algebra(I) eq Algebra(J);
     require IsFiniteEtale(Algebra(I)): "the algebra of definition must be finite and etale over Q";
     S:=Order(J);
     require Order(I) eq S: "the ideals must be over the same order";
@@ -271,6 +272,7 @@ end intrinsic;
 
 intrinsic 'eq'(I::AlgAssVOrdIdl, S::AlgAssVOrd) -> BoolElt
 {return if I eq S. I needs to be an ideal of S}
+  assert Algebra(I) eq Algebra(S);
   if Index(S, I) eq 1 then
       return I eq OneIdeal(S);
   else
@@ -285,12 +287,14 @@ end intrinsic;
 
 intrinsic 'subset'(S::AlgAssVOrd,I::AlgAssVOrdIdl) -> BoolElt
 {given an ideal I of S, return if S subseteq I}
+    assert Algebra(I) eq Algebra(S);
     require Order(I) eq S: "the second argument must be an ideal of the first argument";
     return OneIdeal(S) subset I;
 end intrinsic;
 
 intrinsic 'subset'(I::AlgAssVOrdIdl,S::AlgAssVOrd) -> BoolElt
 {given an ideal I of S, return if I subseteq S}
+    assert Algebra(I) eq Algebra(S);
     require Order(I) eq S: "the first argument must be an ideal of the second argument";
     return I subset OneIdeal(S);
 end intrinsic;
@@ -317,6 +321,7 @@ end intrinsic;
 
 intrinsic Index(S::AlgAssVOrd, T::AlgAssVOrd) -> Any
 {given two orders T \subset S, returns [S:T] = #S/T }
+  assert Algebra(T) eq Algebra(S);
   elt := Index(T)/Index(S);
   if IsCoercible(Integers(), elt) then
     elt := Integers() ! elt;
