@@ -151,6 +151,7 @@ if not assigned R`MinimalOverOrders then
           q:=#F; //need to use q! not the characterstic of F!
           qpow:=hom<V->V | [mTV((v@@mTV)^q) : v in Basis(V)]>;
           eigen_vals:=[e[1] : e in Setseq(Eigenvalues(Matrix(qpow)))];
+          /* THIS IS WRONG... I THINK IT IS BECAUSE V is not Unital... need more thinking.
           //we treat the 0 eigenvalue separatly because the multiplication test is faster.
           if 0 in eigen_vals then
               eigen_spaces_z:=Kernel(hom<V->V | [qpow(v): v in Basis(V)]>); 
@@ -166,8 +167,10 @@ if not assigned R`MinimalOverOrders then
                 end if;
               end for;
           end if;
+          */
           eigen_spaces_nz:=[Kernel(hom<V->V | [qpow(v)-e*v : v in Basis(V)]>)
-                               : e in Exclude(eigen_vals,0)]; //in this way there are naturally embedded in V
+                               //: e in Exclude(eigen_vals,0)]; //in this way there are naturally embedded in V
+                               : e in eigen_vals]; //in this way there are naturally embedded in V
           subs_1:=[ W: W in &cat[Submodules(E) : E in eigen_spaces_nz] | Dimension(W) eq 1];
           for W in subs_1 do //dim eq 1
             wT:=W.1@@mTV;
