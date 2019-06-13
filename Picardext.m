@@ -9,7 +9,6 @@ freeze;
 import "usefulfunctions.m": AllPossibilities;
 
 /*TODO:
--The picard Groups intrinsic is much slower than the in built one. Investigate!
 -Discrete Log in ResidueRingUnits (is it necessary?)
 -Discrete Log for PicardGroup (it seems that I have already implemented it for PicardGroup_prod)
 */
