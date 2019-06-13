@@ -11,7 +11,7 @@ declare attributes AlgAssVOrd : OverOrders;
 
 intrinsic pMaximalOrder(O::AlgAssVOrd, p::RngIntElt) -> AlgAssVOrd
 {given O, retuns the maximal p over order}
-  if (Norm(Discriminant(O)) mod p^2) ne 0 then
+  if (Abs(Integers() ! Discriminant(O)) mod p^2) ne 0 then
     return O;
   end if;
 
@@ -28,7 +28,7 @@ end intrinsic;
 
 intrinsic ResidueField(P::AlgAssVOrdIdl) -> FldFin, Map
 { given P a prime of S, returns a finite field F isomorphic to S/P and a surjection (with inverse) S->F.}
-	//assert IsPrime(P);
+	assert2 IsPrime(P);
 	S := Order(P);
 	Q,q := ResidueRing(S,P); //q:S->S/P
 	size := #Q;
@@ -213,7 +213,7 @@ end intrinsic;
 
 
 intrinsic FindOverOrders_Minimal(R::AlgAssVOrd) -> SetIndx[AlgAssVOrd]
-{ Given an order R returns all the over orders by a recursice search of the minimal overordes.
+{ Given an order R returns all the over orders by a recursive search of the minimal overordes.
   Based on "On the computations of overorders" by TommyHofmann and Carlo Sircana}
   A := Algebra(R);
   require IsFiniteEtale(A): "the algebra of definition must be finite and etale over Q";
