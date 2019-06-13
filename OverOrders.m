@@ -179,7 +179,7 @@ if not assigned R`MinimalOverOrders then
                 Include(~min_oo,S);//necessarly minimal
             end if;
           end for;
-          dims := PrimesUpTo(d);
+          dims := PrimesUpTo(d+1); //the plus one is to prevent issues when d=2.
           subs_2 := Submodules(V : CodimensionLimit := d-2); //we exclude dim 0 and 1
           subs_2 := [W : W in subs_2 | Dimension(W)+1 in dims];
           //only subs of dim a prime number
