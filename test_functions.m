@@ -69,6 +69,10 @@ intrinsic RunTests() -> BoolElt
     f:=x^3+31*x^2+43*x+77;
     K:=AssociativeAlgebra(f);
     E:=EquationOrder(K);
+    if #FindOverOrders(E) ne 15 then 
+      test:=false;
+      printf"\nERROR: OverOrders of f=%o\n",f;
+    end if;
     SeqWC:=WKICM(E);
     if #SeqWC ne 23 then
       test:=false;
