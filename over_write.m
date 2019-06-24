@@ -31,32 +31,8 @@ in an associative algebra.}
     return ans;
 end intrinsic;
 
-///////////////////TO WORK ON!!!!!!!!!!!!!!
-
-function IsOrder(O);
-  S := Basis(O);
-  I := CoefficientIdeals(PseudoMatrix(O));
-  // Check that (S,I) generates a ring
-  isRing := true;
-  for i,j in [1..Degree(O)] do
-    for gi in Generators(I[i]) do
-      for gj in Generators(I[j]) do
-        s := gi*S[i];
-        t := gj*S[j];
-          if not s*t in O then
-            printf "i = %o\nj = %o\ngi = %o\ngj = %o\nS[i] = %o\nS[j] = %o\nst = %o\n",
-                    i, j, gi, gj, S[i], S[j], s*t;
-            isRing := false;
-            break i;
-        end if;
-      end for;
-    end for;
-  end for;
-
-  return isRing;
-end function;
-
 function order_over(Z_F, S, I : Check := true)
+//modified from order-jv.m
   A := Universe(S);
   F := BaseRing(A);
   n := Dimension(A);
@@ -101,14 +77,16 @@ function order_over(Z_F, S, I : Check := true)
   I:=I_new;
   O := Order(A, M, I);
 
-  assert IsOrder(O);
+  assert2 IsOrder(O);
   return O;
 end function;
 
+/*
 intrinsic Order(S::SeqEnum[AlgAssVElt[FldAlg]], I::SeqEnum[RngOrdFracIdl] : Check := true) -> AlgAssVOrd
   {Returns the order which has pseudobasis given by the basis elements S
    and the coefficient ideals I}
-
+//over-writes order-jv.m
+//it seems to be exactly the same!
   A := Universe(S);
   F := BaseRing(A);
   Z_F := MaximalOrder(F);
@@ -121,9 +99,11 @@ intrinsic Order(S::SeqEnum[AlgAssVElt[FldAlg]], I::SeqEnum[RngOrdFracIdl] : Chec
   require not ISA(Type(A), AlgMatV) : "Argument 1 must not contain elements of a matrix algebra";
   return order_over(Z_F, S, I : Check := Check);
 end intrinsic;
+*/
 
 intrinsic '+'(O1::AlgAssVOrd[RngOrd], O2::AlgAssVOrd[RngOrd]) -> AlgAssVOrd
   {Computes the sum O1+O2, the smallest order containing both O1 and O2.}
+//over-writes order-jv.m
   require Algebra(O1) cmpeq Algebra(O2) :
     "Orders must be contained in the same algebra";
 //what follows is the WRONG original code: it's the sum of O1 and O2 as modules, not the smallest order containing O1 and O2!!!!!!!
@@ -146,8 +126,10 @@ intrinsic '+'(O1::AlgAssVOrd[RngOrd], O2::AlgAssVOrd[RngOrd]) -> AlgAssVOrd
   end if;
 end intrinsic;
 
-intrinsic '*'(I::AlgAssVOrdIdl[RngOrd], J::AlgAssVOrdIdl[RngOrd]) -> AlgAssVOrdIdl, AlgAssVOrdIdl
+intrinsic '*'(I::AlgAssVOrdIdl[RngOrd], J::AlgAssVOrdIdl[RngOrd]) -> AlgAssVOrdIdl
 {Product of ideals I and J.}
+//over-writes ..../ideals.m
+//over-writes ..../ideals-jv.m
   A:=Algebra(I);
   require IsFiniteEtale(A): "Arguments must be ideals of orders in an Finite Etale Algebra over Q";
   O:=Order(I);
@@ -171,5 +153,4 @@ intrinsic '*'(I::AlgAssVOrdIdl[RngOrd], J::AlgAssVOrdIdl[RngOrd]) -> AlgAssVOrdI
   IJ := ideal<O | P>;
   return IJ;
 end intrinsic;
-
 
