@@ -6,8 +6,6 @@ freeze;
 // http://www.staff.science.uu.nl/~marse004/
 /////////////////////////////////////////////////////
 
-import "usefulfunctions.m": AllPossibilities;
-
 intrinsic WKICM_bar(S::AlgAssVOrd) -> SeqEnum
 {returns all the weak eq classes I, such that (I:I)=S}
 //TODO : prime per prime;

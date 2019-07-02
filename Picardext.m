@@ -6,13 +6,6 @@ freeze;
 // http://www.staff.science.uu.nl/~marse004/
 /////////////////////////////////////////////////////
 
-import "usefulfunctions.m": AllPossibilities;
-
-/*TODO:
--Discrete Log in ResidueRingUnits (is it necessary?)
--Discrete Log for PicardGroup (it seems that I have already implemented it for PicardGroup_prod)
-*/
-
 declare attributes AlgAssVOrd:PicardGroup;
 declare attributes AlgAssVOrd:UnitGroup;
 
@@ -422,4 +415,25 @@ intrinsic IsPrincipal(I1::AlgAssVOrdIdl)->BoolElt, AlgAssElt
     else
         return false, _;
     end if;  
+end intrinsic;
+
+intrinsic IsIsomorphic2(I::AlgAssVOrdIdl, J::AlgAssVOrdIdl) -> BoolElt, AlgAssElt
+{checks if I=x*J, for some x. If so, also x is returned}
+    require IsFiniteEtale(Algebra(I)): "the algebra of definition must be finite and etale over Q";
+    test:=IsWeakEquivalent(I,J); //if so I=(I:J)*J and (I:J) is invertible in its MultiplicatorRing
+    if test then
+        S:=MultiplicatorRing(I);
+        IS:=S!I;
+        JS:=S!J;
+        CIJ:=ColonIdeal(IS,JS);
+        test2,x:= IsPrincipal(CIJ);
+        if test2 then
+            return test2,x;
+        assert2 I eq x*J;
+        else
+            return false, _ ;
+        end if;
+    else
+        return false , _ ;
+    end if;
 end intrinsic;

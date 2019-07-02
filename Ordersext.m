@@ -7,13 +7,11 @@ freeze;
 // with the help of Edgar Costa
 /////////////////////////////////////////////////////
 
-import "usefulfunctions.m": AllPossibilities;
 declare verbose Ordersext, 1;
 
 /*TODO:
 -compare my IsZeroDivisor2 with the already built-in IsUnit
 -IsFiniteEtale is wrong!!! it does not recognize the base ring, on the other hand, when I define an AssociativeAlgebra, I set the test to be true, so it is sort of harmless.
--Put all the "if assigned ??" in dedicated functions
 */
 
 RANF_protected:=RationalsAsNumberField();
@@ -21,6 +19,7 @@ RANF_protected:=RationalsAsNumberField();
 declare attributes AlgAss : NumberFields;
 declare attributes AlgAss : isFiniteEtale;
 declare attributes AlgAss : CMType;
+declare attributes AlgAss : DefiningPolynomial;
 declare attributes AlgAssVOrd : OneIdeal;
 declare attributes AlgAssVOrd : Index;
 //alternative to declare attributes AlgAssVOrdIdl:Index;
@@ -358,22 +357,6 @@ intrinsic Index(S::AlgAssVOrd, I::AlgAssVOrdIdl) -> FldRatElt
     return Index(OneIdeal(S), I);
 end intrinsic;
 
-/*
-intrinsic Automorphisms(A::AlgAss) -> SeqEnum[Maps]
-{returns the automorphisms of A as a sequence of maps. A must be a product of number fields and the maps are componentwise automorphisms}
-    require IsFiniteEtale(A): "the algebra of definition must be finite and etale over Q";
-    S:=[ Automorphisms(L[1]) : L in A`NumberFields ];
-    output:=[];
-    for s in AllPossibilities(S) do
-        r:=#A`NumberFields;
-        assert #s eq r;
-        map_s:=map< A->A | x:-> &+[A`NumberFields[i,2](s[i](Components(x)[i])) : i in [1..r]] >;
-        Append(~output, map_s);
-    end for;
-    return output;
-end intrinsic;
-*/
-
 intrinsic HomsToC(A::AlgAss : Precision:=30)->SeqEnum[Map]
 {returns Hom(A,\C) as a sequence of maps. The precision of \C is given by the optional parameter "Precision". Default value is 30}
     require IsFiniteEtale(A): "the algebra of definition must be finite and etale over Q";
@@ -472,6 +455,7 @@ intrinsic EquationOrder(A::AlgAss) -> AlgAssVOrd
 {given an associative algebra defined by a polynomial, returns the monogenic order defined by the same polynomial}
     require IsFiniteEtale(A): "the algebra of definition must be finite and etale over Q";
     F:=PrimitiveElement(A);
+    //this will return an error if there are more than one copies of the same number field in the decomposition of A
     E:=Order([F^i : i in [0..Degree(A)-1]]);
     return E;
 end intrinsic;
@@ -574,7 +558,9 @@ intrinsic AssociativeAlgebra(f::RngUPolElt) -> AlgAss
 {given a integer polynomial f generates the Associative algebra over Q given by the factors of f with multiplicity}
   f_fac:=Factorization(f);
   num_fields:=[NumberField(g[1] : DoLinearExtension := true) : j in [1..g[2]] , g in f_fac];
-  return AssociativeAlgebra(num_fields);
+  A:=AssociativeAlgebra(num_fields);
+  A`DefiningPolynomial:=f;
+  return A;
 end intrinsic;
 
 intrinsic AssociativeAlgebra(S::SeqEnum[FldNum]) -> AlgAss
@@ -617,37 +603,6 @@ intrinsic AssociativeAlgebra(S::SeqEnum[FldNum]) -> AlgAss
     return A;
 end intrinsic;
 
-/*
-splittingfield_internal:=function(K)
-//given a number field K returns a pair L,l where L is the SplittingField of K and l is an embedding K in L
-//it is much faster then the in-built function SplittingField(K)
-    f:=DefiningPolynomial(K);
-    F:=PrimitiveElement(K);
-    L:=SplittingField(f);
-    pL:=PolynomialRing(L);
-    fact:=Factorization(pL!f);
-    l:=hom<K->L | F:->Coefficients(fact[1,1])[1]>;
-    return L,l;
-end function;
-
-intrinsic SplittingAlgebra(A::AlgAss) -> AlgAss, Map
-{ given a product of number fields A, returns the product of the splitting fields and a map from A }
-    require IsFiniteEtale(A): "the algebra of definition must be finite and etale over Q";
-    split_fields:=[];
-    split_fields_embeddings:=[];
-    for K in A`NumberFields do
-        L,l:=splittingfield_internal(K[1]);
-        Append(~split_fields,L);
-        Append(~split_fields_embeddings,l);
-    end for;
-    AA:=AssociativeAlgebra(split_fields);
-    assert #A`NumberFields eq #AA`NumberFields;
-    map_AtoAA:=map< A -> AA | x :-> &+[AA`NumberFields[i][2](split_fields_embeddings[i](Components(x)[i])) : i in [1..#AA`NumberFields]]>;
-    return AA, map_AtoAA;
-end intrinsic;
-*/
-
-
 intrinsic PrimitiveElement(A::AlgAss) -> AlgAssElt
 { it returns an element which corresponds to the class of X in Q[X]/(f(X)) }
     require IsFiniteEtale(A): "the algebra of definition must be finite and etale over Q";
@@ -658,7 +613,10 @@ end intrinsic;
 intrinsic DefiningPolynomial(A::AlgAss) -> RngUPolElt
 { it returns an element which corresponds to the class of X in Q[X]/(f(X)) }
     require IsFiniteEtale(A): "the algebra of definition must be finite and etale over Q";
-    return &*[DefiningPolynomial(L[1]) : L in A`NumberFields];
+    if not assigned A`DefiningPolynomial then
+        A`DefiningPolynomial:=&*[DefiningPolynomial(L[1]) : L in A`NumberFields];
+    end if;
+    return A`DefiningPolynomial;
 end intrinsic;
 
 intrinsic '^'(I::AlgAssVOrdIdl, n::RngIntElt) -> AlgAssVOrdIdl
@@ -769,27 +727,6 @@ intrinsic IsProductOfIdeals(I::AlgAssVOrdIdl) -> BoolElt, Tup
     end if;
 end intrinsic;
 
-intrinsic IsIsomorphic2(I::AlgAssVOrdIdl, J::AlgAssVOrdIdl) -> BoolElt, AlgAssElt
-{checks if I=x*J, for some x. If so, also x is returned}
-    require IsFiniteEtale(Algebra(I)): "the algebra of definition must be finite and etale over Q";
-    test:=IsWeakEquivalent(I,J); //if so I=(I:J)*J and (I:J) is invertible in its MultiplicatorRing
-    if test then
-        S:=MultiplicatorRing(I);
-        IS:=S!I;
-        JS:=S!J;
-        CIJ:=ColonIdeal(IS,JS);
-        test2,x:= IsPrincipal(CIJ);
-        if test2 then
-            return test2,x;
-        assert2 I eq x*J;
-        else
-            return false, _ ;
-        end if;
-    else
-        return false , _ ;
-    end if;
-end intrinsic;
-
 intrinsic Components(x::AlgAssElt) -> SeqEnum
 {returns the components of the element as in the product of number fields}
     A:=Parent(x);
@@ -821,15 +758,6 @@ intrinsic TraceDualIdeal(O::AlgAssVOrd) -> AlgAssVOrdIdl
     require IsFiniteEtale(Algebra(O)): "the algebra of definition must be finite and etale over Q";
     return TraceDualIdeal(OneIdeal(O));
 end intrinsic;
-
-/*
-intrinsic IsFractionalIdl(I::AlgAssVOrdIdl) -> BoolElt
-{ checks if the ideal is fractional, that is if contains a non-zero-divisor }
-    require IsFiniteEtale(Algebra(I)): "the algebra of definition must be finite and etale over Q";
-    num_gens:=#Generators(I); //note that the number of generators depends on the rank as an abelian group
-    return num_gens eq Dimension(Algebra(I));
-end intrinsic;
-*/
 
 intrinsic IsMaximal(O::AlgAssVOrd) -> BoolElt
 { checks if the order is the maximal order of its associative algebra}

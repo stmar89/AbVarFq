@@ -1,17 +1,10 @@
 freeze;
 
-/////////////////////////////////////////////////////
-// Abelian varieties with squarefree polynomial, polarizations for the ordinary case and automorphisms
+////////////////////////////////////////////////////////////////////////////////////
+// Z-conjugacy test for integral matrices with square-free characteristic polynomial
 // Stefano Marseglia, Utrecht University, s.marseglia@uu.nl
 // http://www.staff.science.uu.nl/~marse004/
-/////////////////////////////////////////////////////
-
-/* LIST of functions:
-intrinsic IdealToMatrix( I::AlgAssVOrdIdl )->AlgMatElt
-intrinsic MatrixToIdeal( A::AlgAss,M::AlgMatElt )-> AlgAssVOrdIdl
-intrinsic IsZConjugate( M1::AlgMatElt , M2:: AlgMatElt) -> BoolElt
-intrinsic RepresentativesZConjugate( f::RngUPolElt ) -> Seq
-*/
+///////////////////////////////////////////////////////////////////////////////////
 
 intrinsic IdealToMatrix( I::AlgAssVOrdIdl )->AlgMatElt
 {given an ideal of an order in an (étale) algebra A=Q[x]/f1 x ...x Q[x]/fr, let a:=(x mod f1,..,x mod fr), return the integral matrix corresponding to the map "*a":I->I. Note that this matrix depends on the choice of a ZBasis of I and hence is uniquely defined only up to conjugation in Z}
@@ -71,16 +64,3 @@ intrinsic IsZConjugate( M1::AlgMatElt , M2:: AlgMatElt) -> BoolElt
 	end if;
 end intrinsic;
 
-
-intrinsic RepresentativesZConjugate( f::RngUPolElt ) -> Seq
-{given a monic square-free polynomial f with integer coefficients it returns a set of representatives of the Z-conjugacy classes of integral matrices with characteristic (and and hence also minimal) polynomial f }
-	require BaseRing(f) eq Integers() : "the polynomial doesn't have integer coefficients";
-	require IsSquarefree(f) : "the polynomial is not squarefree";
-	require IsMonic(f) : "the polynomial is not monic";
-
-	A:=AssociativeAlgebra(f);
-	E:=EquationOrder(A);
-	icm:=ICM(E);
-	reps:=[ IdealToMatrix(I) : I in icm ];
-	return reps;
-end intrinsic;
