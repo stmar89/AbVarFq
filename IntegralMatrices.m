@@ -39,8 +39,11 @@ intrinsic MatrixToIdeal( A::AlgAss,M::AlgMatElt )-> AlgAssVOrdIdl
 	return Ws;
 end intrinsic;
 
-intrinsic IsZConjugate( M1::AlgMatElt , M2:: AlgMatElt) -> BoolElt
-{given two integral matrices M1 and M2 with squarefree charactersitic polynomial returns wheter the matrices are conjugates over the integers and if this is the case, it returns also a matrix U such that U^-1*M1*U equals M2}
+intrinsic IsZConjugate( M1::AlgMatElt , M2:: AlgMatElt : GRH:=true ) -> BoolElt
+{
+    Given two integral matrices M1 and M2 with squarefree charactersitic polynomial returns wheter the matrices are conjugates over the integers and if this is the case, it returns also a matrix U such that U^-1*M1*U equals M2.
+    The GRH optional argument sets the method bound that will be used in the isomorphism test. The default value is "true".
+}
 	f:=CharacteristicPolynomial(M1);
 	if not CharacteristicPolynomial(M2) eq f then 
 		printf "the characteristic polynomials are not the same\n";
@@ -53,10 +56,10 @@ intrinsic IsZConjugate( M1::AlgMatElt , M2:: AlgMatElt) -> BoolElt
 		bas2:=MatrixToIdeal(A,M2);
 		id1:=ideal<R|bas1>;
 		id2:=ideal<R|bas2>;
-		test,elt:=IsIsomorphic2(id1,id2);
+        test,elt:=IsIsomorphic2(id1,id2 : GRH:=GRH );
 		if test then
 			U:=Transpose(Matrix(Integers(),[Eltseq(s) :s in Coordinates([elt*b : b in bas2],bas1)]));
-			assert (U^-1*M1*U) eq M2;
+			assert2 (U^-1*M1*U) eq M2;
 			return test,U;
 		else
 			return false,_;

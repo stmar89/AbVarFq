@@ -18,7 +18,6 @@ RANF_protected:=RationalsAsNumberField();
 
 declare attributes AlgAss : NumberFields;
 declare attributes AlgAss : isFiniteEtale;
-declare attributes AlgAss : CMType;
 declare attributes AlgAss : DefiningPolynomial;
 declare attributes AlgAssVOrd : OneIdeal;
 declare attributes AlgAssVOrd : Index;
@@ -391,7 +390,7 @@ function factorizationMaximalOrder(I)
             Append(~fac,<P,p[2]>);
         end for;
     end for;
-    assert I eq &*[p[1]^p[2] : p in fac];
+    assert2 I eq &*[p[1]^p[2] : p in fac];
     return fac;
 end function;
 
@@ -415,7 +414,7 @@ intrinsic Factorization(I::AlgAssVOrdIdl) -> Tup
             expP:=&+([ pO[2] : pO in facO | (S meet (S!pO[1])) eq P ]);
             Append(~facS, <P,expP>);
         end for;
-        assert I eq &*([ p[1]^p[2] : p in facS ]);
+        assert2 I eq &*([ p[1]^p[2] : p in facS ]);
         return facS;
     end if;
 end intrinsic;
@@ -661,11 +660,21 @@ intrinsic IsProductOfOrders(O::AlgAssVOrd)->BoolElt, Tup
     idem:=OrthogonalIdempotents(A);
     test:=forall{x : x in idem | x in O};
     O_asProd:=<>;
+    is_max:=IsMaximal(O);
     if test then
         for i in [1..#A`NumberFields] do
             L:=A`NumberFields[i];
             gen_L:=[(x*idem[i])@@L[2]: x in ZBasis(O)];
             O_L:=Order(gen_L);
+            if is_max then
+                if not assigned O_L`Maximal then O_L`Maximal:=true;
+                else assert O_L`Maximal eq true;
+                end if;
+                if not assigned L[1]`MaximalOrder then L[1]`MaximalOrder:=O_L;
+                else assert2 L[1]`MaximalOrder eq O_L;
+                end if;
+                //note: is not is_max it might still happen than OL is the maximal order of L. that's why we don't set it
+            end if;
             Append(~O_asProd,O_L);
         end for;
         return true, O_asProd;
