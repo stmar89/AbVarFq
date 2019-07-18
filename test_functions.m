@@ -13,7 +13,7 @@ find_all_princ_pol_ab:=function(A,phi)
   V:=q*F^-1;
   E:=Order([V,F]);
   seqOO:=FindOverOrders(E);
-  ICM_conjstable:=&cat[[ ideal<E| ZBasis(I)> : I in ICM_bar(S)] : S in seqOO | ComplexConjugate(S) eq S ];
+  ICM_conjstable:=&cat[[ Ideal(E,Generators(I)) : I in ICM_bar(S)] : S in seqOO | ComplexConjugate(S) eq S ];
   output:=[];
   for I in ICM_conjstable do
     test,pols:=IsPrincPolarized(I,phi);
@@ -39,17 +39,17 @@ intrinsic RunTests() -> BoolElt
  //   need and example with non-cyclic PicardGroups
     ];
     for f in list_of_poly do
-        K:=AssociativeAlgebra(f);
+        K:=EtaleAlgebra(f);
         E:=EquationOrder(K);
         O:=MaximalOrder(K);
 //         seqOO:=FindOverOrders(E); #seqOO;
-        U,u:=UnitGroup2(O);
+        U,u:=UnitGroup(O);
         GE,gE:=PicardGroup(E);
 ".";        
     end for;
     
     f:=x^4-1000*x^3-1000*x^2-1000*x-1000;
-    K:=AssociativeAlgebra(f);
+    K:=EtaleAlgebra(f);
     E:=EquationOrder(K);
     SeqWC:=WKICM(E);
     if #SeqWC ne 25 then
@@ -58,7 +58,7 @@ intrinsic RunTests() -> BoolElt
     end if;
 ".";
     f:=x^4+291*x^3-988*x^2-1000*x-1000;
-    K:=AssociativeAlgebra(f);
+    K:=EtaleAlgebra(f);
     E:=EquationOrder(K);
     SeqWC:=WKICM(E);
     if #SeqWC ne 20 then
@@ -67,7 +67,7 @@ intrinsic RunTests() -> BoolElt
     end if;
 ".";
     f:=x^3+31*x^2+43*x+77;
-    K:=AssociativeAlgebra(f);
+    K:=EtaleAlgebra(f);
     E:=EquationOrder(K);
     if #FindOverOrders(E) ne 15 then 
       test:=false;
@@ -80,7 +80,7 @@ intrinsic RunTests() -> BoolElt
     end if;
  ".";
     f:=x^4+4*x^3+6*x^2+44*x+121;
-    K:=AssociativeAlgebra(f);
+    K:=EtaleAlgebra(f);
     cm:=CMType(K);
     if #cm ne 1 then
       test:=false;
@@ -95,7 +95,7 @@ intrinsic RunTests() -> BoolElt
     end if;
 ".";
     f:=x^6-2*x^5-3*x^4+24*x^3-15*x^2-50*x+125;
-    K:=AssociativeAlgebra(f);
+    K:=EtaleAlgebra(f);
     cm:=CMType(K);
     if #cm ne 1 then
       test:=false;
@@ -110,7 +110,7 @@ intrinsic RunTests() -> BoolElt
     end if;
 ".";
     f:=elt<R|[81,-135,117,-75,44,-25,13,-5,1]>;
-    K:=AssociativeAlgebra(f);
+    K:=EtaleAlgebra(f);
     cm:=CMType(K);
     if #cm ne 1 then
       test:=false;
@@ -142,7 +142,7 @@ intrinsic RunTests() -> BoolElt
     ];
     results:=[Rationals() | ];
 for f in poly_list do
-    K:=AssociativeAlgebra(f);
+    K:=EtaleAlgebra(f);
     cm:=CMType(K);
     if #cm ne 1 then
       test:=false;

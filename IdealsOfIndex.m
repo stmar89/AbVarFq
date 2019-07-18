@@ -81,7 +81,7 @@ intrinsic IdealsOfIndexProduct(Is::Tup, N::RngIntElt) -> SeqEnum[Tup]
     return result;
 end intrinsic;
 
-intrinsic IdealsOfIndex(I::AlgAssVOrdIdl[RngOrd], N::RngIntElt : Al := "Default") -> SeqEnum[AlgAssVOrdIdl]
+intrinsic IdealsOfIndex(I::AlgEtOrdIdl, N::RngIntElt : Al := "Default") -> SeqEnum[AlgEtOrdIdl]
 {Given an O-ideal I in O and integer N returns all the subideals J of I with index [I:J]=N.
  The function is very fast if N is coprime to the conductor of O. If this conditions are not satisfied a slow algorithm is used which doesn't require additional hypothesis.
  One can force the slow-naive by setting the vararg Al:="Naive".}
@@ -116,7 +116,7 @@ intrinsic IdealsOfIndex(I::AlgAssVOrdIdl[RngOrd], N::RngIntElt : Al := "Default"
                 L := A`NumberFields[i];
                 gen_inA := gen_inA cat [L[2](y) : y in Basis(J[i], L[1])];
             end for;
-            JA:= ideal<Order(I) | gen_inA>;
+            JA:= Ideal(Order(I), gen_inA);
             assert Index(I,JA) eq N;
             Append(~result,JA);
         end for;

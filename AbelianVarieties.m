@@ -10,7 +10,7 @@ freeze;
 /////////////////////////////////////////////////////
 
 declare verbose AbelianVarieties, 1;
-declare attributes AlgAss : CMType;
+declare attributes AlgEt : CMType;
 
 /* REFERENCES:
 [Wat69] W. C. Waterhouse. Abelian varieties over finite fields. Ann. Sci. École Norm. Sup. (4), 2:521–560, 1969. 45, 53, 54
@@ -22,16 +22,14 @@ declare attributes AlgAss : CMType;
 - create an AbelianVariety container including info about the isogeny class, functor, representative of the isom class, polarizations, ....
 */
 
-intrinsic HasComplexConjugate(A::AlgAss) -> BoolElt
+intrinsic HasComplexConjugate(A::AlgEt) -> BoolElt
 {returns if the algebra is the product of CM fields}
-	require IsFiniteEtale(A): "the algebra of definition must be finite and etale over Q";
 	return forall{L : L in A`NumberFields | HasComplexConjugate(L[1])};
 end intrinsic;
 
-intrinsic ComplexConjugate(x::AlgAssElt) -> AlgAssElt
+intrinsic ComplexConjugate(x::AlgEtElt) -> AlgEtElt
 {if A is a product of CM fields, it returns the complex conjugate of the argument}
 	A:=Parent(x);
-	require IsFiniteEtale(A): "the algebra of definition must be finite and etale over Q";
 	require HasComplexConjugate(A) : "it is not a product of CM fields";
 	comp:=Components(x);
 	x_conj:=Zero(A);
@@ -42,25 +40,23 @@ intrinsic ComplexConjugate(x::AlgAssElt) -> AlgAssElt
 	return x_conj;
 end intrinsic;
 
-intrinsic ComplexConjugate(O::AlgAssVOrd) -> AlgAssVOrd
+intrinsic ComplexConjugate(O::AlgEtOrd) -> AlgEtOrd
 {if A is a product of CM fields, it returns the complex conjugate of the argument}
 	A:=Algebra(O);
-	require IsFiniteEtale(A): "the algebra of definition must be finite and etale over Q";
 	require HasComplexConjugate(A) : "it is not a product of CM fields";
-	return Order([ ComplexConjugate(x) : x in ZBasis(O) ]);
+	return Order([ ComplexConjugate(x) : x in Generators(O) ]);
 end intrinsic;
 
-intrinsic ComplexConjugate(I::AlgAssVOrdIdl) -> AlgAssVOrdIdl
+intrinsic ComplexConjugate(I::AlgEtOrdIdl) -> AlgEtOrdIdl
 {if A is a product of CM fields, it returns the complex conjugate of the argument}
 	O:=Order(I);
 	A:=Algebra(O);
-	require IsFiniteEtale(A): "the algebra of definition must be finite and etale over Q";
 	require HasComplexConjugate(A) : "it is not a product of CM fields";
 	Ob:=ComplexConjugate(O);
-	return ideal<Ob|[ ComplexConjugate(x) : x in ZBasis(I) ]>;
+	return ideal<Ob|[ ComplexConjugate(x) : x in Generators(I) ]>;
 end intrinsic;
 
-intrinsic IsPrincPolarized(I::AlgAssVOrdIdl , phi::SeqEnum[Map])->BoolElt, SeqEnum[AlgAssElt]
+intrinsic IsPrincPolarized(I::AlgEtOrdIdl , phi::SeqEnum[Map])->BoolElt, SeqEnum[AlgEtElt]
 {returns if the abelian variety is principally polarized and if so returns also all the non isomorphic polarizations}
 	S:=MultiplicatorRing(I);
 	if S eq ComplexConjugate(S) then
@@ -70,7 +66,7 @@ intrinsic IsPrincPolarized(I::AlgAssVOrdIdl , phi::SeqEnum[Map])->BoolElt, SeqEn
 	end if;
 end intrinsic;
 
-intrinsic IsogeniesMany(IS::SeqEnum[AlgAssVOrdIdl], J::AlgAssVOrdIdl, N::RngIntElt) -> BoolElt, List
+intrinsic IsogeniesMany(IS::SeqEnum[AlgEtOrdIdl], J::AlgEtOrdIdl, N::RngIntElt) -> BoolElt, List
 {Given a sequence of source abelian varieties IS, a target abelian varity J and a positive integet N, it returns for each I in IS if there exist an isogeny I->J of degree N. 
  For each I in IS, if there exists and isogeny I->J, it is also returned a list of pairs [*x,K*] where K=xI subset J (up to isomorphism).}
 //by Edgar Costa, modified by Stefano
@@ -78,7 +74,7 @@ intrinsic IsogeniesMany(IS::SeqEnum[AlgAssVOrdIdl], J::AlgAssVOrdIdl, N::RngIntE
 	isogenies_of_degree_N := [* [* *] : i in [1..#IS] *];
 	for K in IdealsOfIndex(J, N) do
 		for i := 1 to #IS do
-			test, x := IsIsomorphic2(K, IS[i]); //x*I=K
+			test, x := IsIsomorphic(K, IS[i]); //x*I=K
 			if test then
 				Append(~isogenies_of_degree_N[i], [*x, K*]);
 			end if;
@@ -87,7 +83,7 @@ intrinsic IsogeniesMany(IS::SeqEnum[AlgAssVOrdIdl], J::AlgAssVOrdIdl, N::RngIntE
 	return isogenies_of_degree_N;
 end intrinsic;
 
-intrinsic Isogenies(I::AlgAssVOrdIdl, J::AlgAssVOrdIdl, N::RngIntElt)->BoolElt, List
+intrinsic Isogenies(I::AlgEtOrdIdl, J::AlgEtOrdIdl, N::RngIntElt)->BoolElt, List
 {Given a source abelian variety I, a target abelian varity J and a positive integet N, it returns if there exist an isogeny I->J of degree N.
  If so it is also returned a list of pairs [*x,K*] where K=xI subset J (up to isomorphism).}
 //by Edgar Costa, modified by Stefano
@@ -95,11 +91,10 @@ intrinsic Isogenies(I::AlgAssVOrdIdl, J::AlgAssVOrdIdl, N::RngIntElt)->BoolElt, 
 	return #isogenies_of_degree_N[1] ge 1, isogenies_of_degree_N[1];
 end intrinsic;
 
-intrinsic IsPolarized(I0::AlgAssVOrdIdl, phi::SeqEnum[Map], N::RngIntElt)->BoolElt, SeqEnum[AlgAssElt]
+intrinsic IsPolarized(I0::AlgEtOrdIdl, phi::SeqEnum[Map], N::RngIntElt)->BoolElt, SeqEnum[AlgEtElt]
 {returns if the abelian variety has a polarization of degree N and if so it returns also all the non isomorphic polarizations}
-	require IsFiniteEtale(Algebra(I0)): "the algebra of definition must be finite and etale over Q";
 	S := MultiplicatorRing(I0);
-	I := ideal<S|ZBasis(I0)>;
+	I := Ideal(S,Generators(I0));
 	A := Algebra(S);
 	prec:=Precision(Codomain(phi[1]));
 	RR := RealField(prec); //precision added
@@ -110,7 +105,7 @@ intrinsic IsPolarized(I0::AlgAssVOrdIdl, phi::SeqEnum[Map], N::RngIntElt)->BoolE
 		return false, [];
 	end if;
 
-	U, m := UnitGroup2(S); //m:U->S
+	U, m := UnitGroup(S); //m:U->S
 	// B = Subgroup of S^* generated by u*\bar{u} : u in S^*
 	relB := Seqset([ (( m(U.i)*(ComplexConjugate(A!m(U.i))) ) )@@m : i in [1..Ngens(U)] ] ); //B is generated by u*\bar{u}
 	UqB, q := quo<U|relB>; // UqB = U/B, q:U->UqB
@@ -212,8 +207,7 @@ end intrinsic;
 
 intrinsic AutomorphismsPol(I::AlgAssVOrdIdl) -> GpAb
 {returns the automorphisms of a polarized abelian variety}
-	require IsFiniteEtale(Algebra(I)): "the algebra of definition must be finite and etale over Q";
-	return TorsionSubgroup(UnitGroup2(MultiplicatorRing(I)));
+	return TorsionSubgroup(UnitGroup(MultiplicatorRing(I)));
 end intrinsic;
 
 cm_type_internal:=function(A,prec)
@@ -249,7 +243,7 @@ cm_type_internal:=function(A,prec)
 	return cm_p_pos;
 end function;
 
-intrinsic CMType(A::AlgAss : Precision:=30 , TestOrdinary:=true)->SeqEnum[Maps]
+intrinsic CMType(A::AlgEt : Precision:=30 , TestOrdinary:=true)->SeqEnum[Maps]
 {given a product of CM number fields A=Q[x]/(f), where f is q-Weil polynomial, returns a subset of HomsToC consisting of one map A->C per conjugate pair such that the induced p-adic valuation v on \bar(Q_p) in C is such that v(a)>0, where a is a root of f. If f is ordinary then it should return only one output. Otherwise more. The precision of the computations is set by the optional parameter "Precision" (Default Value 30).}
 	f:=DefiningPolynomial(A);
 	test_Weil,q:=IsWeil(f);
@@ -260,7 +254,6 @@ intrinsic CMType(A::AlgAss : Precision:=30 , TestOrdinary:=true)->SeqEnum[Maps]
 	if assigned A`CMType then 
 		return A`CMType;
 	else
-		require IsFiniteEtale(A): "the algebra of definition must be finite and etale over Q";
 		require HasComplexConjugate(A): "it must be a product of CM number fields";
 		return cm_type_internal(A, Precision);
 	end if;

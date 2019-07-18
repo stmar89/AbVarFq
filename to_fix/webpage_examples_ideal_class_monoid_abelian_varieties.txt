@@ -1,0 +1,141 @@
+/*
+This file contains instructions and examples about ideal class monoid and isomorphism classes of abelian varieties.
+
+We refer to the PhD thesis of the author and the following 2 pre-prints for the theoretical background:
+- Marseglia, S. (2018). Computing the ideal class monoid of an order (https://arxiv.org/abs/1805.09671)
+- Marseglia, S. (2018). Computing square-free polarized abelian varieties over finite fields (https://arxiv.org/abs/1805.10223)
+
+If you find some mistakes or bugs, don't hesitate to contact me.
+*/ 
+
+/////////////////////////////////////////////////////
+// Stefano Marseglia, Stockholm University, stefanom@math.su.se
+// http://staff.math.su.se/stefanom/
+/////////////////////////////////////////////////////
+
+AttachSpec("packages.spec"); 
+// attach all the required packages. Note that we are using also the packages IdealNF.m from the Montes' project.
+
+////////////////////////////////////////////////////////////////////////////////////////////
+//Example 1: over-orders, ideal class monoid, weak equivalence classes
+////////////////////////////////////////////////////////////////////////////////////////////
+P<x>:=PolynomialRing(Integers());
+f:=x^3+31*x^2+43*x+77;
+A:=AssociativeAlgebra(f);
+// we define E=Z[x]/(f)
+E:=EquationOrder(A);
+// the Picard Group of E
+E_pic:=PicardGroup(E);
+#E_pic;
+// we compute the ideal classes of fractional ideals with multiplicator ring equal to E
+E_icm_bar:=ICM_bar(E);
+#E_icm_bar;
+// since E is monogenic we know that it is Gorenstein, but it is not Bass, that is there is at least one over-order which is not Gorenstein
+IsGorenstein(E);
+IsBass(E);
+//and hence we get that there are no other fractional ideals I with (I:I)=E other than the invertible ones.
+#E_pic eq #E_icm_bar;
+// We now compute the over-orders of E
+E_over_orders:=FindOverOrders(E);
+#E_over_orders;
+// and the weak equivalence classes of fractional E-ideals
+E_wk:=WKICM(E);
+#E_wk;
+// and the ideal classes of E
+E_icm:=ICM(E);
+#E_icm;
+
+//there  are ideals which are not invertible in their own multiplicator rings.
+for I in E_icm do 
+    ZBasis(I);
+    S:=MultiplicatorRing(I);
+    IsWeakEquivalent(I,S);
+    IsWeakEquivalent(TraceDualIdeal(S),I);
+    IsIsomorphic2(TraceDualIdeal(S),I);
+end for;
+
+
+
+
+////////////////////////////////////////////////////////////////////////////////////////////
+//Example 2: abelian varieties over a finite fields with polarizations
+////////////////////////////////////////////////////////////////////////////////////////////
+_<x>:=PolynomialRing(Integers());
+h:=x^4+2*x^3-7*x^2+22*x+121;
+IsOrdinary(h);
+IsIrreducible(h);
+//the polynomial h defines an isogeny class of ordinary abelian varieties over F_11. Since h is irreducible we get that these abelian varieties are simple.
+A:=AssociativeAlgebra(h);
+F:=PrimitiveElement(A);
+// we define the order Z[F,V], where F is the Frobenius and V=11/F the Verschiebung
+E:=Order([F,11/F]);
+//the isomorphism classes of abelian varieties correspond to the ideal classes of E
+E_icm:=ICM(E);
+for I in E_icm do
+    ZBasis(I);
+end for;
+// the dual abelian variety correspond to the Trace Dual of the Complex Conjugate of the ideal
+I:=E_icm[1];
+Idual:=TraceDualIdeal(ComplexConjugate(I));
+//we check if I is self-dual
+IsIsomorphic2(I,Idual);
+
+//we compute the cm type of A, in order to find the polarizations
+cm_type:=CMType(A);
+phi:=cm_type[1];
+// we check if one of the isomorphism classes is principally polarized
+for I in E_icm do
+    IsPrincPolarized(I,phi);
+end for;
+// None of the abelian varieties is principally polarized.
+// We can check that the first class admits two polarization of degree 25 such that the corresponding polarized abelian varieties are not isomorphic. This computation takes a few minutes.
+I:=E_icm[1];
+test,pols:=IsPolarized(I,phi,25);
+test,pols;
+// we compute the automorphisms. note that this does not depend on the polarization at all!
+AutomorphismsPol(I);
+
+
+
+////////////////////////////////////////////////////////////////////////////////////////////
+//Example 3: period matrices
+////////////////////////////////////////////////////////////////////////////////////////////
+// Let f:=(x^4−4*x^3+8*x^2−12*x+9)*(x^4−2*x^3+2*x^2−6*x+9), which identifies
+// an isogeny class of abelian four-folds over F3. We compute the principally polarized
+// abelian varieties and we found that 4 isomorphism classes admit a unique principal
+// polarization. Here we present the corresponding (approximations of
+// the) big and small period matrices.
+_<x>:=PolynomialRing(Integers());
+f:=(x^4-4*x^3+8*x^2-12*x+9)*(x^4-2*x^3+2*x^2-6*x+9);
+A:=AssociativeAlgebra(f);
+F:=PrimitiveElement(A);
+E:=Order([F,3/F]);
+E_oo:=FindOverOrders(E);
+//since we are looking for principal polarizations, we need to compute only the isomorphim classes with multiplicator ring which is conjugate stable.
+E_oo_conj:=[S: S in E_oo | ComplexConjugate(S) eq S];
+E_icm_conj:=[  ];
+for S in E_oo_conj do
+    //we compute the isomorphism classes with multiplicator ring S
+    S_icm_bar:=ICM_bar(S);
+    S_icm_bar_in_E:=[E ! I : I in S_icm_bar]; //the ideals need all to be defined over the same order
+    E_icm_conj:=E_icm_conj cat S_icm_bar_in_E;
+end for;
+cm_type:=CMType(A);
+phi:=cm_type[1];
+for I in E_icm_conj do
+    test,pols:=IsPrincPolarized(I,phi);
+//if the abelian variety is principally polarized, we compute all the principal polarizations and for each of them the priod matrices (small and big)
+    if test then
+        for p in pols do
+//we set the number of decimal digits to 3            
+            PeriodMatrix(I,p,phi : prec:=3);
+        end for;
+    end if;
+end for;
+//we check which of the abelian surfaces are products of elliptic curves. This happens precisely when the correspodning ideal is a direct sum of two ideals, which is equivalent to have a multiplicator ring which is a product of two orders.
+for I in E_icm_conj do
+    S:=MultiplicatorRing(I);
+    IsProductOfOrders(S);
+    IsProductOfIdeals(I);
+end for;
+

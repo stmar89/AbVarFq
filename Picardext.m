@@ -6,12 +6,11 @@ freeze;
 // http://www.staff.science.uu.nl/~marse004/
 /////////////////////////////////////////////////////
 
-declare attributes AlgAssVOrd:PicardGroup;
-declare attributes AlgAssVOrd:UnitGroup;
+declare attributes AlgEtOrd:PicardGroup;
+declare attributes AlgEtOrd:UnitGroup;
 
-intrinsic ResidueRingUnits(S::AlgAssVOrd,I::AlgAssVOrdIdl) -> GrpAb,Map
+intrinsic ResidueRingUnits(S::AlgEtOrd,I::AlgEtOrdIdl) -> GrpAb,Map
 {returns the group (S/I)^* and a map (S/I)^* -> S. It is required S to be maximal }
-    require IsFiniteEtale(Algebra(S)): "the algebra of definition must be finite and etale over Q";
     //the following code works only for maximal orders in etale algebras
     require IsMaximal(S): "implemented only for the maximal order";
     test,I_asProd:=IsProductOfIdeals(I);
@@ -45,9 +44,9 @@ end intrinsic;
 residue_class_field_primitive_element := function(P)
 //given a maximal ideal P in S, returns a generator of (S/P)* as an element of S;
     S:=Order(P);
+    assert2 IsPrime(P);
     Q,m:=ResidueRing(S,P);
     ord:=#Q-1; //ord = #(S/P)-1;
-    assert IsPrimePower(#Q); // #(S/P) must be a prime power
     proper_divisors_ord:=Exclude(Divisors(ord),ord);
     repeat
         repeat 
@@ -62,9 +61,9 @@ residue_class_ring_unit_subgroup_generators:=function(S, F)
 // determine generators of the subgroup of (S/F)^* as elements of A=Algebra(S)
 	A:=Algebra(S);
 	O:=MaximalOrder(A);
-	Fm:=ideal<O| ZBasis(F)>;
+	Fm:=Ideal(O,Generators(F));
 	l:=Factorization(Fm);
-	l2:=[<ideal<S|ZBasis(x[1])> meet S,x[2]>: x in l]; 
+	l2:=[<Ideal(S,Generators(x[1])) meet S,x[2]>: x in l]; 
 	primes:={x[1]:x in l2};
 	primes:=[<x, Maximum([y[2]: y in l2 |y[1] eq x])>:x in primes];
 	elts:={};
@@ -83,7 +82,7 @@ residue_class_ring_unit_subgroup_generators:=function(S, F)
 		Include(~elts,c);
 		b:=1;
 		while b lt a[2] do
-			M:=ZBasis(idp);
+			M:=Generators(idp);
 			M:=[1+x:x in M];
 			for elt in M do
 				c:=ChineseRemainderTheorem((a1a2),rest,elt,One(A));
@@ -121,18 +120,19 @@ IsPrincipal_prod_internal:=function( I , GRH )
         end if;
         gen:=gen+L[2](L[1] ! genL);
     end for;
-    assert2 ideal<S|gen> eq I;
+    assert2 Ideal(S,gen) eq I;
+    I`Generators:=[gen];
     return true,gen;
 end function;
 
 
-intrinsic IsPrincipal(I1::AlgAssVOrdIdl : GRH:=false )->BoolElt, AlgAssElt
+intrinsic IsPrincipal(I1::AlgEtOrdIdl : GRH:=false )->BoolElt, AlgEtElt
 {   
     Return if the argument is a principal ideal; if so the function returns also the generator.
     The optional argument "GRH" decides wheter the bound for the IsPrincipal test should be conditional. The default value is "false".
 }
 //wouldn't an LLL test be faster?
-    require IsFiniteEtale(Algebra(I1)): "the algebra of definition must be finite and etale over Q";
+    if #Generators(I1) eq 1 then return true,Generators(I1)[1]; end if;
     if not IsInvertible(I1) then return false,_; end if;
     S:=Order(I1);
     if IsMaximal(S) then
@@ -141,18 +141,20 @@ intrinsic IsPrincipal(I1::AlgAssVOrdIdl : GRH:=false )->BoolElt, AlgAssElt
     A:=Algebra(S);
     O:=MaximalOrder(A);
     F:=Conductor(S);
-    FO:=ideal<O|ZBasis(F)>;
+    FO:=Ideal(O,Generators(F));
     cop:=CoprimeRepresentative(I1,F);
     I:=cop*I1;
-    IO:=ideal<O|ZBasis(I)>; 
+    IO:=Ideal(O,Generators(I)); 
     is_princ_IO,gen_IO:=IsPrincipal_prod_internal(IO,GRH);
     if not is_princ_IO then
         return false,_;
     end if;
     R,r:=ResidueRingUnits(O,FO);
     if Order(R) eq 1 then
-        assert2 ideal<S|gen_IO> eq I;
-        return true, gen_IO*cop^-1;
+        assert2 Ideal(S,gen_IO) eq I;
+        gen:=gen_IO*cop^-1;
+        I`Generators:=[gen];
+        return true, gen;
     end if;
     UO,uO:=UnitGroup2(O : GRH:=GRH );
     Sgens:=residue_class_ring_unit_subgroup_generators(S,F);
@@ -170,7 +172,8 @@ intrinsic IsPrincipal(I1::AlgAssVOrdIdl : GRH:=false )->BoolElt, AlgAssElt
     if is_princ then
         gen_I:=gen_IO*(elt@@qQ@uO)^-1;
         gen_I1:=gen_I*cop^-1;
-        assert2 ideal<S|gen_I1> eq I1;
+        assert2 Ideal(S,gen_I1) eq I1;
+        I`Generators:=[gen_I1];
         return true,gen_I1;
     else
         return false, _;
@@ -248,19 +251,18 @@ PicardGroup_prod_internal:=function( O , GRH )
     end if;
 end function;
 
-intrinsic PicardGroup( S::AlgAssVOrd : GRH:=false ) -> GrpAb, Map
+intrinsic PicardGroup( S::AlgEtOrd : GRH:=false ) -> GrpAb, Map
 {
     Return the PicardGroup of the order S, which is not required to be maximal, and a map from the PicardGroup to a set of representatives of the ideal classes
     The optional argument "GRH" decides the bound for the computations of the ClassGroup and UnitGroup of the maximal order. The default value is "false".
 }
     if assigned S`PicardGroup then return S`PicardGroup[1],S`PicardGroup[2]; end if;
     if IsMaximal(S) then return PicardGroup_prod_internal(S,GRH); end if;
-    require IsFiniteEtale(Algebra(S)): "the algebra of definition must be finite and etale over Q";
     A:=Algebra(S);
     O:=MaximalOrder(A);
     GO,gO:=PicardGroup_prod_internal(O,GRH); //C, mC
     F:=Conductor(S);
-    FO:=ideal<O|ZBasis(F)>; //Fm
+    FO:=Ideal(O,Generators(F)); //Fm
     gens_GO_in_S:=[]; //coprime with FO, in S and then meet S   
     gens_GO_in_O:=[]; //coprime with FO, in O, Cgen
     if #GO gt 1 then
@@ -269,7 +271,7 @@ intrinsic PicardGroup( S::AlgAssVOrd : GRH:=false ) -> GrpAb, Map
             //c:=CoprimeRepresentative(I,FO);
             c:=CoprimeRepresentative(I,MinimalInteger(FO)*O);
             cI:=c*I;
-            cISmeetS:=ideal<S|ZBasis(cI)> meet S;
+            cISmeetS:=Ideal(S,Generators(cI)) meet S;
             Append(~gens_GO_in_S,cISmeetS);
             Append(~gens_GO_in_O,cI);//used in building relDglue
         end for;
@@ -299,7 +301,7 @@ intrinsic PicardGroup( S::AlgAssVOrd : GRH:=false ) -> GrpAb, Map
 
     R,r:=ResidueRingUnits(O,FO); // G, mG
     Sgens:=residue_class_ring_unit_subgroup_generators(S,F); // ogens //generators in S of (S/F)*
-    UO,uO:=UnitGroup2(O : GRH:=GRH ); // Um, mUm 
+    UO,uO:=UnitGroup(O : GRH:=GRH ); // Um, mUm 
     H:=FreeAbelianGroup(#Generators(GO));
     D, mRD, mHD, mDR, mDH := DirectSum(R,H); // D, mGD, mHD, mDG, mDH
     relDresidue:=[mRD(x@@r) : x in Sgens];
@@ -318,7 +320,7 @@ intrinsic PicardGroup( S::AlgAssVOrd : GRH:=false ) -> GrpAb, Map
     if #P gt 1 then
         generators_ideals:=[];
         for gen in gens_P_in_D do
-            id1:=ideal<S|ZBasis(ideal<O|r(mDR(gen))>)> meet S;
+            id1:=Ideal(S,Generators(Ideal(O,r(mDR(gen))))) meet S;
             id2:=mGO_to_S(mDH(gen));
             gen_inS:=id1*id2;
             Append(~generators_ideals,gen_inS);
@@ -337,7 +339,7 @@ intrinsic PicardGroup( S::AlgAssVOrd : GRH:=false ) -> GrpAb, Map
     disc_log_picard_group:=function(id)
     // (crep*id)^-1 is coprime with F
         crep:=1/(CoprimeRepresentative(id^-1,F));
-        idO:=O!(crep*id); //idO is coprime with FO
+        idO:=O!!(crep*id); //idO is coprime with FO
         GOrep:=idO@@gO;
         J:=mGO_to_O((H!Eltseq(GOrep))); //no minus signs, so J is coprime with FO
         assert2 IsCoprime(J,FO);
@@ -356,7 +358,7 @@ intrinsic PicardGroup( S::AlgAssVOrd : GRH:=false ) -> GrpAb, Map
     return P,p;
 end intrinsic;
 
-UnitGroup2_prod_internal:=function(O, GRH)
+UnitGroup_prod_internal:=function(O, GRH)
 	//returns the UnitGroup of a order which is a produc of orders
 	if assigned O`UnitGroup then return O`UnitGroup[1],O`UnitGroup[2]; end if;
 	assert IsMaximal(O); //this function should be used only for maximal orders
@@ -390,20 +392,26 @@ UnitGroup2_prod_internal:=function(O, GRH)
     return Udp,maptoA;
 end function;
 
-intrinsic UnitGroup2(S::AlgAssVOrd : GRH:=false ) -> GrpAb, Map
+intrinsic UnitGroup2(S::AlgEtOrd : GRH:=false ) -> GrpAb, Map
+{   
+    Return the unit group of a order in a etale algebra
+    The optional argument "GRH" decides the bound for the computation of the unit group of the maximal order. The default value is "false".
+}
+return UnitGroup(S:GRH:=GRH);
+end intrinsic;
+
+intrinsic UnitGroup(S::AlgEtOrd : GRH:=false ) -> GrpAb, Map
 {   
     Return the unit group of a order in a etale algebra
     The optional argument "GRH" decides the bound for the computation of the unit group of the maximal order. The default value is "false".
 }
     if assigned S`UnitGroup then return S`UnitGroup[1],S`UnitGroup[2]; end if;
-    if IsMaximal(S) then return UnitGroup2_prod_internal(S,GRH); end if;
-    require IsFiniteEtale(Algebra(S)): "the algebra of definition must be finite and etale over Q";
+    if IsMaximal(S) then return UnitGroup_prod_internal(S,GRH); end if;
     A:=Algebra(S);
-    require assigned A`NumberFields: "the order must lie in a product of number fields";
     O:=MaximalOrder(Algebra(S));
-    UO,uO:=UnitGroup2_prod_internal(O, GRH);
+    UO,uO:=UnitGroup_prod_internal(O, GRH);
     F:=Conductor(S);
-    FO:=ideal<O|ZBasis(F)>;
+    FO:=Ideal(O,Generators(F));
 
     //Let's build B=(O/FO)^*/(S/F)^*
     R,r:=ResidueRingUnits(O,FO);
@@ -433,17 +441,25 @@ intrinsic UnitGroup2(S::AlgAssVOrd : GRH:=false ) -> GrpAb, Map
 end intrinsic;
 
 
-intrinsic IsIsomorphic2(I::AlgAssVOrdIdl, J::AlgAssVOrdIdl : GRH:=false ) -> BoolElt, AlgAssElt
+intrinsic IsIsomorphic2(I::AlgEtOrdIdl, J::AlgEtOrdIdl : GRH:=false ) -> BoolElt, AlgEtElt
 {
     Checks if I=x*J, for some x. If so, also x is returned
     The optional argument "GRH" decides wheter the bound for the IsPrincipal test should be conditional. The default value is "false"
 }
-    require IsFiniteEtale(Algebra(I)): "the algebra of definition must be finite and etale over Q";
+    return IsIsomorphic(I,J:GRH:=GRH);
+end intrinsic;
+
+intrinsic IsIsomorphic(I::AlgEtOrdIdl, J::AlgEtOrdIdl : GRH:=false ) -> BoolElt, AlgEtElt
+{
+    Checks if I=x*J, for some x. If so, also x is returned
+    The optional argument "GRH" decides wheter the bound for the IsPrincipal test should be conditional. The default value is "false"
+}   
+    if I eq J then return true,Algebra(I)!1; end if;
     test:=IsWeakEquivalent(I,J); //if so I=(I:J)*J and (I:J) is invertible in its MultiplicatorRing
     if test then
         S:=MultiplicatorRing(I);
-        IS:=S!I;
-        JS:=S!J;
+        IS:=S!!I;
+        JS:=S!!J;
         CIJ:=ColonIdeal(IS,JS);
         test2,x:= IsPrincipal(CIJ : GRH:=GRH );
         if test2 then

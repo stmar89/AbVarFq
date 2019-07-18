@@ -6,10 +6,11 @@ freeze;
 // http://www.staff.science.uu.nl/~marse004/
 // and Edgar Costa, MIT
 /////////////////////////////////////////////////////
-declare attributes AlgAssVOrd : MinimalOverOrders;
-declare attributes AlgAssVOrd : OverOrders;
 
-intrinsic pMaximalOrder(O::AlgAssVOrd, p::RngIntElt) -> AlgAssVOrd
+declare attributes AlgEtOrd : MinimalOverOrders;
+declare attributes AlgEtOrd : OverOrders;
+
+intrinsic pMaximalOrder(O::AlgEtOrd, p::RngIntElt) -> AlgEtOrd
 {given O, retuns the maximal p over order}
   if (Abs(Integers() ! Discriminant(O)) mod p^2) ne 0 then
     return O;
@@ -26,7 +27,7 @@ intrinsic pMaximalOrder(O::AlgAssVOrd, p::RngIntElt) -> AlgAssVOrd
   end while;
 end intrinsic;
 
-intrinsic ResidueField(P::AlgAssVOrdIdl) -> FldFin, Map
+intrinsic ResidueField(P::AlgEtOrdIdl) -> FldFin, Map
 { given P a prime of S, returns a finite field F isomorphic to S/P and a surjection (with inverse) S->F.}
 	assert2 IsPrime(P);
 	S := Order(P);
@@ -50,20 +51,20 @@ intrinsic ResidueField(P::AlgAssVOrdIdl) -> FldFin, Map
 	return F, map;
 end intrinsic;
 
-intrinsic QuotientVS(I::Any, J::Any, P::AlgAssVOrdIdl, K::FldFin, k::Map) -> ModFld, Map
+intrinsic QuotientVS(I::Any, J::Any, P::AlgEtOrdIdl, K::FldFin, k::Map) -> ModFld, Map
 {
  let I, J, P be fractional R-ideals such that:
  - P is prime with residue field K;
  - k the map
  - J in I and I/J is a vector space over R/P, say of dimension d;
  the function returns the KModule K^d=V and the natural surjection I->V (with pre-image)}
-    require {Type(I),Type(J)} subset {AlgAssVOrd,AlgAssVOrdIdl} : "I and J must be either orders (AlgAssVOrd) or ideals (AlgAssVOrdIdl)";
-    assert2 P*(ideal<Order(P)|ZBasis(I)>) subset (ideal<Order(P)|ZBasis(J)>);
+    require {Type(I),Type(J)} subset {AlgEtOrd,AlgEtOrdIdl} : "I and J must be either etale orders (AlgEtOrd) or ideals (AlgEtOrdIdl)";
+    assert2 (P*Ideal(Order(P),ZBasis(I))) subset (Ideal(Order(P),ZBasis(J)));
 	S := Order(P);
     assert2 S subset MultiplicatorRing(I);
     assert2 S subset MultiplicatorRing(J);
 	A := Algebra(S);
-	d := Ilog(#K,Integers() ! (Index(J)/Index(I))); // d = dim(I/J) over (S/P)
+d := Ilog(#K,Integers() ! (Index(J)/Index(I))); // d = dim(I/J) over (S:q/P)
 	V := KModule(K,d);
 	//need to find a basis of I/J over R/P.
 	zbI := ZBasis(I);
@@ -80,7 +81,7 @@ intrinsic QuotientVS(I::Any, J::Any, P::AlgAssVOrdIdl, K::FldFin, k::Map) -> Mod
 		elt_F := (Q.1@@q);
 		elt_I := mFI(elt_F);
 		Append(~bas,elt_I);
-        rel_i:=[mIF(bb) : bb in ZBasis(ideal<S|elt_I>)];
+        rel_i:=[mIF(bb) : bb in ZBasis(Ideal(S,elt_I))];
 		rel := rel cat rel_i;
 		Q, q := quo<F|rel>; //q:F->Q
 	end for;
@@ -119,7 +120,7 @@ intrinsic QuotientVS(I::Any, J::Any, P::AlgAssVOrdIdl, K::FldFin, k::Map) -> Mod
 end intrinsic;
 
 
-intrinsic MinimalOverOrders(R::AlgAssVOrd : singular_primes := [], orders := {@ @}) -> SetIndx[AlgAssVOrd]
+intrinsic MinimalOverOrders(R::AlgEtOrd : singular_primes := [], orders := {@ @}) -> SetIndx[AlgEtOrd]
 { returns the minimal over orders of R given the singular primes of R 
   Based on "On the computations of overorders" by TommyHofmann and Carlo Sircana}
 if not assigned R`MinimalOverOrders then
@@ -127,7 +128,7 @@ if not assigned R`MinimalOverOrders then
     if not IsMaximal(R) then
       zbR := ZBasis(R);
       if singular_primes ne [] then
-        pp := [(R!P) meet (OneIdeal(R)) : P in singular_primes];
+        pp := [(R!!P) meet (OneIdeal(R)) : P in singular_primes];
         pp := Setseq(Seqset(pp)); //remove duplicates
         pp := [P : P in pp | Index(P, P*P) ne Index(R,P)]; //only the sing ones
         assert2 SequenceToSet(pp) eq SequenceToSet(PrimesAbove(Conductor(R)));
@@ -197,12 +198,11 @@ if not assigned R`MinimalOverOrders then
 end intrinsic;
 
 
-intrinsic FindOverOrders_Minimal(R::AlgAssVOrd) -> SetIndx[AlgAssVOrd]
+intrinsic FindOverOrders_Minimal(R::AlgEtOrd) -> SetIndx[AlgEtOrd]
 { Given an order R returns all the over orders by a recursive search of the minimal overordes.
   Based on "On the computations of overorders" by TommyHofmann and Carlo Sircana}
   A := Algebra(R);
-  require IsFiniteEtale(A): "the algebra of definition must be finite and etale over Q";
-  singular_primes := PrimesAbove(MaximalOrder(A)!Conductor(R));
+  singular_primes := PrimesAbove(MaximalOrder(A)!!Conductor(R));
   //singular_primes := [];
   queue := {@ R @};
   done := {@  @};
@@ -219,7 +219,7 @@ intrinsic FindOverOrders_Minimal(R::AlgAssVOrd) -> SetIndx[AlgAssVOrd]
 end intrinsic;
 
 
-intrinsic FindOverOrders(E::AlgAssVOrd: alg := "minimal", populateoo_in_oo := false) -> SetIndx[AlgAssVOrd]
+intrinsic FindOverOrders(E::AlgEtOrd: alg := "minimal", populateoo_in_oo := false) -> SetIndx[AlgEtOrd]
 {returns all the overorders of E, and populates }
   require alg in ["minimal", "naive"]: "only naive and minimal options are supported";
   if not assigned E`OverOrders then
@@ -249,18 +249,16 @@ end intrinsic;
 
 // what follows is OLD
 //
-intrinsic FindOverOrders(E::AlgAssVOrd, O::AlgAssVOrd) -> SetIndx[AlgAssVOrd]
+intrinsic FindOverOrders(E::AlgEtOrd, O::AlgEtOrd) -> SetIndx[AlgEtOrd]
 {given E subset O, returns the sequence of orders between E and O}
-	require IsFiniteEtale(Algebra(E)): "the algebra of definition must be finite and etale over Q";
 	require E subset O : "the first argument must be a subset of the second";
   //modified by Edgar
   return {@ S: S in FindOverOrders(E) | S subset O @};
 end intrinsic;
 
-intrinsic FindOverOrders_Naive(E::AlgAssVOrd) -> SetIndx[AlgAssVOrd]
+intrinsic FindOverOrders_Naive(E::AlgEtOrd) -> SetIndx[AlgEtOrd]
 {returns all the overorders of E}
   A := Algebra(E);
-  require IsFiniteEtale(A): "the algebra of definition must be finite and etale over Q";
   O := MaximalOrder(A);
   if IsMaximal(E) then
     return [E];
@@ -268,11 +266,10 @@ intrinsic FindOverOrders_Naive(E::AlgAssVOrd) -> SetIndx[AlgAssVOrd]
   return FindOverOrders_Naive(E,O);
 end intrinsic;
 
-intrinsic FindOverOrders_Naive(E::AlgAssVOrd, O::AlgAssVOrd) -> SetIndx[AlgAssVOrd]
+intrinsic FindOverOrders_Naive(E::AlgEtOrd, O::AlgEtOrd) -> SetIndx[AlgEtOrd]
 {given E subset O, returns the sequence of orders between E and O}
 //15/02/2018 we add the LowIndexProcess
-	require IsFiniteEtale(Algebra(E)): "the algebra of definition must be finite and etale over Q";
-	require E subset O : "the first argument must be a subset of the second";
+  require E subset O : "the first argument must be a subset of the second";
   F := FreeAbelianGroup(Degree(O));
   E_ZBasis := ZBasis(E);
   O_ZBasis := ZBasis(O);
