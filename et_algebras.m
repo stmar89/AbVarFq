@@ -7,13 +7,13 @@ freeze;
 // with the help of Edgar Costa
 /////////////////////////////////////////////////////
 
-declare verbose AlgEt, 1;
+declare verbose et_algebras, 1;
 
 /*TODO:
 -IsFiniteEtale is wrong!!! it does not recognize the base ring, on the other hand, when I define an AssociativeAlgebra, I set the test to be true, so it is sort of harmless.
 */
 
-declare type AlgEt[AlgEtElt]: AlgAss;
+declare type AlgEt[AlgEtElt];
 
 declare attributes AlgEt : DefiningPolynomial, 
                            ass_algebra, 
@@ -162,7 +162,7 @@ intrinsic '-'(x::AlgEtElt) -> AlgEtElt
 end intrinsic;
 
 intrinsic '-'(x1::AlgEtElt,x2::AlgEtElt) -> AlgEtElt
-{x1+x2}
+{x1-x2}
    require Parent(x1) cmpeq Parent(x2): "the elements must be defined over the same algebra";
    x3:=New(AlgEtElt);
    x3`AlgAssElt:=(x1`AlgAssElt)-(x2`AlgAssElt);
@@ -171,7 +171,7 @@ intrinsic '-'(x1::AlgEtElt,x2::AlgEtElt) -> AlgEtElt
 end intrinsic;
 
 intrinsic '-'(x1::.,x2::AlgEtElt) -> AlgEtElt
-{x1+x2}
+{x1-x2}
    bool,x1:=IsCoercible(Algebra(x2),x1);
    if bool then
         return x1 - x2;
@@ -181,7 +181,7 @@ intrinsic '-'(x1::.,x2::AlgEtElt) -> AlgEtElt
 end intrinsic;
 
 intrinsic '-'(x1::AlgEtElt,x2::.) -> AlgEtElt
-{x1+x2}
+{x1-x2}
    bool,x2:=IsCoercible(Algebra(x1),x2);
    if bool then
         return x1 - x2;
@@ -191,7 +191,7 @@ intrinsic '-'(x1::AlgEtElt,x2::.) -> AlgEtElt
 end intrinsic;
 
 intrinsic '*'(x1::AlgEtElt,x2::AlgEtElt) -> AlgEtElt
-{x1+x2}
+{x1*x2}
    require Parent(x1) cmpeq Parent(x2): "the elements must be defined over the same algebra";
    x3:=New(AlgEtElt);
    x3`AlgAssElt:=(x1`AlgAssElt)*(x2`AlgAssElt);
@@ -200,7 +200,7 @@ intrinsic '*'(x1::AlgEtElt,x2::AlgEtElt) -> AlgEtElt
 end intrinsic;
 
 intrinsic '*'(x1::.,x2::AlgEtElt) -> AlgEtElt
-{x1+x2}
+{x1*x2}
    bool,x1:=IsCoercible(Algebra(x2),x1);
    if bool then
         return x1 * x2;
@@ -210,7 +210,7 @@ intrinsic '*'(x1::.,x2::AlgEtElt) -> AlgEtElt
 end intrinsic;
 
 intrinsic '*'(x1::AlgEtElt,x2::.) -> AlgEtElt
-{x1+x2}
+{x1*x2}
    bool,x2:=IsCoercible(Algebra(x1),x2);
    if bool then
         return x1 * x2;
@@ -229,7 +229,7 @@ intrinsic '/'(x1::AlgEtElt,x2::AlgEtElt) -> AlgEtElt
 end intrinsic;
 
 intrinsic '/'(x1::.,x2::AlgEtElt) -> AlgEtElt
-{x1+x2}
+{x1/x2}
    bool,x1:=IsCoercible(Algebra(x2),x1);
    if bool then
         return x1 / x2;
@@ -239,7 +239,7 @@ intrinsic '/'(x1::.,x2::AlgEtElt) -> AlgEtElt
 end intrinsic;
 
 intrinsic '/'(x1::AlgEtElt,x2::.) -> AlgEtElt
-{x1+x2}
+{x1/x2}
    bool,x2:=IsCoercible(Algebra(x1),x2);
    if bool then
         return x1 / x2;
@@ -279,7 +279,7 @@ intrinsic 'eq'(x1::AlgEtElt,x2::AlgEtElt) -> BoolElt
 end intrinsic;
 
 intrinsic 'eq'(x1::.,x2::AlgEtElt) -> BoolElt
-{x1+x2}
+{x1 eq x2}
    bool,x1:=IsCoercible(Algebra(x2),x1);
    if bool then
         return x1 eq x2;
@@ -289,7 +289,7 @@ intrinsic 'eq'(x1::.,x2::AlgEtElt) -> BoolElt
 end intrinsic;
 
 intrinsic 'eq'(x1::AlgEtElt,x2::.) -> BoolElt
-{x1+x2}
+{x1 eq x2}
    bool,x2:=IsCoercible(Algebra(x1),x2);
    if bool then
         return x1 eq x2;
@@ -424,7 +424,8 @@ intrinsic Idempotents(A::AlgEt)->SeqEnum
 end intrinsic;
 
 intrinsic Coordinates(seq::SeqEnum[AlgEtElt],basis::SeqEnum[AlgEtElt]) -> SeqEnum
-{ ihe coordinates of the sequence S of elements in an etale algebra A, relative to the given basis of A over the rationals. }
+{ the coordinates of the sequence S of elements in an etale algebra A, relative to the given basis of A over the rationals. }
+    vprintf et_algebras: "Coordinates";
     require Universe(seq) eq Universe(basis) : "the sequences must be defined over the same algebra";
     A:=AssAlgebra(Universe(seq));
     seq:=[A ! x : x in seq ];
