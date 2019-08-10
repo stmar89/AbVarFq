@@ -26,10 +26,7 @@ declare attributes AlgEtOrdIdl : Index, //stores the index
 import "et_orders.m" : crQZ , crZQ , Columns , hnf , MatrixQ , MatrixZ , MatrixToA ;
 
 /*TODO
-    - try to avoid calling AssIdeal as much as possible. For example, ColonIdeal should be done without!
     - ChineseRemThm to be fixed
-    - ColonIdeal should be done properly see buchmann-lenstra
-    - avoid using pseudo matrices as much as possible.
     - a function MinimalGenerators
     - check which attributes should I pass when I create a new ideal (eg in *,+,colon,...)
     - in '*' should pass Factorization
@@ -933,68 +930,27 @@ intrinsic ColonIdeal(I::AlgEtOrdIdl,J::AlgEtOrdIdl)->AlgEtOrdIdl
          I0:=I;
          J0:=J;
 //
-
     require Order(J) eq O : "the ideals must be of the same order";
     if assigned J`Generators and #J`Generators eq 1 then
         j:=J`Generators[1];
         return (1/j)*I;
     end if;
-/*    // we first put I \subseteq O \subseteq J.
-    // hence (I:J) subseteq O.
-    // then multipliy back and get the wanted ideal.
-    nI:=1; nJ:=1; // we initialize the modifiers to 1
-    if not O subset J then
-        nJ:=Random(J);
-        J:=(1/nJ)*J;
-    end if;
-    if not IsIntegral(I) then
-        I,nI:=MakeIntegral(I);
-    end if;
-    nInJ:=nI*nJ;
+t0:=Cputime();
+// based on jv code
+    N:=Dimension(A);
     zbI:=ZBasis(I);
+    mIinv:=Matrix(zbI)^-1;
     zbJ:=ZBasis(J);
-    N:=#zbI;
-// what follows is wrong. dig deeper in Buchman Lenstra
-    M:=VerticalJoin([Matrix(Coordinates([zi*zj : zi in zbJ] , zbI)) : zj in zbJ]);
-"M",M ;
-    d:=Integers()!Denominator(M);
-"d",d;
-    H:=crZQ(hnf(crQZ(d*M)));
-"H,",H;
-    dHinv:=d*H^-1;
-    zbIJ:=Matrix([(&+[zbJ[k]*dHinv[i,k] : k in [1..N]]) : i in [1..N]]);
-Determinant(Matrix(zbIJ)),
-Determinant(Matrix(zbI)),
-Determinant(Matrix(zbJ));
-    //zbIJ:=Matrix(zbI)*zbIJ*Matrix(zbJ)^-1;
-    zbIJ:=zbIJ*Matrix(ZBasis(O))^-1;
-Determinant(Matrix(zbIJ));
-    zbIJ:=MatrixToA(A,zbIJ);
-nInJ;
-    assert2 forall{z : z in zbIJ | z in O  };
-    //we modify back the ideal so obtained.
-    if nInJ ne One(A) then
-        zbIJ:=[ (1/nInJ)*z : z in zbIJ]; 
-    end if;
-    //create the ouptut
+    M:=VerticalJoin([ Transpose( Matrix([zj*A.i : i in [1..N]])*mIinv) : zj in zbJ] );
+    d:=Denominator(M);
+    P:=(1/d)*crZQ(hnf(crQZ(d*M)));
+    P:=Transpose(P)^-1;
+    zbIJ:=MatrixToA(A,P);
     IJ:=Ideal(O,zbIJ);
-    IJ`ZBasis:=zbIJ; //we know that zbIJ is a ZBasis
-*/
-//t0:=Cputime();
-    gensJ:=Generators(J);
-    while not forall{j : j in gensJ | not IsZeroDivisor(j)} do
-        N:=#Generators(J);
-        mm:=RandomUnimodularMatrix(N,10);
-        gensJ:=MatrixToA(A,mm*Matrix(gensJ));
-    end while;
-// TO BE inproved
-    IJ:=&meet([(1/j)*I : j in gensJ]);
-/*
-t1:=Cputime(t0);
+    IJ`ZBasis:=zbIJ; //we know that zbIJ is a ZBasisA
+    t1:=Cputime(t0);
 t0:=Cputime();
 //tests to be removed
-//IJ:=TraceDualIdeal(TraceDualIdeal(I)*J);
-//"zbasiss",IJ`ZBasis eq zbIJ;
     C := Colon(AssIdeal(I0),AssIdeal(J0));
     C := PseudoMatrix(CoefficientIdeals(C), Matrix(C) * Matrix(PseudoMatrix(AssOrder(O)))^-1 );
     IJtest := O!!ideal<AssOrder(O)|C>;
@@ -1003,9 +959,9 @@ t2:=Cputime(t0);
 //ZBasis(IJtest);
 //ZBasis(IJ);
     assert IJtest eq IJ;
-t1 le t2;
+//t1 le t2;
 //
-*/
+    assert2 IJ*J subset I;
     return IJ;
 end intrinsic;
 
