@@ -1,0 +1,82 @@
+SetAssertions(2);
+//SetDebugOnError(true);
+
+
+AttachSpec("packages.spec");
+Attach("test_functions.m");
+
+//SetVerbose("et_orders",1);
+//SetVerbose("et_ideals",1);
+
+_<x>:=PolynomialRing(Integers());
+f:=(x^8+16)*(x^8+81);
+A:=EtaleAlgebra(f);
+O:=EquationOrder(A);
+
+forall{ x : x in [Random(O) : i in [1..10]] | x in O };
+
+ZBasis(O);
+ZBasis(O)[1] in O;
+One(A) in O;
+One(O);
+
+IsMaximal(O);
+//Hash(O);
+MaximalOrder(O);
+OO1:=MaximalOrder(O);
+forall{ x : x in [Random(OO1) : i in [1..10]] | x in OO1 };
+A`MaximalOrder;
+A`MaximalOrder eq OO1;
+Hash(OO1);
+ZBasis(OO1);
+exists{ z : z in ZBasis(OO1) | z in O };
+Index(OO1,O);
+Index(OO1);
+
+OneIdeal(O);
+2*OneIdeal(O);
+//"a"*OneIdeal(O);
+
+OO1 !! (2*OneIdeal(O));
+
+MultiplicatorRing(4*O) eq O;
+MultiplicatorRing(4*O) eq OO1;
+
+"Conductor";
+ff:=Conductor(O); ff;
+"IsIntegral";
+IsIntegral(ff);
+
+//sing:=PrimesAbove(ff);
+//IsBass(O);
+
+"IsGorenstein";
+time IsGorenstein(O);
+
+f:=(x^8+16);
+A:=EtaleAlgebra(f);
+F:=PrimitiveElement(A);
+V:=2/F;
+F*V;
+F*V eq 2;
+
+time O:=Order([F,V]);
+//FindOverOrders(O);
+
+SetAssertions(1);
+_<x>:=PolynomialRing(Integers());
+graphs:=[* *];
+for k in [2..5] do
+	f:=x^4-(5^k)*(x^3+x^2+x+1);
+	A:=EtaleAlgebra(f);
+	R:=EquationOrder(A);
+    SetProfile(true);
+    "k=",k;
+    time oo:=FindOverOrders(R);
+    #oo;
+    SetProfile(false);
+    G:=ProfileGraph();
+    Append(~graphs,G);
+end for;
+
+RunTests();

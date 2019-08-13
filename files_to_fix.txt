@@ -1,0 +1,12 @@
+basis_functions_example.m
+graph_builder.m
+graph_example.m
+over_write.m
+padictocc.m
+PeriodMatrices.m
+PowerBass.m
+rational_points.m
+RepsZConjugacy.m
+table_maker.m
+webpage_examples_ideal_class_monoid_abelian_varieties.txt
+webpage_examples_integral_matrices.txt
