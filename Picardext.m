@@ -168,7 +168,7 @@ intrinsic IsPrincipal(I1::AlgAssVOrdIdl : GRH:=false )->BoolElt, AlgAssElt
     alpha:=hom<UQ -> B | [UQ.i@@qQ @uO @@r @b : i in [1..#Generators(UQ)]]>;
     is_princ,elt:=HasPreimage(gen_IO@@r@b,alpha);
     if is_princ then
-        gen_I:=gen_IO*(elt@@qQ@uO)^-1;
+        gen_I:=gen_IO*(A ! (elt@@qQ@uO))^-1;
         gen_I1:=gen_I*cop^-1;
         assert2 ideal<S|gen_I1> eq I1;
         return true,gen_I1;
@@ -385,7 +385,7 @@ UnitGroup2_prod_internal:=function(O, GRH)
         return x_in_Udp;
     end function;
 
-    maptoA:=map<Udp -> O | rep :-> rep_inA(rep) , y :-> disc_log(y) >;
+    maptoA:=map<Udp -> A | rep :-> rep_inA(rep) , y :-> disc_log(y) >;
     O`UnitGroup:=<Udp,maptoA>;
     return Udp,maptoA;
 end function;
@@ -414,7 +414,8 @@ intrinsic UnitGroup2(S::AlgAssVOrd : GRH:=false ) -> GrpAb, Map
     m:=hom<UO -> B | img_gensUO_in_B >;
     P:=Kernel(m);
     gens_P_in_A:=[uO(UO ! P.i) : i in [1..#Generators(P)] ];
-    p_codomain:=Parent(gens_P_in_A[1]);
+    //p_codomain:=Parent(gens_P_in_A[1]);
+    p_codomain:=A;
 
     map_P_to_S:=function(rep)
         coeff:=Eltseq(rep);
