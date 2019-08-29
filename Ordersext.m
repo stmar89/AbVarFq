@@ -10,7 +10,7 @@ freeze;
 declare verbose Ordersext, 1;
 
 /*TODO:
--compare my IsZeroDivisor2 with the already built-in IsUnit
+- In the ChineseReminderThm there is a bug: sometimes One(K) is not in the ZBasis of an order.
 -IsFiniteEtale is wrong!!! it does not recognize the base ring, on the other hand, when I define an AssociativeAlgebra, I set the test to be true, so it is sort of harmless.
 */
 
@@ -155,6 +155,7 @@ intrinsic ChineseRemainderTheorem(I::AlgAssVOrdIdl,J::AlgAssVOrdIdl,a::AlgAssElt
     n:=Degree(K);
     //I need to modify the ZBasis(S) in a way that One(K) is the first element of Zbasis_S
     Zbasis_S:=ZBasis(S);
+    //assert One(K) in Zbasis_S; //this fails sometimes. It need to be fixed or double checked.
     pos:=Position(Eltseq(S ! One(K)),1); //Eltseq(S ! One(K)) does not distinguish 1 from -1.....
     temp:=Zbasis_S[1];
     Zbasis_S[1]:=One(K);
