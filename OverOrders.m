@@ -50,7 +50,7 @@ intrinsic ResidueField(P::AlgAssVOrdIdl) -> FldFin, Map
 	return F, map;
 end intrinsic;
 
-intrinsic QuotientVS(I::Any, J::Any, P::AlgAssVOrdIdl, K::FldFin, k::Map) -> ModFld, Map, Map
+intrinsic QuotientVS(I::Any, J::Any, P::AlgAssVOrdIdl, K::FldFin, k::Map) -> ModFld, Map
 {
  let I, J, P be fractional R-ideals such that:
  - P is prime with residue field K;
