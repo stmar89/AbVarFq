@@ -23,7 +23,7 @@ declare attributes AlgAss : isFiniteEtale;
 declare attributes AlgAss : CMType;
 declare attributes AlgAssVOrd : OneIdeal;
 declare attributes AlgAssVOrd : Index;
-declare attributes AlgAssVOrd : IsProducOfOrders;
+declare attributes AlgAssVOrd : IsProductOfOrders;
 //alternative to declare attributes AlgAssVOrdIdl:Index;
 AlgAssVOrdIdlData2 := recformat<
   // magma internal, see orders-jv.m
