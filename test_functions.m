@@ -6,29 +6,29 @@
 // http://www.staff.science.uu.nl/~marse004/
 /////////////////////////////////////////////////////
 
+find_all_princ_pol_ab:=function(A,phi)
+  f:=DefiningPolynomial(A);
+  q:=Integers() ! (Coefficients(f)[1]^(2/Degree(f)));
+  F:=PrimitiveElement(A);
+  V:=q*F^-1;
+  E:=Order([V,F]);
+  seqOO:=FindOverOrders(E);
+  ICM_conjstable:=&cat[[ ideal<E| ZBasis(I)> : I in ICM_bar(S)] : S in seqOO | ComplexConjugate(S) eq S ];
+  output:=[];
+  for I in ICM_conjstable do
+    test,pols:=IsPrincPolarized(I,phi);
+    if test then 
+      Append(~output, < I, pols, #AutomorphismsPol(I)  >);
+    end if;
+  end for;
+  return output;
+end function;
+
 intrinsic RunTests() -> BoolElt
 { a bunch of checks }
     test:=true;
     time_begin:=Realtime();
     R<x>:=PolynomialRing(Integers());
-    
-    find_all_princ_pol_ab:=function(A,phi)
-      f:=DefiningPolynomial(A);
-      q:=Integers() ! (Coefficients(f)[1]^(2/Degree(f)));
-      F:=PrimitiveElement(A);
-      V:=q*F^-1;
-      E:=Order([V,F]);
-      seqOO:=FindOverOrders(E);
-      ICM_conjstable:=&cat[[ ideal<E| ZBasis(I)> : I in ICM_bar(S)] : S in seqOO | ComplexConjugate(S) eq S ];
-      output:=[];
-      for I in ICM_conjstable do
-        test,pols:=IsPrincPolarized(I,phi);
-        if test then 
-          Append(~output, < I, pols, #AutomorphismsPol(I)  >);
-        end if;
-      end for;
-      return output;
-    end function;
 
     list_of_poly:=[
 //     x^3 - 1000*x^2 - 1000*x - 1000, //domain with 25 wk classes, but very big ICM, should be 69116, but attention to the BUG!!!!
@@ -69,6 +69,10 @@ intrinsic RunTests() -> BoolElt
     f:=x^3+31*x^2+43*x+77;
     K:=AssociativeAlgebra(f);
     E:=EquationOrder(K);
+    if #FindOverOrders(E) ne 15 then 
+      test:=false;
+      printf"\nERROR: OverOrders of f=%o\n",f;
+    end if;
     SeqWC:=WKICM(E);
     if #SeqWC ne 23 then
       test:=false;
