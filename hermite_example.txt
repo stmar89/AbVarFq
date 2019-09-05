@@ -1,0 +1,53 @@
+/*
+The following shows how to compute lower diagonal hermite normal forms in the LMFDB basis V^{g-1},...,V,1,F,...,F^g given a fractional ideal I presented in the power-basis 1, F, ..., F^{2g-1}.
+*/
+
+/*
+Some commands I am keeping around to remember how to change directories.
+
+//C:\Users\tdupuy\Dropbox\computing\AbVarFq
+//GetCurrentDirectory()
+//ChangeDirectory("C:/Users/tdupuy/Dropbox/computing/AbVarFq");
+//Can't use the WINDOWS backslash format C:\Users\tdupuy\Dropbox\computing\AbVarFq-stmar89
+//ChangeDirectory("C:/Users/tdupuy/Dropbox/computing/AbVarFq-stmar89")
+AttachSpec("packages.spec");
+P<x>:=PolynomialRing(Integers());
+//f:=x^6-3*x^4-4*x^4-15*x^2+125; not a good choice since there is only one order
+//f:=1*x^6-6*x^5+18*x^4-41*x^3+90*x^2-150*x + 125; only has two orders
+*/
+
+//Picking a good weil polynomial with lots of lattices to compare.
+f:=x^6 - 3*x^4 - 4*x^3 - 15*x^2 + 125;
+A:=AssociativeAlgebra(f);
+is_weil, q := IsWeil(f);
+g := Degree(f)/2;
+K:= AssociativeAlgebra(f);
+F:= PrimitiveElement(K);
+V:= q/F;
+R:= Order([F,q/F]);
+ordersR :=FindOverOrders(R);
+is_ordinary:=IsOrdinary(f);
+icmR := ICM(R);
+//lmfdb-basis written as elements K which naturally write out things using the power basis.
+std_beta := Reverse([V^i : i in [0..g-1]]) cat [F^i : i in [1..g] ]; 
+chg_of_basis:=Transpose(Matrix(std_beta)); 
+inverse_chg_of_basis:=chg_of_basis^-1;
+
+//We are going to compute the Hermite normal form of the lattice below.
+I5 := icmR[5];
+IR5:=ZBasis(I5);
+
+//make matrix with columns coeffs of generators of ideal in terms of the power-basis
+gens_power:=Transpose(Matrix(IR5)); 
+
+//convert power-basis to LMFDB-basis columns are now generators in the lmfdb-basis, and hence column operations are combining the generators.
+gens_lmfdb:=inverse_chg_of_basis*gens_power; 
+M := MatrixAlgebra(Integers(),2*3); 
+gens_lmfdb_ZZ:=(M ! gens_lmfdb);
+Ht,Tt := HermiteForm(Transpose(gens_lmfdb_ZZ)); // Tt At = Ht
+H := Transpose(Ht);
+T:= Transpose(Tt); // A*T = H (only allows col operations which act on the choice of basis for the ideal)
+
+
+    	    
+
