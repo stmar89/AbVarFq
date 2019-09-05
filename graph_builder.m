@@ -1,4 +1,3 @@
-//run this
 //AttachSpec("packages.spec"); 
 
 /*
@@ -14,13 +13,244 @@ of (IS:IT)
 
 4) Span by Picards. THIS STEP IS NOT IMPLEMENTED
 
-WE ALSO NEED TO FIND ISOGENIES GOING BACKWARDS AND BETWEEN HORIZONTAL COMPONENTS. 
-IT WOULD ALSO BE NICE TO SEE HOW DUALIZING AND THE FROBENIUS WORK IN THIS CONTEXT. 
+TODO: 
+-Find smallest isogenies between horizontal components
+-Find smallest isogenies between vertical components
+-Dualize
+-Frobenius twist
+-Vershiebung twist 
 */
 
-AttachSpec("C:/Users/tdupuy/Dropbox/computing/AbVarFq/packages.spec");
-load "C:/Users/tdupuy/Dropbox/computing/LMFDB/stephano-loose-code/graph_builder.m"
 
+//********************************************************
+//SORTING/LABELLING 
+//********************************************************
+
+/*
+Pretty self explanatory, this is a bunch of functions for sorting and ordering our lists. 
+Currently it allows us to apply a label for orders using the comparison with the basis [V^{g-1}, ..., 1, F, ... , F^{g}]. 
+Many of the functions here require some other things to be run. 
+I am assuming we are going to due this in the script that outputs the large tuples. 
+*/
+
+
+function CompareLowerTriangular(A,B)
+/*
+Magma Documentation On Comparison Functions:The comparison function C must take two arguments and return an integer less than, equal to, or greater than 0
+according to whether the first argument is less than, equal to, or greater than the second argument 
+*/
+
+    n:=Nrows(A); 
+    //Assumes that they are both square and dimensions of A,B same
+
+    //TODO:add test to check to see if matrix is integer valued and lower triangular.
+    for i in [1..n] do
+	    for j in [1..i] do
+    	    if A[i,j] gt B[i,j] then
+	    	    return 1;
+		    end if;
+		    if A[i,j] lt B[i,j] then
+		        return -1;
+			end if;
+		end for;
+	end for;
+	
+	return 0;
+end function;
+
+function HNFify(I)
+/*
+INPUT: fractional ideal (as returned from Stefano's code
+OUTPUT: A,H,T where 
+
+-A presentations of I in LMFDB form
+-H lower triangular integer valued matrix
+-T tranformation matrix 
+
+They satisfy A = H*T where A is the matrix we have in LMFDB form.
+*/
+
+/*
+Assumes objects have been instantiated
+f:=x^6 - 3*x^4 - 4*x^3 - 15*x^2 + 125; //or some choice
+A:=AssociativeAlgebra(f);
+is_weil, q := IsWeil(f);
+g := Degree(f)/2;
+K:= AssociativeAlgebra(f);
+F:= PrimitiveElement(K);
+V:= q/F;
+R:= Order([F,q/F]);
+std_beta := Reverse([V^i : i in [0..g-1]]) cat [F^i : i in [1..g] ]; 
+chg_of_basis:=Transpose(Matrix(std_beta)); 
+inverse_chg_of_basis:=chg_of_basis^-1;
+*/		
+    IR:=ZBasis(I);
+    gens_power:=Transpose(Matrix(IR)); 
+    gens_lmfdb:=inverse_chg_of_basis*gens_power;
+    k := (Integers() ! g);
+	k := 2*k;
+    M := MatrixAlgebra(Integers(),k); 
+    gens_lmfdb_ZZ:=(M ! gens_lmfdb);
+    Ht,Tt := HermiteForm(Transpose(gens_lmfdb_ZZ)); // Tt At = Ht
+    H := Transpose(Ht);
+    T:= Transpose(Tt); // A*T = H (only allows col operations which act on the choice of basis for the ideal)
+	return gens_lmfdb_ZZ,H,T;
+end function;
+
+function LeastCommonDenom(A)
+/*
+INPUT: Matrix with rational entries.
+OUTPUT: Least common multiple of the denominators
+*/
+    list:=Eltseq(A);
+	denoms:=[Denominator(x) : x in list];
+	lcd := LeastCommonMultiple(denoms);
+	return lcd;
+end function;
+
+    
+function CompareLattices(I,J)
+/*
+Magma Documentation On Comparison Functions: The comparison function C must take two arguments and return an integer less than, equal to, or greater than 0.
+according to whether the first argument is less than, equal to, or greater than the second argument 
+*/
+
+/*
+Assumes objects have been instantiated
+f:=x^6 - 3*x^4 - 4*x^3 - 15*x^2 + 125; //or some choice
+A:=AssociativeAlgebra(f);
+is_weil, q := IsWeil(f);
+g := Degree(f)/2;
+K:= AssociativeAlgebra(f);
+F:= PrimitiveElement(K);
+V:= q/F;
+R:= Order([F,q/F]);
+*/	
+    AI,HI,TI := HNFify(I);
+    AJ,HJ,TJ := HNFify(J);
+    return CompareLowerTriangular(HI,HJ);
+end function;
+
+
+function HNFifyOrder(O)
+/*
+INPUT: Order in an associative algebra
+OUTPUT: d,A,H,T 
+    -matrix A whose columns are its generators in terms of the lmfdb basis
+	-integer d, the least common denominator of entries of A
+	-lower triangular Hermite normal form, H
+	-T the matrix such that dA*T = H
+*/
+
+/*
+Assumes objects have been instantiated
+f:=x^6 - 3*x^4 - 4*x^3 - 15*x^2 + 125; //or some choice
+A:=AssociativeAlgebra(f);
+is_weil, q := IsWeil(f);
+g := Degree(f)/2;
+K:= AssociativeAlgebra(f);
+F:= PrimitiveElement(K);
+V:= q/F;
+R:= Order([F,q/F]);
+std_beta := Reverse([V^i : i in [0..g-1]]) cat [F^i : i in [1..g] ]; 
+chg_of_basis:=Transpose(Matrix(std_beta)); 
+inverse_chg_of_basis:=chg_of_basis^-1;
+*/	
+    OR := ZBasis(O);
+    gens_power:=Transpose(Matrix(OR));
+    gens_lmfdb:=inverse_chg_of_basis*gens_power;
+    d:=LeastCommonDenom(gens_lmfdb);
+    n:=Nrows(gens_lmfdb); 
+    M:=MatrixAlgebra(Integers(),n);
+	gens_lmfdb_ZZ := d*gens_lmfdb;
+    gens_lmfdb_ZZ := (M ! gens_lmfdb_ZZ);
+    Ht,Tt := HermiteForm(Transpose(gens_lmfdb_ZZ)); // Tt At = Ht
+    H := Transpose(Ht);
+    T:= Transpose(Tt); // A*T = H (only allows col operations which act on the choice of basis for the ideal)
+	return d,A,H,T;
+end function;
+
+function CompareOrders(O1,O2)
+/*
+Magma Documentation On Comparison Functions:The comparison function C must take two arguments and return an integer less than, equal to, or greater than 0.
+according to whether the first argument is less than, equal to, or greater than the second argument 
+*/
+    
+/*
+Assumes objects have been instantiated
+f:=x^6 - 3*x^4 - 4*x^3 - 15*x^2 + 125; //or some choice
+A:=AssociativeAlgebra(f);
+is_weil, q := IsWeil(f);
+g := Degree(f)/2;
+K:= AssociativeAlgebra(f);
+F:= PrimitiveElement(K);
+V:= q/F;
+R:= Order([F,q/F]);
+std_beta := Reverse([V^i : i in [0..g-1]]) cat [F^i : i in [1..g] ]; 
+chg_of_basis:=Transpose(Matrix(std_beta)); 
+inverse_chg_of_basis:=chg_of_basis^-1;
+*/	
+
+//TODO: prove that this is a total order
+
+    ind1 := Index(OK,O1);
+    ind2 := Index(OK,O2);
+    
+	if ind1 gt ind2 then
+        return 1;
+    end if;
+
+    if ind2 gt ind1 then
+        return -1;
+    end if;
+	
+    d1,A1,H1,T1 := HNFifyOrder(O1);
+    d2,A2,H2,T2 := HNFifyOrder(O2);
+
+    if d1 gt d2 then
+        return 1;
+    end if;
+	
+	return CompareLowerTriangular(H1,H2);
+	
+end function;
+
+//***************************************************
+// DATA FUNCTIONS
+//***************************************************
+
+
+//function PeriodLattice(IR):
+//This might be wrong:
+//Take Gram Matrix and Compare Diagonal Entries in LMFDB
+//
+
+//function DualAV(IR)
+//Input needs to be over R
+//returns the fractional ideal dual to IR, this is just the trace dual
+
+//function FrobeniusTwist(IR)
+//Input needs to be over R
+//Relative Frobenius
+//Note: This allows you to compute the base field F_q by iterating.
+
+
+
+//******************************************
+//sIsogeny Graph Functions
+//******************************************
+/*
+It turns out we can compute Hom(A,B) quite easily. 
+If T(A) = I, and T(B)=J then Hom(A,B) is just the elements which map I into J, this is just (J:I).
+Note that (J:I) is a lattice in K and hence isomorphic to one of the lattices in the database.
+The isogenies of degree d are the elements of (J:I) giving an isogeny of degree d
+
+Neron Sevari: Hom(A,A^t)
+Picard Number: rank NS(A)
+
+TODO: Move Edgar's Function Here
+
+*/
 
 function ugly_order_graph(orders)
 //ADDING THE INDEX OF THE SUBGROUPS HERE WILL BE MESSY
@@ -61,8 +291,15 @@ function IsogDegree(I,J,alpha)
 Given two lattices inside K = Algebra(I) and Algebra(J) is computes the order. 
 You may need to check that they are both considered over R = ZZ[F,1/F]
 */
-    return Index(I,alpha*J);
+    return Index(I,alpha*J); //I think this is just the norm too
 end function;
+
+//function Kernel(I,J,alpha)
+/*
+Find the group scheme of the kernel of a particular isogeny
+*/
+
+
 
 function FindShortestElements(J)
 //Needs that Algebra(J) be a CM field with ComplexConjugationMethod.
@@ -79,7 +316,7 @@ function FindShortestElements(J)
     Gram := Matrix(gram_matrix_data);
     ZZGram := ChangeRing(Gram,Integers());
     L := LatticeWithGram(ZZGram);
-    shorts := ShortestVectors(L);
+    shorts := ShortestVectors(L); //ShortVectors <- take a lattice and a number
     J_shorts := [];
 	for short in shorts do
 	    size :=0;
@@ -105,6 +342,7 @@ function GetShortIsogs(IR,JR)
 	return isogs;
 end function;
 
+
 /*EXAMPLE FOR SIMPLIFY GRAPH
 stupid_graph := [ ];
 for i in [1..10] do
@@ -117,4 +355,3 @@ end for;
 
 //run this to test the simplify graph function
 
-*/
