@@ -502,7 +502,7 @@ intrinsic PicardGroup(S::AlgAssVOrd : LMFDB_generators := false) -> GrpAb, Map
             end while;
         end procedure;
         find_best_gen_with_support := function(support, indexes, lifts, gen_ord)
-            return;
+            return; // FIX ME //
         end function;
         find_best_gen_of_order := function(gen_ord, all_of_order, prime_list, prime_indexes, prime_lifts)
             possibilities := [];
@@ -547,7 +547,6 @@ prime_lifts;
         for gen_num in [#Pgens..1 by -1] do
             gen_ord := Order(P.gen_num);
             best_elt, best_ideal := find_best_gen_of_order(Order(P.gen_num), all_of_order, prime_list, prime_indexes, prime_lifts);
-"order", Order(best_elt);
             Insert(~gens, 1, best_ideal);
             if gen_num eq 1 then
                 break;
