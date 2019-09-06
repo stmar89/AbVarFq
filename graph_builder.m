@@ -58,82 +58,19 @@ according to whether the first argument is less than, equal to, or greater than 
 	return 0;
 end function;
 
-function HNFify(I)
-/*
-INPUT: fractional ideal (as returned from Stefano's code
-OUTPUT: A,H,T where 
 
--A presentations of I in LMFDB form
--H lower triangular integer valued matrix
--T tranformation matrix 
-
-They satisfy A = H*T where A is the matrix we have in LMFDB form.
-*/
-
-/*
-Assumes objects have been instantiated
-P<x> :=PolynomialRing(Integers());
-f:=x^6 - 3*x^4 - 4*x^3 - 15*x^2 + 125; //or some choice
-A:=AssociativeAlgebra(f);
-is_weil, q := IsWeil(f);
-g := Degree(f)/2;
-//K:= AssociativeAlgebra(f);
-F:= PrimitiveElement(K);
-V:= q/F;
-R:= Order([F,q/F]);
-std_beta := Reverse([V^i : i in [0..g-1]]) cat [F^i : i in [1..g] ]; 
-chg_of_basis:=Transpose(Matrix(std_beta)); 
-inverse_chg_of_basis:=chg_of_basis^-1;
-*/		
-    IR:=ZBasis(I);
-    gens_power:=Transpose(Matrix(IR)); 
-    gens_lmfdb:=inverse_chg_of_basis*gens_power;
-    k := (Integers() ! g);
-	k := 2*k;
-    M := MatrixAlgebra(Rationals(),k); 
-    gens_lmfdb_QQ:=(M ! gens_lmfdb);
-    Ht,Tt := HermiteForm(Transpose(gens_lmfdb_QQ)); // Tt At = Ht
-    H := Transpose(Ht);
-    T:= Transpose(Tt); // A*T = H (only allows col operations which act on the choice of basis for the ideal)
-	return gens_lmfdb_ZZ,H,T;
-end function;
-
-function LeastCommonDenom(A)
+function LeastCommonDenom(C)
 /*
 INPUT: Matrix with rational entries.
 OUTPUT: Least common multiple of the denominators
 */
-    list:=Eltseq(A);
+    list:=Eltseq(C);
 	denoms:=[Denominator(x) : x in list];
 	lcd := LeastCommonMultiple(denoms);
 	return lcd;
 end function;
 
-    
-function CompareLattices(I,J)
-/*
-Magma Documentation On Comparison Functions: The comparison function C must take two arguments and return an integer less than, equal to, or greater than 0.
-according to whether the first argument is less than, equal to, or greater than the second argument 
-*/
-
-/*
-Assumes objects have been instantiated
-f:=x^6 - 3*x^4 - 4*x^3 - 15*x^2 + 125; //or some choice
-A:=AssociativeAlgebra(f);
-is_weil, q := IsWeil(f);
-g := Degree(f)/2;
-K:= AssociativeAlgebra(f);
-F:= PrimitiveElement(K);
-V:= q/F;
-R:= Order([F,q/F]);
-*/	
-    AI,HI,TI := HNFify(I);
-    AJ,HJ,TJ := HNFify(J);
-    return CompareLowerTriangular(HI,HJ);
-end function;
-
-
-function HNFifyOrder(O)
+function HNFify(I)
 /*
 INPUT: Order in an associative algebra
 OUTPUT: d,A,H,T 
@@ -158,8 +95,8 @@ std_beta := Reverse([V^i : i in [0..g-1]]) cat [F^i : i in [1..g] ];
 chg_of_basis:=Transpose(Matrix(std_beta)); 
 inverse_chg_of_basis:=chg_of_basis^-1;
 */	
-    OR := ZBasis(O);
-    gens_power:=Transpose(Matrix(OR));
+    IR := ZBasis(I);
+    gens_power:=Transpose(Matrix(IR));
     gens_lmfdb:=inverse_chg_of_basis*gens_power;
     d:=LeastCommonDenom(gens_lmfdb);
     n:=Nrows(gens_lmfdb); 
@@ -169,7 +106,34 @@ inverse_chg_of_basis:=chg_of_basis^-1;
     Ht,Tt := HermiteForm(Transpose(gens_lmfdb_ZZ)); // Tt At = Ht
     H := Transpose(Ht);
     T:= Transpose(Tt); // A*T = H (only allows col operations which act on the choice of basis for the ideal)
-	return d,A,H,T;
+	return d,gens_lmfdb_ZZ,H,T;
+end function;
+
+function CompareLattices(I,J)
+/*
+Magma Documentation On Comparison Functions: The comparison function C must take two arguments and return an integer less than, equal to, or greater than 0.
+according to whether the first argument is less than, equal to, or greater than the second argument 
+*/
+
+/*
+Assumes objects have been instantiated
+f:=x^6 - 3*x^4 - 4*x^3 - 15*x^2 + 125; //or some choice
+A:=AssociativeAlgebra(f);
+is_weil, q := IsWeil(f);
+g := Degree(f)/2;
+K:= AssociativeAlgebra(f);
+F:= PrimitiveElement(K);
+V:= q/F;
+R:= Order([F,q/F]);
+*/	
+    dI, AI,HI,TI := HNFify(I);
+    dJ, AJ,HJ,TJ := HNFify(J);
+
+    if dI gt dJ then
+        return 1;
+    end if;
+	
+	return CompareLowerTriangular(HI,HJ);
 end function;
 
 function CompareOrders(O1,O2)
@@ -181,16 +145,17 @@ according to whether the first argument is less than, equal to, or greater than 
 /*
 Assumes objects have been instantiated
 f:=x^6 - 3*x^4 - 4*x^3 - 15*x^2 + 125; //or some choice
-A:=AssociativeAlgebra(f);
 is_weil, q := IsWeil(f);
 g := Degree(f)/2;
 K:= AssociativeAlgebra(f);
 F:= PrimitiveElement(K);
 V:= q/F;
 R:= Order([F,q/F]);
+OK := MaximalOrder(R);
 std_beta := Reverse([V^i : i in [0..g-1]]) cat [F^i : i in [1..g] ]; 
 chg_of_basis:=Transpose(Matrix(std_beta)); 
 inverse_chg_of_basis:=chg_of_basis^-1;
+
 */	
 
 //TODO: prove that this is a total order
@@ -206,14 +171,7 @@ inverse_chg_of_basis:=chg_of_basis^-1;
         return -1;
     end if;
 	
-    d1,A1,H1,T1 := HNFifyOrder(O1);
-    d2,A2,H2,T2 := HNFifyOrder(O2);
-
-    if d1 gt d2 then
-        return 1;
-    end if;
-	
-	return CompareLowerTriangular(H1,H2);
+	return CompareLattices(O1,O2);
 	
 end function;
 
@@ -356,4 +314,51 @@ for i in [1..10] do
 end for;
 */
 //run this to test the simplify graph function
+
+
+/*
+//This is an old version of the HNFify code. The HNFify orders has been replaces by this. 
+
+function HNFify(I)
+//
+//INPUT: fractional ideal (as returned from Stefano's code
+//OUTPUT: A,H,T where 
+//
+//-A presentations of I in LMFDB form
+//-H lower triangular integer valued matrix
+//-T tranformation matrix 
+//
+//They satisfy A = H*T where A is the matrix we have in LMFDB form.
+
+
+
+//Assumes objects have been instantiated
+//P<x> :=PolynomialRing(Integers());
+//f:=x^6 - 3*x^4 - 4*x^3 - 15*x^2 + 125; //or some choice
+//A:=AssociativeAlgebra(f);
+//is_weil, q := IsWeil(f);
+//g := Degree(f)/2;
+////K:= AssociativeAlgebra(f);
+//F:= PrimitiveElement(K);
+//V:= q/F;
+//R:= Order([F,q/F]);
+//std_beta := Reverse([V^i : i in [0..g-1]]) cat [F^i : i in [1..g] ]; 
+//chg_of_basis:=Transpose(Matrix(std_beta)); 
+//inverse_chg_of_basis:=chg_of_basis^-1;
+	
+    IR:=ZBasis(I);
+    gens_power:=Transpose(Matrix(IR)); 
+    gens_lmfdb:=inverse_chg_of_basis*gens_power;
+    k := (Integers() ! g);
+	k := 2*k;
+    M := MatrixAlgebra(Rationals(),k); 
+    gens_lmfdb_QQ:=(M ! gens_lmfdb);
+    Ht,Tt := HermiteForm(Transpose(gens_lmfdb_QQ)); // Tt At = Ht
+    H := Transpose(Ht);
+    T:= Transpose(Tt); // A*T = H (only allows col operations which act on the choice of basis for the ideal)
+	return gens_lmfdb_ZZ,H,T;
+end function;
+
+*/
+
 
