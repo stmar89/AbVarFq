@@ -72,11 +72,12 @@ They satisfy A = H*T where A is the matrix we have in LMFDB form.
 
 /*
 Assumes objects have been instantiated
+P<x> :=PolynomialRing(Integers());
 f:=x^6 - 3*x^4 - 4*x^3 - 15*x^2 + 125; //or some choice
 A:=AssociativeAlgebra(f);
 is_weil, q := IsWeil(f);
 g := Degree(f)/2;
-K:= AssociativeAlgebra(f);
+//K:= AssociativeAlgebra(f);
 F:= PrimitiveElement(K);
 V:= q/F;
 R:= Order([F,q/F]);
@@ -89,9 +90,9 @@ inverse_chg_of_basis:=chg_of_basis^-1;
     gens_lmfdb:=inverse_chg_of_basis*gens_power;
     k := (Integers() ! g);
 	k := 2*k;
-    M := MatrixAlgebra(Integers(),k); 
-    gens_lmfdb_ZZ:=(M ! gens_lmfdb);
-    Ht,Tt := HermiteForm(Transpose(gens_lmfdb_ZZ)); // Tt At = Ht
+    M := MatrixAlgebra(Rationals(),k); 
+    gens_lmfdb_QQ:=(M ! gens_lmfdb);
+    Ht,Tt := HermiteForm(Transpose(gens_lmfdb_QQ)); // Tt At = Ht
     H := Transpose(Ht);
     T:= Transpose(Tt); // A*T = H (only allows col operations which act on the choice of basis for the ideal)
 	return gens_lmfdb_ZZ,H,T;
@@ -152,6 +153,7 @@ K:= AssociativeAlgebra(f);
 F:= PrimitiveElement(K);
 V:= q/F;
 R:= Order([F,q/F]);
+OK := MaximalOrder(R);
 std_beta := Reverse([V^i : i in [0..g-1]]) cat [F^i : i in [1..g] ]; 
 chg_of_basis:=Transpose(Matrix(std_beta)); 
 inverse_chg_of_basis:=chg_of_basis^-1;
@@ -352,6 +354,6 @@ for i in [1..10] do
 	    end if;
     end for;
 end for;
-
+*/
 //run this to test the simplify graph function
 

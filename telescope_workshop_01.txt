@@ -3,6 +3,7 @@
 //ChangeDirectory("C:/Users/tdupuy/Dropbox/computing/AbVarFq");
 //Can't use the WINDOWS backslash format C:\Users\tdupuy\Dropbox\computing\AbVarFq-stmar89
 //ChangeDirectory("C:/Users/tdupuy/Dropbox/computing/AbVarFq-stmar89")
+ChangeDirectory("C:/Users/tdupuy/Dropbox/computing/AbVarFq")
 AttachSpec("packages.spec");
 P<x>:=PolynomialRing(Integers());
 //f:=x^6-3*x^4-4*x^4-15*x^2+125; not a good choice since there is only one order
