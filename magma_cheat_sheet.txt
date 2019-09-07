@@ -8,6 +8,7 @@
 - [* *] general array
 - +&[ shit[i] : i in SHIT], adds shit together
 - Coordinates( [shit I have], [expanded in this basis] ); you need to take the transpose of this I think.
+- Parent(object)
 
 
 -git grep "WeakEquivalent"

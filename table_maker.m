@@ -1,6 +1,6 @@
 /* vim: set syntax=magma : */
-//TAYLOR DUPUY: I ADDED THIS TO THE REPOSITORY SO THAT WE KNOW WHERE TO FIND IN A COUPLE MONTHS. 
-//THIS WAS WRITTEN BY STEPHANO MARSEGLIA AND WAS USED BY DAVID ROE. 02/03/2019
+// 
+//---David Roe, Stefano Marseglia 02/03/2019
 /*
 on the list from David Roe
 For each isogeny class, write lines to two files
