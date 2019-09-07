@@ -59,8 +59,10 @@ NMlift := ChangeRing(NM1,Integers()); //FM*NMlift gives shit divisble by q
 
 
 /*
-Compute Iprime, the submodule of I such that F Iprime = q Iprime. 
-We have I = I'' + I' and then I'' + (1/q) I' is the Frobenius twist of I. 
+Compute I'', the submodule of I such that F I'' = q I''. 
+We have I = I'' + I' and then I' + (1/p) I'' is the Frobenius twist of I. 
+
+
 */
 
 coeffs := Transpose(NMlift);

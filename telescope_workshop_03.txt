@@ -50,7 +50,7 @@ OUTPUT:
     order_label := "order";
 	weak_label := "weak";
 	pic_label := "pic;
-	label := order_label cat "." cat "weak_label" cat "." cat "pic_label";
+	label := order_label cat "." cat weak_label cat "." cat pic_label;
 	return label;
 end function;
 
