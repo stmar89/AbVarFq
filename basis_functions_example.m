@@ -32,7 +32,7 @@ TIMES AN INVERTIBLE MATRIX.
 */
 
 beta := ZBasis(I);
-FM := Matrix(Coordinates([F*z : z in beta],beta))
+FM := Matrix(Coordinates([F*z : z in beta],beta));
 Fq := GF(q);
 FMq := ChangeRing(FM,Fq);
 R, T, D := RationalForm(FM2);

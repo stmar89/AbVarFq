@@ -180,6 +180,11 @@ end function;
 //***************************************************
 
 
+//function DeligneModuleGenerators();
+
+
+
+
 //function PeriodLattice(IR):
 //This might be wrong:
 //Take Gram Matrix and Compare Diagonal Entries in LMFDB
@@ -197,7 +202,7 @@ end function;
 
 
 //******************************************
-//sIsogeny Graph Functions
+//Isogeny Graph Functions
 //******************************************
 /*
 It turns out we can compute Hom(A,B) quite easily. 

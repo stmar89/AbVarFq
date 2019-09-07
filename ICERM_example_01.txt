@@ -1,0 +1,78 @@
+/*
+by Taylor Dupuy
+   
+THIS CODE COMPUTES THE SLOPE FILTRATION IN AN EXAMPLE. 
+IT IS DONE FOR THE PURPOSES OF COMPUTING THE FROBENIUS BASE CHANGE/VERSHIEBUNG CHANGE OF AN ABELIAN VARIETY.
+
+*/
+
+AttachSpec("packages.spec");
+
+
+P<x>:=PolynomialRing(Integers());
+f:=x^6 - 4*x^5 + 16*x^4 - 53*x^3 + 128*x^2 - 256*x + 512;
+is_weil, q := IsWeil(f);
+q := (Integers() ! q);
+A:=AssociativeAlgebra(f);
+F:=PrimitiveElement(A);
+V:=q/F;
+R:=Order([F,V]);
+OK := MaximalOrder(R);
+
+//Comment these out after first run
+//ordersR := FindOverOrders(R);
+//icmR := ICM(R);
+
+
+I := icmR[5];
+OI := MultiplicatorRing(I);
+
+
+//Compute Hasse-Witt Matrix for I
+beta := ZBasis(I);
+coord:=Coordinates([F*z : z in beta],beta)
+FM := Matrix(coord);
+
+//Given I compute subspsace Iprime where F Iprime = q A Iprime, where A is invertible. 
+//-step 1: compute Matrix of Frobenius in basis
+//-step 2: reduce mod q
+//-step 3: compute rational canonical form of reduction
+//-step 4: lift kernel to ZZ 
+
+
+Fq := FiniteField(q);
+FMq := ChangeRing(FM,Fq);
+R0, T, D := RationalForm(FMq);
+//T*FMq*T^-1 eq R0 
+NM := NullspaceMatrix(Transpose(R0)); //R0*Transpose(NullspaceMatrix(Transpose(R0)));
+NMlift := T^-1*NM; // FM2*NM1
+NMlift := ChangeRing(NM1,Integers()); 
+
+/*
+THE FOLLOWING FUNCTION TAKES THE COLUMN VECTORS REPRESENTING THE NULL SPACE OF 
+THE FROBENIUS MATRIX MODULO P AND STORES THEM BACK AS ELEMENT OF I
+*/
+
+function IElements(entries_in_column_vectors, I);
+//A FUNCTION THAT CONVERTS FROM FREE MODULE COORDINATES BACK INTO
+//THE PRESENATION WE ARE USING
+//I THINK THIS WORKS BUT IT NEEDS TO BE TESTED
+//    coeffs := entries_in_column_vectors;
+/c is the length of the column vector
+	beta := ZBasis(I);
+	elements := [ &+[coeffs[j][i]*beta[i] i in [1..6]] : j in [1..c]];
+	return elements;
+end function;
+
+/*
+THE FOLLOWING TAKES PERFORMS THE ABOVE FUNCTION BY HAND THEN COMPUTES 1/p TIMES THE RESULT. 
+*/
+
+coeffs := Transpose(NMlift);
+elements := [ &+[coeffs[1][i]*beta[j] i in]] : j in [1..g]]
+divided_elements := [(Algebra(I) ! x)/p : x in elements];
+ideal<Order(I)|Generators(I) cat divided_elements >;
+
+J:=ideal<Order(I)|Generators(I) cat divided_elements >;
+// will return true I subset J;
+// The quotient of this is the Kernel of Frobenius. 
