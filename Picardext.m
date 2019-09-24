@@ -436,8 +436,8 @@ intrinsic PicardGroup(S::AlgAssVOrd : LMFDB_generators := false) -> GrpAb, Map
                                 end if;
                             end for;
                             Oprime := ideal<O | Oprime_gens>;
-                            prime := (S!Oprime meet S);
-                            plift := prime@@pmap;
+                            Sprime := (S!Oprime meet S);
+                            plift := Sprime@@pmap;
                             ord := Order(plift);
                             pproj := curquo(plift);
                             if Order(pproj) ne ord then
@@ -448,11 +448,11 @@ intrinsic PicardGroup(S::AlgAssVOrd : LMFDB_generators := false) -> GrpAb, Map
                             end if;
                             if ord eq ord_goal and not stop then
                                 // we don't stop immediately since we still need to finish this value of q
-                                Insert(~gens, 1, prime);
+                                Insert(~gens, 1, Sprime);
                                 Insert(~Pgens, 1, plift);
                                 stop := true;
                             end if;
-                            Append(~primes_by_norm, prime);
+                            Append(~primes_by_norm, Sprime);
                             Append(~orders_of_primes, ord);
                             Append(~prime_lifts, plift);
                         end if;
@@ -467,14 +467,27 @@ intrinsic PicardGroup(S::AlgAssVOrd : LMFDB_generators := false) -> GrpAb, Map
             // Remove primes whose order drops modulo the already chosen generators
 
             i := 1;
-            while i le #prime_list do
+            while i le #primes_by_norm do
                 ord := orders_of_primes[i];
                 if Order(curquo(prime_lifts[i])) ne ord then
                     Remove(~primes_by_norm, i);
                     Remove(~orders_of_primes, i);
                     Remove(~prime_lifts, i);
+                else
+                    i := i + 1;
                 end if;
             end while;
+        end procedure;
+        use_factor_base := procedure(~found, gen_ord, ~primes_by_norm, ~orders_of_primes, ~prime_lifts, ~gens, ~Pgens)
+            found := false;
+            for i in [1..#primes_by_norm] do
+                if orders_of_primes[i] eq gen_ord then
+                    found := true;
+                    Insert(~gens, 1, primes_by_norm[i]);
+                    Insert(~Pgens, 1, prime_lifts[i]);
+                    break;
+                end if;
+            end for;
         end procedure;
 
         // We construct an initial factor base
@@ -484,14 +497,17 @@ intrinsic PicardGroup(S::AlgAssVOrd : LMFDB_generators := false) -> GrpAb, Map
 
         // Now choose new generators
         // Here we assume that the generators have orders as returned by AbelianInvariants.
-        Pgens := Generators(P);
-        for gen_num in [#Pgens..1 by -1] do
+        oldgens := Generators(P);
+        for gen_num in [#oldgens..1 by -1] do
             gen_ord := Order(P.gen_num);
-            expand_factor_base(~q, gen_ord, curquo, ~primes_above_p, ~primes_by_norm, ~orders_of_primes, ~prime_lifts, ~gens, ~Pgens);
+            found := false;
+            use_factor_base(~found, gen_ord, ~primes_by_norm, ~orders_of_primes, ~prime_lifts, ~gens, ~Pgens);
+            if not found then
+                expand_factor_base(~q, gen_ord, curquo, ~primes_above_p, ~primes_by_norm, ~orders_of_primes, ~prime_lifts, ~gens, ~Pgens);
+            end if;
             _, curquo := quo<P|Pgens>;
             if gen_num ne 1 then
                 trim_factor_base(curquo, ~primes_by_norm, ~orders_of_primes, ~prime_lifts);
-                break;
             end if;
         end for;
         return gens;
