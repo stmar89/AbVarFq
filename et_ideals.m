@@ -20,7 +20,7 @@ declare attributes AlgEtOrdIdl : Index, //stores the index
                                  PrimesAbove,
                                  Factorization,
                                  Hash,
-                                 ideal;
+                                 ideal; //AlgAssVOrdIdl would like to remove it.
 
 
 import "et_orders.m" : crQZ , crZQ , Columns , hnf , MatrixQ , MatrixZ , MatrixToA ;
@@ -30,6 +30,10 @@ import "et_orders.m" : crQZ , crZQ , Columns , hnf , MatrixQ , MatrixZ , MatrixT
     - a function MinimalGenerators
     - check which attributes should I pass when I create a new ideal (eg in *,+,colon,...)
     - in '*' should pass Factorization
+    - clean the code
+    - comment ColonIdeal
+    - do not want to use AssIdeal and AssociativeIdeal
+    - check equality and Hashing
 */
 
 //----------
@@ -52,11 +56,9 @@ CreateAlgEtOrdIdl:=function(S,gens)
         M:=MatrixQ(gens);
         d:=Integers()!Denominator(M);
         P:=hnf(crQZ(d*M));
-        
         entries:=[d] cat [(Integers()!P[i,j]) : j in [i..N] , i in [1..N]];
         hash:=Integers() ! eval(&cat[Sprint(s) : s in entries]);
         I`Hash:=hash;
-
         P:=(1/d)*crZQ(P);
         zb:=MatrixToA(A,P);
         assert #zb eq Dimension(A);
@@ -657,7 +659,7 @@ intrinsic ChineseRemainderTheorem(I::AlgEtOrdIdl,J::AlgEtOrdIdl,a::AlgEtElt,b::A
     n:=Degree(K);
     //I need to modify the ZBasis(S) in a way that One(K) is the first element of Zbasis_S
     Zbasis_S:=ZBasis(S);
-    pos:=Position(ZBasis(S),One(K));
+/*    pos:=Position(ZBasis(S),One(K));
     if pos ne 1 then
         if pos eq 0 then //One(K) not in Zbasis_S
             coord:=Coordinates([One(K)],Zbasis_S)[1];
@@ -667,13 +669,13 @@ intrinsic ChineseRemainderTheorem(I::AlgEtOrdIdl,J::AlgEtOrdIdl,a::AlgEtElt,b::A
             end if;
 //test
 if pos eq 0 then coord; end if;
-            assert pos ne 0;
-            //replacing Zbasis_S[pos] with One(K) since they generate the same Z-Span
-        end if; 
+//assert pos ne 0;
+//replacing Zbasis_S[pos] with One(K) since they generate the same Z-Span
+end if; 
         temp:=Zbasis_S[1];
         Zbasis_S[1]:=One(K);
         Zbasis_S[pos]:=temp;
-    end if;
+    end if;*/
     M:=Matrix(Zbasis_S);
     Minv:=M^-1;
     A:=ChangeRing(Matrix(ZBasis(I))*Minv,Integers());
@@ -702,8 +704,8 @@ if pos eq 0 then coord; end if;
         d:=d1*J_min;
     end if;
     e:=a*d+b*c;
-    assert2 e-a in I;
-    assert2 e-b in J;
+    assert e-a in I;
+    assert e-b in J;
     return e;
 end intrinsic;
 
@@ -1040,3 +1042,21 @@ intrinsic IsInvertible(I::AlgEtOrdIdl) ->AlgEtOrdIdl
     return IsWeakEquivalent(I,O);
 end intrinsic;
 
+
+/*TEST
+
+//problem with CRT
+
+AttachSpec("packages.spec");
+  _<x>:=PolynomialRing(Integers());
+f:=x^4+11*x^3+73*x^2+319*x+841;
+A:=EtaleAlgebra(f);
+q:=Integers() ! (Coefficients(f)[1]^(2/Degree(f)));
+F:=PrimitiveElement(A);
+V:=q*F^-1;
+E:=Order([V,F]);
+seqOO:=FindOverOrders(E);
+[#PicardGroup(S) : S in seqOO];
+
+
+*/

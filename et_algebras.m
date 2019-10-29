@@ -10,7 +10,7 @@ freeze;
 declare verbose et_algebras, 1;
 
 /*TODO:
--IsFiniteEtale is wrong!!! it does not recognize the base ring, on the other hand, when I define an AssociativeAlgebra, I set the test to be true, so it is sort of harmless.
+
 */
 
 declare type AlgEt[AlgEtElt];

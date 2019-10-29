@@ -53,7 +53,7 @@ intrinsic ComplexConjugate(I::AlgEtOrdIdl) -> AlgEtOrdIdl
 	A:=Algebra(O);
 	require HasComplexConjugate(A) : "it is not a product of CM fields";
 	Ob:=ComplexConjugate(O);
-	return ideal<Ob|[ ComplexConjugate(x) : x in Generators(I) ]>;
+	return Ideal(Ob,[ ComplexConjugate(x) : x in Generators(I) ]);
 end intrinsic;
 
 intrinsic IsPrincPolarized(I::AlgEtOrdIdl , phi::SeqEnum[Map])->BoolElt, SeqEnum[AlgEtElt]
