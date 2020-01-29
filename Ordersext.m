@@ -260,13 +260,13 @@ intrinsic IsIntegral(I::AlgAssVOrdIdl) -> BoolElt
     return I subset S;
 end intrinsic;
 
-intrinsic MakeIntegral(I::AlgAssVOrdIdl) -> AlgAssVOrdIdl
+intrinsic MakeIntegral(I::AlgAssVOrdIdl) -> AlgAssVOrdIdl,RngIntElt
 {ginven a fractional S ideal I, returns the ideal d*I when d is the smallest integer such that d*I is integral in S}
     require IsFiniteEtale(Algebra(I)): "the algebra of definition must be finite and etale over Q";
     if IsIntegral(I) then return I; end if;
     S:=Order(I);
     d:=Denominator(ChangeRing(Matrix(Coordinates(ZBasis(I),ZBasis(S))),Rationals()));
-    return d*I;
+    return d*I,d;
 end intrinsic;
 
 intrinsic 'eq'(I::AlgAssVOrdIdl, S::AlgAssVOrd) -> BoolElt
