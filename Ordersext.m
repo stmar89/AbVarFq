@@ -130,8 +130,9 @@ intrinsic Random(I::AlgAssVOrdIdl : bound:=3) -> AlgAssElt
     return A ! &+[ Random([-bound..bound])*b : b in B];
 end intrinsic;
 
-intrinsic CoprimeRepresentative(I::AlgAssVOrdIdl,J::AlgAssVOrdIdl) -> AlgAssElt
-{return an element x such that x*I is an integral ideal coprime with J. The first ideal must be invertible and the second should be integral}
+intrinsic CoprimeRepresentative(I::AlgAssVOrdIdl,J::AlgAssVOrdIdl) -> AlgAssElt,AlgAssVOrdIdl
+{   return an element x such that x*I is an integral ideal coprime with J, and the product x*I.
+    The first ideal must be invertible and the second should be integral}
     require IsFiniteEtale(Algebra(I)): "the algebra of definition must be finite and etale over Q";
     require IsIntegral(J) : "the second ideal must be integral";
     S:=Order(I);
@@ -139,9 +140,12 @@ intrinsic CoprimeRepresentative(I::AlgAssVOrdIdl,J::AlgAssVOrdIdl) -> AlgAssElt
     require IsInvertible(I): "The first ideal must be invertible";
     invI:=ColonIdeal(S,I);
     repeat
-        x:=Random(invI);
-    until (not IsZeroDivisor2(x) and IsCoprime(x*I,J)); //integrality of x*I is checked in IsCoprime
-    return x;
+        repeat
+            x:=Random(invI);
+        until (not IsZeroDivisor2(x));
+        xI:=x*I;
+    until IsCoprime(xI,J); //integrality of x*I is checked in IsCoprime
+    return x,xI;
 end intrinsic;
 
 intrinsic ChineseRemainderTheorem(I::AlgAssVOrdIdl,J::AlgAssVOrdIdl,a::AlgAssElt,b::AlgAssElt)-> AlgAssElt
