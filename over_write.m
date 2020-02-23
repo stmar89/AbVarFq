@@ -148,21 +148,16 @@ intrinsic Order(S::SeqEnum[AlgAssVElt[FldAlg]], I::SeqEnum[RngOrdFracIdl] : Chec
   {Returns the order which has pseudobasis given by the basis elements S
    and the coefficient ideals I}
 //nothing is changed. I need it in order to trigger the (heavily) over-written order_over(...), see above.
-
   A := Universe(S);
   F := BaseRing(A);
   Z_F := MaximalOrder(F);
   n := Dimension(A);
-
   if I eq [] then
     I := [ideal<Z_F | 1> : i in [1..#S]];
   end if;
-
   require R cmpeq Z_F or R cmpeq FieldOfFractions(Z_F) where R is Ring(Universe(I)) :
         "Ideals in argument 2 must be of the ring of integers of the base ring of argument 1";
-
   require not ISA(Type(A), AlgMatV) : "Argument 1 must not contain elements of a matrix algebra";
-
   return order_over(Z_F, S, I : Check := Check);
 end intrinsic;
 
@@ -203,14 +198,59 @@ intrinsic '*'(I::AlgAssVOrdIdl[RngOrd], J::AlgAssVOrdIdl[RngOrd]) -> AlgAssVOrdI
   require IsFiniteEtale(A): "Arguments must be ideals of orders in an Finite Etale Algebra over Q";
   require A cmpeq Algebra(Order(J)) : "Arguments must be ideals of orders in the same algebra";
   require O cmpeq Order(J) : "Arguments must be ideals of orders in the same algebra";
-//new  
   if I eq OneIdeal(Order(I)) then
     return J;
   elif J eq OneIdeal(Order(J)) then
     return I;
   end if;
 
+  // Compute P = pmatrix of I*J, expressed relative to the basis of A
+  S := [x*y : x in Basis(I, A), y in Basis(J, A)];
+  CI := CoefficientIdeals(PseudoMatrix(I));
+  CJ := CoefficientIdeals(PseudoMatrix(J));
+  C := [ci*cj : ci in CI, cj in CJ];
+  P := PseudoMatrix(C, Matrix(S));
+  P := HermiteForm(P);
+  // Get P relative to the basis of O, since the ideal constructor expects this
+  P := PseudoMatrix(CoefficientIdeals(P), Matrix(P) * Matrix(PseudoMatrix(O))^-1 );
+  IJ := ideal<O | P>;
+  return IJ;
+end intrinsic;
+
 /*
+//the difference with my code, apart from a lot of removing 'not used' things is that I do not want to check that RightOrder(I) cmepq LeftOrder(J) because I want to allow multiplication of ideals with different multiplicator rings.
+// but note that (IJ:IJ) might be strictly bigger than (I:I)+(J:J). Hence the multiplicatorring of the product should always be recomputed!!!
+
+debug:=false;
+intrinsic '*'(I::AlgAssVOrdIdl[RngOrd], J::AlgAssVOrdIdl[RngOrd] : Check:=true, Sides:="Both") -> 
+     AlgAssVOrdIdl, AlgAssVOrdIdl
+  {Product of ideals I and J. Returns two objects by default: firstly I*J as a left ideal,
+   and secondly I*J as a right ideal.  When "Sides" is set to "Left" or "Right", only one 
+   of these is returned}
+
+  // When I is officially a left ideal (of Order(I)), the left ideal I*J is created 
+  // as a lideal of Order(I), and otherwise as a lideal of LeftOrder(I).  
+  // Likewise for the right I*J.
+
+  if Check then
+    require RightOrder(I) cmpeq LeftOrder(J) : 
+      "Right order of the first argument must be equal to the left order of the second";
+  end if;
+  require Algebra(Order(I)) cmpeq Algebra(Order(J)) : 
+    "Arguments must be ideals of orders in the same algebra";
+  require Sides in {"Left", "Right", "Both"} : 
+    "The optional argument \"Sides\" should be \"Left\", \"Right\" or \"Both\"";
+
+  // Compute P = pmatrix of I*J, expressed relative to the basis of A
+  O := Order(I);
+  A := Algebra(O);
+  S := [x*y : x in Basis(I, A), y in Basis(J, A)];
+  CI := CoefficientIdeals(PseudoMatrix(I));
+  CJ := CoefficientIdeals(PseudoMatrix(J));
+  C := [ci*cj : ci in CI, cj in CJ];
+  P := PseudoMatrix(C, Matrix(S));
+  P := HermiteForm(P);
+
   // If I and J are both officially 2-sided ideals of O, return the same object for left and right
   if Sides ne "Right" and IsTwoSidedIdeal(I) and IsTwoSidedIdeal(J) and O eq Order(J) then
     // Get P relative to the basis of O, since the ideal constructor expects this
@@ -252,21 +292,6 @@ intrinsic '*'(I::AlgAssVOrdIdl[RngOrd], J::AlgAssVOrdIdl[RngOrd]) -> AlgAssVOrdI
   elif Sides eq "Both" then 
     return IJleft, IJright;
   end if;
-*/
-//replaced by...
-  // Compute P = pmatrix of I*J, expressed relative to the basis of A
-  S := [x*y : x in Basis(I, A), y in Basis(J, A)];
-  CI := CoefficientIdeals(PseudoMatrix(I));
-  CJ := CoefficientIdeals(PseudoMatrix(J));
-  C := [ci*cj : ci in CI, cj in CJ];
-  P := PseudoMatrix(C, Matrix(S));
-  P := HermiteForm(P);
-  // Get P relative to the basis of O, since the ideal constructor expects this
-  P := PseudoMatrix(CoefficientIdeals(P), Matrix(P) * Matrix(PseudoMatrix(O))^-1 );
-  IJ := ideal<O | P>;
-  return IJ;
 end intrinsic;
-
-
-
+*/
 

@@ -2,7 +2,6 @@
 
 freeze;
 
-declare verbose AbelianVarieties, 1;
 /////////////////////////////////////////////////////
 // Abelian varieties with squarefree polynomial, polarizations for the ordinary case and automorphisms
 // Stefano Marseglia, Utrecht University, s.marseglia@uu.nl
@@ -10,33 +9,15 @@ declare verbose AbelianVarieties, 1;
 // with the help of Edgar Costa
 /////////////////////////////////////////////////////
 
-import "usefulfunctions.m": AllPossibilities;
-
-/* LIST of functions:
-intrinsic HasComplexConjugate(A::AlgAss) -> BoolElt
-intrinsic ComplexConjugate(x::AlgAssElt) -> AlgAssElt
-intrinsic ComplexConjugate(O::AlgAssVOrd) -> AlgAssVOrd
-intrinsic ComplexConjugate(I::AlgAssVOrdIdl) -> AlgAssVOrdIdl
-intrinsic IsPrincPolarized(I::AlgAssVOrdIdl , phi::SeqEnum[Maps])->BoolElt, SeqEnum[AlgAssElt]
-intrinsic IsogeniesMany(IS::SeqEnum[AlgAssVOrdIdl], J::AlgAssVOrdIdl, N::RngIntElt) -> BoolElt, SeqEnum[AlgAssElt]
-intrinsic Isogenies(I::AlgAssVOrdIdl, J::AlgAssVOrdIdl, N::RngIntElt)->BoolElt, SeqEnum[AlgAssElt]
-intrinsic IsPolarized(I0::AlgAssVOrdIdl , phi::SeqEnum[Map], N::RngIntElt)->BoolElt, SeqEnum[AlgAssElt]
-intrinsic LPolyToWeilPoly(l::RngUPolElt) -> RngUPolElt
-intrinsic WeilPolyToLPoly(w::RngUPolElt) -> RngUPolElt
-intrinsic IsWeil(f::RngUPolElt) -> BoolElt,RngIntElt
-intrinsic IsOrdinary(f::RngUPolElt) -> BoolElt
-intrinsic IsCharacteristicPoly(f::RngUPolElt : Precision:=100) -> BoolElt,RngIntElt
-intrinsic AutomorphismsPol(I::AlgAssVOrdIdl) -> GpAb
-cm_type_internal:=function(A,prec)
-intrinsic CMType(A::AlgAss)->SeqEnum
-*/
+declare verbose AbelianVarieties, 1;
+declare attributes AlgAss : CMType;
 
 /* REFERENCES:
 [Wat69] W. C. Waterhouse. Abelian varieties over finite fields. Ann. Sci. École Norm. Sup. (4), 2:521–560, 1969. 45, 53, 54
 */
 
 /* TODO:
-- check the Isogeny functions. Edgar Costa added a require on the MultiplicatorRing that I don't understand.
+- add "GRH" varargs 
 - Drew suggested to use a minimal set of generators for ideals rather than a ZBasis. I need to think about how to produce it.
 - create an AbelianVariety container including info about the isogeny class, functor, representative of the isom class, polarizations, ....
 */
@@ -248,7 +229,7 @@ cm_type_internal:=function(A,prec)
 	PM:=M`PrimeIdeals[p,1]; // we choose a prime of M above p
 	Cvalues_p_pos:=[ [Conjugates(c : Precision:=prec)[1] : c in fr | PValuation(c,PM) gt 0]  : fr in frob_in_M ]; // note that the function PValuation is also from the +IdealsNF.m package
 	homsA:=HomsToC(A : Precision:=prec);
-	all_cm_types:=[ListToSequence(cm) : cm in AllPossibilities([ [homsA[2*k-1],homsA[2*k]] : k in [1..Degree(fA) div 2 ]])];
+    all_cm_types:=[[phi : phi in cm] : cm in CartesianProduct(< [homsA[2*k-1],homsA[2*k]] : k in [1..Degree(fA) div 2 ]>)];
 	FA:=PrimitiveElement(A);
 	cm_p_pos:=[];
 	for cm in all_cm_types do
