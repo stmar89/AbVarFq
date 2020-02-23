@@ -1,4 +1,3 @@
-//run this
 //AttachSpec("packages.spec"); 
 
 /*
@@ -12,15 +11,266 @@ by Taylor Dupuy
 of weak equivalence representatives, compute find minimal elements 
 of (IS:IT)
 
-4) Span by Picards. THIS STEP IS NOT IMPLEMENTS
+4) Span by Picards. THIS STEP IS NOT IMPLEMENTED
 
-WE ALSO NEED TO FIND ISOGENIES GOING BACKWARDS AND BETWEEN HORIZONTAL COMPONENTS. 
-IT WOULD ALSO BE NICE TO SEE HOW DUALIZING AND THE FROBENIUS WORK IN THIS CONTEXT. 
+TODO: 
+-Find smallest isogenies between horizontal components
+-Find smallest isogenies between vertical components
+-Dualize
+-Frobenius twist
+-Vershiebung twist 
 */
 
-AttachSpec("C:/Users/tdupuy/Dropbox/computing/AbVarFq/packages.spec");
-load "C:/Users/tdupuy/Dropbox/computing/LMFDB/stephano-loose-code/graph_builder.m"
 
+//********************************************************
+//SORTING/LABELLING 
+//********************************************************
+
+/*
+Pretty self explanatory, this is a bunch of functions for sorting and ordering our lists. 
+Currently it allows us to apply a label for orders using the comparison with the basis [V^{g-1}, ..., 1, F, ... , F^{g}]. 
+Many of the functions here require some other things to be run. 
+I am assuming we are going to due this in the script that outputs the large tuples. 
+*/
+
+
+function CompareLowerTriangular(A,B)
+/*
+Magma Documentation On Comparison Functions:The comparison function C must take two arguments and return an integer less than, equal to, or greater than 0
+according to whether the first argument is less than, equal to, or greater than the second argument 
+*/
+
+    n:=Nrows(A); 
+    //Assumes that they are both square and dimensions of A,B same
+
+    //TODO:add test to check to see if matrix is integer valued and lower triangular.
+    for i in [1..n] do
+	    for j in [1..i] do
+    	    if A[i,j] gt B[i,j] then
+	    	    return 1;
+		    end if;
+		    if A[i,j] lt B[i,j] then
+		        return -1;
+			end if;
+		end for;
+	end for;
+	
+	return 0;
+end function;
+
+
+function LeastCommonDenom(C)
+/*
+INPUT: Matrix with rational entries.
+OUTPUT: Least common multiple of the denominators
+*/
+    list:=Eltseq(C);
+	denoms:=[Denominator(x) : x in list];
+	lcd := LeastCommonMultiple(denoms);
+	return lcd;
+end function;
+
+function HNFify(I)
+/*
+INPUT: Order in an associative algebra
+OUTPUT: d,A,H,T 
+    -matrix A whose columns are its generators in terms of the lmfdb basis
+	-integer d, the least common denominator of entries of A
+	-lower triangular Hermite normal form, H
+	-T the matrix such that dA*T = H
+*/
+
+/*
+Assumes objects have been instantiated
+f:=x^6 - 3*x^4 - 4*x^3 - 15*x^2 + 125; //or some choice
+A:=AssociativeAlgebra(f);
+is_weil, q := IsWeil(f);
+g := Degree(f)/2;
+K:= AssociativeAlgebra(f);
+F:= PrimitiveElement(K);
+V:= q/F;
+R:= Order([F,q/F]);
+OK := MaximalOrder(R);
+std_beta := Reverse([V^i : i in [0..g-1]]) cat [F^i : i in [1..g] ]; 
+chg_of_basis:=Transpose(Matrix(std_beta)); 
+inverse_chg_of_basis:=chg_of_basis^-1;
+*/	
+    IR := ZBasis(I);
+    gens_power:=Transpose(Matrix(IR));
+    gens_lmfdb:=inverse_chg_of_basis*gens_power;
+    d:=LeastCommonDenom(gens_lmfdb);
+    n:=Nrows(gens_lmfdb); 
+    M:=MatrixAlgebra(Integers(),n);
+	gens_lmfdb_ZZ := d*gens_lmfdb;
+    gens_lmfdb_ZZ := (M ! gens_lmfdb_ZZ);
+    Ht,Tt := HermiteForm(Transpose(gens_lmfdb_ZZ)); // Tt At = Ht
+    H := Transpose(Ht);
+    T:= Transpose(Tt); // A*T = H (only allows col operations which act on the choice of basis for the ideal)
+	return d,gens_lmfdb_ZZ,H,T;
+end function;
+
+function CompareLattices(I,J)
+/*
+Magma Documentation On Comparison Functions: The comparison function C must take two arguments and return an integer less than, equal to, or greater than 0.
+according to whether the first argument is less than, equal to, or greater than the second argument 
+*/
+
+/*
+Assumes objects have been instantiated
+f:=x^6 - 3*x^4 - 4*x^3 - 15*x^2 + 125; //or some choice
+A:=AssociativeAlgebra(f);
+is_weil, q := IsWeil(f);
+g := Degree(f)/2;
+K:= AssociativeAlgebra(f);
+F:= PrimitiveElement(K);
+V:= q/F;
+R:= Order([F,q/F]);
+*/	
+    dI, AI,HI,TI := HNFify(I);
+    dJ, AJ,HJ,TJ := HNFify(J);
+
+    if dI gt dJ then
+        return 1;
+    end if;
+	
+	return CompareLowerTriangular(HI,HJ);
+end function;
+
+function CompareOrders(O1,O2)
+/*
+Magma Documentation On Comparison Functions:The comparison function C must take two arguments and return an integer less than, equal to, or greater than 0.
+according to whether the first argument is less than, equal to, or greater than the second argument 
+*/
+    
+/*
+Assumes objects have been instantiated
+f:=x^6 - 3*x^4 - 4*x^3 - 15*x^2 + 125; //or some choice
+is_weil, q := IsWeil(f);
+g := Degree(f)/2;
+K:= AssociativeAlgebra(f);
+F:= PrimitiveElement(K);
+V:= q/F;
+R:= Order([F,q/F]);
+OK := MaximalOrder(R);
+std_beta := Reverse([V^i : i in [0..g-1]]) cat [F^i : i in [1..g] ]; 
+chg_of_basis:=Transpose(Matrix(std_beta)); 
+inverse_chg_of_basis:=chg_of_basis^-1;
+
+*/	
+
+//TODO: prove that this is a total order
+
+    ind1 := Index(OK,O1);
+    ind2 := Index(OK,O2);
+    
+	if ind1 gt ind2 then
+        return 1;
+    end if;
+
+    if ind2 gt ind1 then
+        return -1;
+    end if;
+	
+	return CompareLattices(O1,O2);
+	
+end function;
+
+//***************************************************
+// DATA FUNCTIONS
+//***************************************************
+
+//function DeligneModuleGenerators();
+//See any of the telescope_workshop textfiles
+
+
+//function DualAV(IR)
+//See telescope_workshop_04.txt
+
+//function FrobeniusTwist(IR)
+//See ICERM_example_01.txt
+
+
+function trace_pairing(x,y)
+    return Trace(x*ComplexConjugate(y));
+end function;
+
+function IsogDegree(I,J,alpha)
+/*
+Given two lattices inside K = Algebra(I) and Algebra(J) is computes the order. 
+You may need to check that they are both considered over R = ZZ[F,1/F]
+*/
+    return Index(I,alpha*J); //I think this is just the norm too
+end function;
+
+//function PeriodLattice(IR):
+//Take Gram Matrix and Compare Diagonal Entries in LMFDB
+//See ICERM_example_02.txt
+//Also, Stefano has a function
+
+
+//******************************************************************
+// POLARIZATIONS
+//******************************************************************
+
+//The Neron-Severi lattice of polarizations is just (I,Idual)
+
+function FindShortestElements(J)
+//Needs that Algebra(J) be a CM field with ComplexConjugationMethod.
+//We use that the Minkowski Embedding is an isomorphism of lattices:
+//we take 
+//It uses that 
+    g := Degree(Algebra(J));
+    basis := ZBasis(J);
+    gram_matrix_data :=[];
+    for v in basis do
+        new_row := [Trace(v*ComplexConjugate(w)) : w in basis];
+	    Append(~gram_matrix_data, new_row);
+    end for;
+    Gram := Matrix(gram_matrix_data);
+    ZZGram := ChangeRing(Gram,Integers());
+    L := LatticeWithGram(ZZGram);
+    shorts := ShortestVectors(L); //ShortVectors <- take a lattice and a number
+    J_shorts := [];
+	for short in shorts do
+	    size :=0;
+	    size:=Norm(short);
+		element := &+[ shorts[1][i]*basis[i] : i in [1..g]];
+		Append(~J_shorts,[element,size]);
+	end for;
+	return J_shorts;
+end function;
+
+function GetShortIsogs(IR,JR)
+//Input needs to be over R
+//returns short elements lambda such that lambda J subset I
+	Hom12 := ColonIdeal(IR,JR);
+	shortest_elements := FindShortestElements(Hom12);
+	isogs := [* *];
+	for short in shortest_elements do
+	    isog := [* *];
+	    isog := [* short[1],IsogDegree(IR,JR,short[1]) *];
+	    Append(~isogs,isog);
+	end for;
+	
+	return isogs;
+end function;
+
+
+//******************************************
+//Isogeny Graph Functions
+//******************************************
+/*
+It turns out we can compute Hom(A,B) quite easily. 
+If T(A) = I, and T(B)=J then Hom(A,B) is just the elements which map I into J, this is just (J:I).
+Note that (J:I) is a lattice in K and hence isomorphic to one of the lattices in the database.
+The isogenies of degree d are the elements of (J:I) giving an isogeny of degree d
+
+Neron Sevari: Hom(A,A^t)
+Picard Number: rank NS(A)
+
+TODO: Move Edgar's Function Here
+
+*/
 
 function ugly_order_graph(orders)
 //ADDING THE INDEX OF THE SUBGROUPS HERE WILL BE MESSY
@@ -52,58 +302,6 @@ function simplify_graph(my_graph,n)
 	return clean_graph;
 end function;
 
-function trace_pairing(x,y)
-    return Trace(x*ComplexConjugate(y));
-end function;
-
-function IsogDegree(I,J,alpha)
-/*
-Given two lattices inside K = Algebra(I) and Algebra(J) is computes the order. 
-You may need to check that they are both considered over R = ZZ[F,1/F]
-*/
-    return Index(I,alpha*J);
-end function;
-
-function FindShortestElements(J)
-//Needs that Algebra(J) be a CM field with ComplexConjugationMethod.
-//We use that the Minkowski Embedding is an isomorphism of lattices:
-//we take 
-//It uses that 
-    g := Degree(Algebra(J));
-    basis := ZBasis(J);
-    gram_matrix_data :=[];
-    for v in basis do
-        new_row := [Trace(v*ComplexConjugate(w)) : w in basis];
-	    Append(~gram_matrix_data, new_row);
-    end for;
-    Gram := Matrix(gram_matrix_data);
-    ZZGram := ChangeRing(Gram,Integers());
-    L := LatticeWithGram(ZZGram);
-    shorts := ShortestVectors(L);
-    J_shorts := [];
-	for short in shorts do
-	    size :=0;
-	    size:=Norm(short);
-		element := &+[ shorts[1][i]*basis[i] : i in [1..g]];
-		Append(~J_shorts,[element,size]);
-	end for;
-	return J_shorts;
-end function;
-
-function GetShortIsogs(IR,JR)
-//Input needs to be over R
-//returns short elements lambda such that lambda J subset I
-	Hom12 := ColonIdeal(IR,JR);
-	shortest_elements := FindShortestElements(Hom12);
-	isogs := [* *];
-	for short in shortest_elements do
-	    isog := [* *];
-	    isog := [* short[1],IsogDegree(IR,JR,short[1]) *];
-	    Append(~isogs,isog);
-	end for;
-	
-	return isogs;
-end function;
 
 /*EXAMPLE FOR SIMPLIFY GRAPH
 stupid_graph := [ ];
@@ -114,7 +312,8 @@ for i in [1..10] do
 	    end if;
     end for;
 end for;
-
+*/
 //run this to test the simplify graph function
 
-*/
+
+

@@ -23,3 +23,10 @@ intrinsic RationalPoints(I::AlgAssVOrdIdl,r::RngIntElt)-> GrpAb , Map
 end intrinsic;
 
 
+//function Kernel(I,J,alpha)
+/*
+Find the group scheme of the kernel of a particular isogeny
+*/
+
+
+
