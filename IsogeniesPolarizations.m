@@ -9,6 +9,8 @@ freeze;
 // with the help of Edgar Costa
 /////////////////////////////////////////////////////
 
+declare verbose IsogeniesPolarizations, 1;
+
 //TODO all these intrinsic should have as input AbelianVarietiesFq
 //TODO add DualAbelianVariety
 
@@ -16,11 +18,11 @@ intrinsic IsogeniesMany(IS::SeqEnum[AlgAssVOrdIdl], J::AlgAssVOrdIdl, N::RngIntE
 {Given a sequence of source abelian varieties IS, a target abelian varity J and a positive integet N, it returns for each I in IS if there exist an isogeny I->J of degree N. 
  For each I in IS, if there exists and isogeny I->J, it is also returned a list of pairs [*x,K*] where K=xI subset J (up to isomorphism).}
 //by Edgar Costa, modified by Stefano
-	vprintf AbelianVarieties : "IsogeniesMany\n";
+	vprintf IsogeniesPolarizations : "IsogeniesMany\n";
 	isogenies_of_degree_N := [* [* *] : i in [1..#IS] *];
 	for K in IdealsOfIndex(J, N) do
 		for i := 1 to #IS do
-			test, x := IsIsomorphic2(K, IS[i]); //x*I=K
+			test, x := IsIsomorphic2(K, IS[i]); //x*IS[i]=K
 			if test then
 				Append(~isogenies_of_degree_N[i], [*x, K*]);
 			end if;
@@ -49,7 +51,7 @@ end intrinsic;
 
 intrinsic IsPolarized(I0::AlgAssVOrdIdl, phi::SeqEnum[Map], N::RngIntElt)->BoolElt, SeqEnum[AlgAssElt]
 {returns if the abelian variety has a polarization of degree N and if so it returns also all the non isomorphic polarizations}
-	require IsFiniteEtale(Algebra(I0)): "the algebra of definition must be finite and etale over Q";
+	//require IsFiniteEtale(Algebra(I0)): "the algebra of definition must be finite and etale over Q";
 	S := MultiplicatorRing(I0);
 	I := ideal<S|ZBasis(I0)>;
 	A := Algebra(S);

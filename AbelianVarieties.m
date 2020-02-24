@@ -10,18 +10,14 @@ freeze;
 /////////////////////////////////////////////////////
 
 declare verbose AbelianVarieties, 1;
-declare attributes AlgAss : CMType;
 
 /* REFERENCES:
 [Wat69] W. C. Waterhouse. Abelian varieties over finite fields. Ann. Sci. École Norm. Sup. (4), 2:521–560, 1969. 45, 53, 54
 */
 
 /* TODO:
-- Drew suggested to use a minimal set of generators for ideals rather than a ZBasis. I need to think about how to produce it.
 - pRank, Functor
 - projection and inclusions of isogenyclasses
-- eq of AVs
-- isomorphism testing for abvar
 */
 
 
