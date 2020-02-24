@@ -1,5 +1,7 @@
 {
 AbelianVarieties.m
+CMAlgAss.m
+IsogeniesPolarizations.m
 Ordersext.m
 IdealClassMonoid.m
 IdealsOfIndex.m

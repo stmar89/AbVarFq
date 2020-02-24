@@ -3,8 +3,7 @@
 freeze;
 
 /////////////////////////////////////////////////////
-// Abelian varieties with squarefree polynomial, polarizations for the ordinary case and automorphisms
-// Isogeny class container and functions.
+// Abelian varieties and Isogeny classes
 // Stefano Marseglia, Utrecht University, s.marseglia@uu.nl
 // http://www.staff.science.uu.nl/~marse004/
 // with the help of Edgar Costa
@@ -52,7 +51,7 @@ intrinsic IsogenyClass( h::RngUPol ) -> IsogenyClassFq
     test_weil,q,p:=IsWeil(h);
     require test_weil : "the given polynomial is not a Weil polynomial";
     fac:=Factorization(h);
-    require forall{f : f in fac | IsCharactersiticPolynomial(f[1]^f[2]) } : "the given polynomial does not define an isogeny class".
+    require forall{f : f in fac | IsCharactersiticPolynomial(f[1]^f[2]) } : "the given polynomial does not define an isogeny class";
 
     I:=New(IsogenyClassFq);
     I`WeilPolynomial:=h;
@@ -65,14 +64,14 @@ intrinsic IsogenyClass( h::RngUPol ) -> IsogenyClassFq
     I`UniverseAlgebra:=Ah;
     if IsSquarefree(h) then
         Ag:=Ah;
-        delta:=hom<Ag->Ah | [Ah.i : i in [1..Dimension(Ah)] >; //this is just the identity
+        delta:=hom<Ag->Ah | [Ah.i : i in [1..Dimension(Ah)]] >; //this is just the identity
     else
         nf_g:=&cat[[ NumberField(f[1]) ] : f in fac]; 
         Ag:=AssociativeAlgebra(nf_g);
         i:=0;
         img:=[];
         for f in fac do
-            img &cat:=[ &+[ Ah.(i+j) : k in [1..f[2]]] : j in [1..Degree(f[1])] ];
+            img cat:=[ &+[ Ah.(i+j) : k in [1..f[2]]] : j in [1..Degree(f[1])] ];
             i:=i+Degree(f[1])*f[2];
         end for;
         delta:=hom<Ag->Ah | img >;
@@ -108,17 +107,17 @@ intrinsic UniverseAlgebra( I::IsogenyClassFq )-> AlgAss
     return I`UniverseAlgebra;
 end intrinsic;
 
-intrinsic ZFV( I::IsogenyClassFq )-> AlgAssVOrd,Map
+intrinsic ZFV(I::IsogenyClassFq)-> AlgAssVOrd,Map
 { given an isogeny class AV(h) returns the algebra where all the Deligne modules live in }
     return I`ZFV[1],I`ZFV[2];
 end intrinsic;
 
-intrinsic Print(I :: IsogenyClassFq )
+intrinsic Print(I::IsogenyClassFq)
 { print the isogeny class}
     printf "Isogeny class of abelian varieties over FF_%o defined by the Weil polynomial %o",FiniteField(I),WeilPolynomial(I);
 end intrinsic;
 
-intrinsic 'eq'(AVh1 :: IsogenyClassFq , AVh2 :: IsogenyClassFq ) -> BoolElt
+intrinsic 'eq'(AVh1::IsogenyClassFq , AVh2::IsogenyClassFq ) -> BoolElt
 { checks if two isogeny classes are the equal }
     if WeilPolynomial(AVh1) eq WeilPolynomial(AVh2) then
         assert2 UniverseAlgebra(AVh1) eq UniverseAlgebra(AVh2);
@@ -127,7 +126,7 @@ intrinsic 'eq'(AVh1 :: IsogenyClassFq , AVh2 :: IsogenyClassFq ) -> BoolElt
     else
         return false;
     end if;
-end if;
+end intrinsic;
 
 /////////////////////////////////////////////////////
 // defining the type AbelianVarietyFq
@@ -142,10 +141,10 @@ declare attributes AbelianVarietyFq : IsogenyClass,
                                       DualVariety;
 
 /////////////////////////////////////////////////////
-// Creation and access functions of AbelianVarietyFq
+// Creation  functions of AbelianVarietyFq
 /////////////////////////////////////////////////////
 
-intrinsic AbelianVarietyFq( AVh : IsogenyClassFq , I :: AlgAssVOrdIdl )->AbelianVarietyFq
+intrinsic AbelianVarietyFq( AVh::IsogenyClassFq , I::AlgAssVOrdIdl )->AbelianVarietyFq
 { returns the abelian variety defined by a fractional ideal I of the Z[F,V] order of the isogeny class AV(h), where h is the characteristic polynomial of the Frobenius } 
     R,delta:=ZFV(AVh);
     require R eq Order(I) : "the fractional ideal is not defined over the order Z[F,V] of the given isogeny class";
@@ -153,14 +152,14 @@ intrinsic AbelianVarietyFq( AVh : IsogenyClassFq , I :: AlgAssVOrdIdl )->Abelian
     require UA eq Algebra(R) : "one cannot define an abelian variety using a fractional ideal for the given isogeny class";
     AV:=New(AbelianVarietyFq);
     AV`IsogenyClass:=AVh;
-    map:=< Algebra(R) -> UA | [UA.i : i in [1..Dimension(UA)] ]>; // this is the identity map
+    map:=hom<Algebra(R)-> UA | [UA.i : i in [1..Dimension(UA)] ]>; // this is the identity map
     AV`DeligneModuleAsDirectSum:=[ <I,map> ];
     AV`DeligneModuleZBasis:=[ map(z) : z in ZBasis(I) ];
     return AV;
 end intrinsic;
 
 
-intrinsic AbelianVarietyFq( AVh : IsogenyClassFq , seq :: SeqEnum[AlgAssVOrdIdl] )-> AbelianVarietyFq
+intrinsic AbelianVarietyFq( AVh::IsogenyClassFq , seq::SeqEnum[AlgAssVOrdIdl] )-> AbelianVarietyFq
 { returns the abelian variety defined by a direct sum of s fractional ideals  of the Z[F,V] order of the isogeny class AV(g^s), where g is the square-free characteristic polynomial of the Frobenius } 
     R,delta:=ZFV(AVh);
     g:=DefiningPolynomial(Algebra(R));
@@ -175,7 +174,7 @@ intrinsic AbelianVarietyFq( AVh : IsogenyClassFq , seq :: SeqEnum[AlgAssVOrdIdl]
         I:=seq[i];
         i0:=Degree(g)*(i-1)+1;
         assert (UA.i0^2 eq UA.i0); //it should be an orthogonl idempotent
-        map:=< Algebra(R) -> UA | [UA.i : i in [i0..i0+Degree(g)] ]>; // embedding of Ag->Ag^s into the ith component
+        map:=hom<Algebra(R)->UA | [UA.i : i in [i0..i0+Degree(g)] ]>; // embedding of Ag->Ag^s into the ith component
         Append(~DM,<I,map>);
     end for;    
     AV`DeligneModule:=DM;
@@ -183,7 +182,7 @@ intrinsic AbelianVarietyFq( AVh : IsogenyClassFq , seq :: SeqEnum[AlgAssVOrdIdl]
     return AV;
 end intrinsic;
 
-intrinsic AbelianVarietyFq( AVh : IsogenyClassFq , seq :: SeqEnum[Tup] )-> AbelianVarietyFq
+intrinsic AbelianVarietyFq( AVh::IsogenyClassFq , seq::SeqEnum[Tup] )-> AbelianVarietyFq
 { given an isogeny class and sequence of pairs  <J_i,v_i> returns the abelin variety in the given isogeny class defined by the Deligne Module J_1v_1+...+J_sv_s }
     R,delta:=ZFV(AVh);
     g:=DefiningPolynomial(Algebra(R));
@@ -200,7 +199,7 @@ intrinsic AbelianVarietyFq( AVh : IsogenyClassFq , seq :: SeqEnum[Tup] )-> Abeli
         vi:=seq[i,2];
         i0:=Degree(g)*(i-1)+1;
         assert (UA.i0^2 eq UA.i0); //it should be an orthogonl idempotent
-map:=< Algebra(R) -> UA | [UA.i*vi : i in [i0..i0+Degree(g)] ]>; // embedding of Ag->Ag^s defined by 1:->vi
+        map:=hom<Algebra(R)-> UA | [UA.i*vi : i in [i0..i0+Degree(g)] ]>; // embedding of Ag->Ag^s defined by 1:->vi
         Append(~DM,<I,map>);
     end for;    
     AV`DeligneModule:=DM;
@@ -208,7 +207,11 @@ map:=< Algebra(R) -> UA | [UA.i*vi : i in [i0..i0+Degree(g)] ]>; // embedding of
     return AV;
 end intrinsic;
 
-intrinsic IsogenyClass( A :: AbelianVarietyFq) -> IsogenyClassFq
+/////////////////////////////////////////////////////
+// Access functions for AbelianVarietyFq
+/////////////////////////////////////////////////////
+
+intrinsic IsogenyClass( A::AbelianVarietyFq) -> IsogenyClassFq
 { returns the isogeny class of the given abelian variety }
     return A`IsogenyClass;
 end intrinsic;
@@ -249,140 +252,83 @@ intrinsic ZFV( A :: AbelianVarietyFq) -> AlgAssVOrd,Map
     return IsogenyClass(A)`ZFV;
 end intrinsic;
 
-/* TODO I need equality for DM-modules using the HNF
+/////////////////////////////////////////////////////
+// Equality and isomorphism testing for AbelianVarietyFq
+/////////////////////////////////////////////////////
+
+isHNFeq:=function(gensM,gensN)
+// input: two sequence of AlgAssElt
+// returns: whether the vectors generate the same Z-module
+    assert forall{ g : g in gensM cat gensN | Parent(g) eq Parent(gensM[1])  };
+    M_mat:=Matrix([ ChangeUniverse(Eltseq(g),Rationals()) : g in gensM ]);
+    N_mat:=Matrix([ ChangeUniverse(Eltseq(g),Rationals()) : g in gensN ]);
+    d_M:=Denominator(M_mat);
+    d_N:=Denominator(N_mat);
+    if not d_M eq d_N then 
+    	return false;
+    else
+	    M_matZ:=ChangeRing(d_M*M_mat,Integers()); 
+	    N_matZ:=ChangeRing(d_N*N_mat,Integers());
+	    HNF_M:=Matrix([r : r in Rows(HermiteForm(M_matZ)) | not IsZero(r)]);
+	    HNF_N:=Matrix([r : r in Rows(HermiteForm(N_matZ)) | not IsZero(r)]);
+	    return HNF_M eq HNF_N;
+    end if;
+end function;
+
 intrinsic 'eq'( A1 :: AbelianVarietyFq , A2 :: AbelianVarietyFq ) -> BoolElt
 { checks if two abelin varieties are equal the equal }
     if IsogenyClass(A1) eq IsogenyClass(A2) then
         gens1:=DeligneModuleAsZBasis(A1);
         gens2:=DeligneModuleAsZBasis(A2);
-        return ???
+        return isHNFeq(gens1,gens2);
     else
+        vprintf AbelianVarieties : "eq : the abelian varities are not in the same isogeny class \n";
         return false;
     end if;
-end if;
-*/
-// TO CONTINUE from here
-
-
-
-
-intrinsic HasComplexConjugate(A::AlgAss) -> BoolElt
-{returns if the algebra is the product of CM fields}
-	require IsFiniteEtale(A): "the algebra of definition must be finite and etale over Q";
-	return forall{L : L in A`NumberFields | HasComplexConjugate(L[1])};
 end intrinsic;
 
-intrinsic ComplexConjugate(x::AlgAssElt) -> AlgAssElt
-{if A is a product of CM fields, it returns the complex conjugate of the argument}
-	A:=Parent(x);
-	require IsFiniteEtale(A): "the algebra of definition must be finite and etale over Q";
-	require HasComplexConjugate(A) : "it is not a product of CM fields";
-	comp:=Components(x);
-	x_conj:=Zero(A);
-	for i in [1..#A`NumberFields] do
-		L:=A`NumberFields[i];
-		x_conj:=x_conj+L[2](ComplexConjugate(comp[i]));
-	end for;
-	return x_conj;
+intrinsic IsIsomorphic( A1 :: AbelianVarietyFq , A2 :: AbelianVarietyFq ) -> BoolElt
+{ checks if two abelin varieties are isomorphic and eventually it returns also a Z[F,V]-linear isomorphism from the common UniverseAlgebra  }
+    if IsogenyClass(A1) eq IsogenyClass(A2) then
+        h:=WeilPolynomial(A1);
+        ZFV,mZFV:=ZFV(A1);
+        g:=DefiningPolynomial(Algebra(ZFV));
+        DM1:=DeligneModuleAsDirectSum(A1);
+        DM2:=DeligneModuleAsDirectSum(A2);
+        s:=#DM1;
+        assert s eq #DM2;
+        if IsSquarefree(h) then
+            assert s eq 1;
+            I1:=DM1[1,1];
+            v1:=DM1[1,2];
+            I2:=DM2[1,1];
+            v2:=DM2[1,2];
+            test,iso_0:=IsIsomorphic2(I1,I2);
+            if test then
+                assert I1 eq iso_0*I2;
+                iso:=v2/(iso_0*v2);
+                map:=hom<UniverseAlgebra(A1)->UniverseAlgebra(A2) | x:->iso*x, y:->y/iso >;
+                return true,map;
+            else
+                return false,_;
+            end if;
+        elif h eq g^s and Bass(ZFV) then
+            one:=One(Algebra(ZFV));
+            BC1:=[ <M[1],M[2](one)> : M in DM1 ];
+            BC2:=[ <M[1],M[2](one)> : M in DM2 ];
+            return IsBassIsomorphicWithMap(BC1,BC2);
+        else
+            error "the isomorphism testing is implemented only for squarefree and power-of-Bass isogeny classes"; 
+        end if; 
+    else
+        vprintf AbelianVarieties : "IsIsomorphic : the abelian varities are not in the same isogeny class \n";
+        return false;
+    end if;
 end intrinsic;
 
-intrinsic ComplexConjugate(O::AlgAssVOrd) -> AlgAssVOrd
-{if A is a product of CM fields, it returns the complex conjugate of the argument}
-	A:=Algebra(O);
-	require IsFiniteEtale(A): "the algebra of definition must be finite and etale over Q";
-	require HasComplexConjugate(A) : "it is not a product of CM fields";
-	return Order([ ComplexConjugate(x) : x in ZBasis(O) ]);
-end intrinsic;
-
-intrinsic ComplexConjugate(I::AlgAssVOrdIdl) -> AlgAssVOrdIdl
-{if A is a product of CM fields, it returns the complex conjugate of the argument}
-	O:=Order(I);
-	A:=Algebra(O);
-	require IsFiniteEtale(A): "the algebra of definition must be finite and etale over Q";
-	require HasComplexConjugate(A) : "it is not a product of CM fields";
-	Ob:=ComplexConjugate(O);
-	return ideal<Ob|[ ComplexConjugate(x) : x in ZBasis(I) ]>;
-end intrinsic;
-
-intrinsic IsPrincPolarized(I::AlgAssVOrdIdl , phi::SeqEnum[Map])->BoolElt, SeqEnum[AlgAssElt]
-{returns if the abelian variety is principally polarized and if so returns also all the non isomorphic polarizations}
-	S:=MultiplicatorRing(I);
-	if S eq ComplexConjugate(S) then
-		return IsPolarized(I, phi , 1);
-	else
-		return false,[];
-	end if;
-end intrinsic;
-
-intrinsic IsogeniesMany(IS::SeqEnum[AlgAssVOrdIdl], J::AlgAssVOrdIdl, N::RngIntElt) -> BoolElt, List
-{Given a sequence of source abelian varieties IS, a target abelian varity J and a positive integet N, it returns for each I in IS if there exist an isogeny I->J of degree N. 
- For each I in IS, if there exists and isogeny I->J, it is also returned a list of pairs [*x,K*] where K=xI subset J (up to isomorphism).}
-//by Edgar Costa, modified by Stefano
-	vprintf AbelianVarieties : "IsogeniesMany\n";
-	isogenies_of_degree_N := [* [* *] : i in [1..#IS] *];
-	for K in IdealsOfIndex(J, N) do
-		for i := 1 to #IS do
-			test, x := IsIsomorphic2(K, IS[i]); //x*I=K
-			if test then
-				Append(~isogenies_of_degree_N[i], [*x, K*]);
-			end if;
-		end for;
-	end for;
-	return isogenies_of_degree_N;
-end intrinsic;
-
-intrinsic Isogenies(I::AlgAssVOrdIdl, J::AlgAssVOrdIdl, N::RngIntElt)->BoolElt, List
-{Given a source abelian variety I, a target abelian varity J and a positive integet N, it returns if there exist an isogeny I->J of degree N.
- If so it is also returned a list of pairs [*x,K*] where K=xI subset J (up to isomorphism).}
-//by Edgar Costa, modified by Stefano
-	isogenies_of_degree_N := IsogeniesMany([I], J, N);
-	return #isogenies_of_degree_N[1] ge 1, isogenies_of_degree_N[1];
-end intrinsic;
-
-intrinsic IsPolarized(I0::AlgAssVOrdIdl, phi::SeqEnum[Map], N::RngIntElt)->BoolElt, SeqEnum[AlgAssElt]
-{returns if the abelian variety has a polarization of degree N and if so it returns also all the non isomorphic polarizations}
-	require IsFiniteEtale(Algebra(I0)): "the algebra of definition must be finite and etale over Q";
-	S := MultiplicatorRing(I0);
-	I := ideal<S|ZBasis(I0)>;
-	A := Algebra(S);
-	prec:=Precision(Codomain(phi[1]));
-	RR := RealField(prec); //precision added
-	Itbar := ComplexConjugate(TraceDualIdeal(I));
-
-	boolean, isogenies_of_degree_N := Isogenies(I, Itbar, N);
-	if not boolean then
-		return false, [];
-	end if;
-
-	U, m := UnitGroup2(S); //m:U->S
-	// B = Subgroup of S^* generated by u*\bar{u} : u in S^*
-	relB := Seqset([ (( m(U.i)*(ComplexConjugate(A!m(U.i))) ) )@@m : i in [1..Ngens(U)] ] ); //B is generated by u*\bar{u}
-	UqB, q := quo<U|relB>; // UqB = U/B, q:U->UqB
-	UqBinS := [ m(u@@q) :  u in UqB ]; //elements of U/B as elements of the order S
-	polarizations_of_degree_N :=[];
-
-	for elt in isogenies_of_degree_N do
-		// x*I = J
-		x := elt[1];
-		J := elt[2];
-		assert (J) subset Itbar;
-		for uu in UqBinS do
-			pol := (x*(A ! uu));
-			assert (pol*I) eq J;
-			//pol is a polarization if totally imaginary and \Phi-positive
-			C := [g(pol): g in phi];
-			if (ComplexConjugate(pol) eq (-pol)) and (forall{c : c in C | Im(c) gt (RR ! 0)}) then
-				Append(~polarizations_of_degree_N, pol);
-			end if;
-		end for;
-	end for;
-
-	if #polarizations_of_degree_N ge 1 then
-		return true, polarizations_of_degree_N;
-	else
-		return false,[];
-	end if;
-end intrinsic;
+/////////////////////////////////////////////////////
+// other useful instrinsics for Weil polynomials
+/////////////////////////////////////////////////////
 
 intrinsic LPolyToWeilPoly(l::RngUPolElt) -> RngUPolElt
 {given an L-polynomial l(T) returns the associated Weil polynomial w(T):=T^(2g)*l(1/T)}
@@ -453,58 +399,3 @@ This abelian variety exists and it is uniquely determined up to \F_q-isogeny by 
 	end if;
 end intrinsic;
 
-intrinsic AutomorphismsPol(I::AlgAssVOrdIdl) -> GpAb
-{returns the automorphisms of a polarized abelian variety}
-	require IsFiniteEtale(Algebra(I)): "the algebra of definition must be finite and etale over Q";
-	return TorsionSubgroup(UnitGroup2(MultiplicatorRing(I)));
-end intrinsic;
-
-cm_type_internal:=function(A,prec)
-// "prec" is a precision parameter
-	P<x>:=PolynomialRing(Integers());
-	fA:=P!DefiningPolynomial(A);
-	q:=Integers() ! ( Coefficients(fA)[1]^(2/Degree(fA)) );
-	_,p:=IsPrimePower(q);
-	M:=NumberField(P!DefiningPolynomial(SplittingField(fA))); //this is the compositum
-	frob_in_M:=[[-Coefficients(h[1])[1] : h in Factorization(PolynomialRing(M)!DefiningPolynomial(L[1])) ] : L in A`NumberFields ]; //conjugates of the Frobenius in M
-	//here we use Montes algorithm. One need to Attach +IdealsNF.m !!!!
-	fac:=Factorization(ideal(M,p)); //the assignement is just to avoid the printing
-	PM:=M`PrimeIdeals[p,1]; // we choose a prime of M above p
-	Cvalues_p_pos:=[ [Conjugates(c : Precision:=prec)[1] : c in fr | PValuation(c,PM) gt 0]  : fr in frob_in_M ]; // note that the function PValuation is also from the +IdealsNF.m package
-	homsA:=HomsToC(A : Precision:=prec);
-    all_cm_types:=[[phi : phi in cm] : cm in CartesianProduct(< [homsA[2*k-1],homsA[2*k]] : k in [1..Degree(fA) div 2 ]>)];
-	FA:=PrimitiveElement(A);
-	cm_p_pos:=[];
-	for cm in all_cm_types do
-		cm_values0:=[ h(FA) : h in cm];
-		cm_values:=[];
-		deg_prev:=0;
-		for i1 in [1..#A`NumberFields] do
-			deg1:=Degree(A`NumberFields[i1,1]) div 2;
-			Append(~cm_values,cm_values0[deg_prev+1..deg_prev+deg1]);
-			deg_prev:=deg_prev+deg1;
-		end for;
-		if forall{ i : i in [1..#cm_values] | forall{ d : d in cm_values[i] | exists{ c : c in Cvalues_p_pos[i] | Abs(d-c) lt 10^(2-prec) } } } then
-		Append(~cm_p_pos,cm);
-		end if;
-	end for;
-	A`CMType:=cm_p_pos;
-	return cm_p_pos;
-end function;
-
-intrinsic CMType(A::AlgAss : Precision:=30 , TestOrdinary:=true)->SeqEnum[Maps]
-{given a product of CM number fields A=Q[x]/(f), where f is q-Weil polynomial, returns a subset of HomsToC consisting of one map A->C per conjugate pair such that the induced p-adic valuation v on \bar(Q_p) in C is such that v(a)>0, where a is a root of f. If f is ordinary then it should return only one output. Otherwise more. The precision of the computations is set by the optional parameter "Precision" (Default Value 30).}
-	f:=DefiningPolynomial(A);
-	test_Weil,q:=IsWeil(f);
-	require test_Weil: "the defining polynomial must be a q-Weil polynomial";
-	if TestOrdinary then
-		require IsOrdinary(f): "The isogeny class is not ordinary";
-	end if;
-	if assigned A`CMType then 
-		return A`CMType;
-	else
-		require IsFiniteEtale(A): "the algebra of definition must be finite and etale over Q";
-		require HasComplexConjugate(A): "it must be a product of CM number fields";
-		return cm_type_internal(A, Precision);
-	end if;
-end intrinsic;
