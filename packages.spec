@@ -2,6 +2,7 @@
 AbelianVarieties.m
 CMAlgAss.m
 IsogeniesPolarizations.m
+BaseFieldExtension.m
 Ordersext.m
 IdealClassMonoid.m
 IdealsOfIndex.m

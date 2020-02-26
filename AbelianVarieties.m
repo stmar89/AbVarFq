@@ -1,6 +1,6 @@
 /* vim: set syntax=magma :*/
 
-freeze;
+//freeze;
 
 /////////////////////////////////////////////////////
 // Abelian varieties and Isogeny classes
@@ -16,7 +16,7 @@ declare verbose AbelianVarieties, 1;
 */
 
 /* TODO:
-- pRank, Functor
+- pRank, Functor, CMType
 - projection and inclusions of isogenyclasses
 */
 
@@ -32,8 +32,11 @@ declare attributes IsogenyClassFq : WeilPolynomial, //the characteristic polynom
                                     Dimension, // the dimension
                                     UniverseAlgebra, //the AlgAss that contains all the DeligneModules. eg. if h=g1^s1*g2^s2 then it equals (Q[x]/g1)^s1 x (Q[x]/g2)^s2 
                                     ZFV, //a pair <Z[F,q/F], delta>, where F is the Frobenius endomorphism and delta:Q(F)->EndomorphismAlgebra which gives the (diagonal) action of the Frobenius on the endomorphism algebra. 
+                                    FrobeniusEndomorphism, //an endomorphism of the UniverseAlgebra representing the Frobenius
                                     IsomorphismClasses, //a sequence of DeligneModules representing the isomorphism classes inside the isogeny class
-                                    CMType; //the same as above
+                                    IsSquarefree,
+                                    IsPowerOfBass,
+                                    CMType; //TODO
 // TODO
 //                                  pRank, // the p-rank
 //                                  Functor, //a string describing which functor is used to describe the category "Deligne", "Centeleghe-Stix", "Oswal=Shankar"
@@ -42,12 +45,15 @@ declare attributes IsogenyClassFq : WeilPolynomial, //the characteristic polynom
 // Creation and access functions of IsogenyClassFq
 /////////////////////////////////////////////////////
 
-intrinsic IsogenyClass( h::RngUPol ) -> IsogenyClassFq
+intrinsic IsogenyClass( h::RngUPolElt ) -> IsogenyClassFq
 { given a WeilPolynomial h creates the isogeny class determined by h via Honda-Tate theory }
     test_weil,q,p:=IsWeil(h);
     require test_weil : "the given polynomial is not a Weil polynomial";
     fac:=Factorization(h);
-    require forall{f : f in fac | IsCharactersiticPolynomial(f[1]^f[2]) } : "the given polynomial does not define an isogeny class";
+    for f in fac do
+        _,e:=IsCharacteristicPoly(f[1]);
+        require (f[2] mod e) eq 0 : "the given polynomial does not define an isogeny class";
+    end for;
 
     I:=New(IsogenyClassFq);
     I`WeilPolynomial:=h;
@@ -67,10 +73,11 @@ intrinsic IsogenyClass( h::RngUPol ) -> IsogenyClassFq
         i:=0;
         img:=[];
         for f in fac do
-            img cat:=[ &+[ Ah.(i+j) : k in [1..f[2]]] : j in [1..Degree(f[1])] ];
+            img cat:=[ &+[ Ah.(i+j+k*Degree(f[1])) : k in [0..f[2]-1]] : j in [1..Degree(f[1])] ]; //this is wrong
             i:=i+Degree(f[1])*f[2];
         end for;
         delta:=hom<Ag->Ah | img >;
+        assert delta(One(Ag)) eq One(Ah); 
     end if;
     F:=PrimitiveElement(Ag); //the Frobenius
     ZFV:=Order([F,q/F]);
@@ -78,7 +85,7 @@ intrinsic IsogenyClass( h::RngUPol ) -> IsogenyClassFq
     return I;
 end intrinsic;
 
-intrinsic WeilPolynomial( I::IsogenyClassFq )-> RngUpol
+intrinsic WeilPolynomial( I::IsogenyClassFq )-> RngUpolElt
 { given an isogeny class AV(h) returns the Weil polynomial h defining it }
     return I`WeilPolynomial;
 end intrinsic;
@@ -103,9 +110,37 @@ intrinsic UniverseAlgebra( I::IsogenyClassFq )-> AlgAss
     return I`UniverseAlgebra;
 end intrinsic;
 
-intrinsic ZFV(I::IsogenyClassFq)-> AlgAssVOrd,Map
+intrinsic ZFVOrder(I::IsogenyClassFq)-> AlgAssVOrd,Map
 { given an isogeny class AV(h) returns the algebra where all the Deligne modules live in }
     return I`ZFV[1],I`ZFV[2];
+end intrinsic;
+
+intrinsic FrobeniusEndomorphism(I::IsogenyClassFq)-> Map
+{ given an isogeny class AV(h) returns the Frobenius endomorphism (acting on the UniverseAlgebra) }
+    UA:=UniverseAlgebra(I);
+    R,mR:=ZFVOrder(I);
+    FUA:=mR(PrimitiveElement(Algebra(R)));
+    F:=hom<UA->UA | [FUA*UA.i : i in [1..Dimension(UA)] ] >;
+    return F;
+end intrinsic;
+
+intrinsic IsSquarefree(I::IsogenyClassFq)-> BoolElt
+{ given an isogeny class AV(h) returns whether h is squarefree }
+    if not assigned I`IsSquarefree then
+        I`IsSquarefree:=IsSquarefree(WeilPolynomial(I));
+    end if;
+    return I`IsSquarefree;
+end intrinsic;
+
+intrinsic IsPowerOfBass(I::IsogenyClassFq)-> BoolElt
+{ given an isogeny class AV(h) returns whether h is a pure power and ZFV is a Bass Order }
+    if not assigned I`IsPowerOfBass then
+        h:=WeilPolynomial(I);
+        ZFV:=ZFVOrder(I);
+        g:=DefiningPolynomial(Algebra(ZFV));
+        I`IsPowerOfBass:=( (Degree(h) mod Degree(g)) eq 0 ) and IsBass(ZFV);
+    end if;
+    return I`IsPowerOfBass;
 end intrinsic;
 
 intrinsic Print(I::IsogenyClassFq)
@@ -117,7 +152,7 @@ intrinsic 'eq'(AVh1::IsogenyClassFq , AVh2::IsogenyClassFq ) -> BoolElt
 { checks if two isogeny classes are the equal }
     if WeilPolynomial(AVh1) eq WeilPolynomial(AVh2) then
         assert2 UniverseAlgebra(AVh1) eq UniverseAlgebra(AVh2);
-        assert2 ZFV(AVh1) eq ZFV(AVh2);
+        assert2 ZFVOrder(AVh1) eq ZFVOrder(AVh2);
         return true;
     else
         return false;
@@ -135,14 +170,18 @@ declare attributes AbelianVarietyFq : IsogenyClass,
                                       GroupOfRationalPoints,
                                       Polarizations,
                                       DualVariety;
+intrinsic Print(I::AbelianVarietyFq)
+{ print the abelian variety }
+    printf "Abelian variety over FF_%o in the %o",FiniteField(I),IsogenyClass(I);
+end intrinsic;
 
 /////////////////////////////////////////////////////
-// Creation  functions of AbelianVarietyFq
+// Creation functions of AbelianVarietyFq
 /////////////////////////////////////////////////////
 
-intrinsic AbelianVarietyFq( AVh::IsogenyClassFq , I::AlgAssVOrdIdl )->AbelianVarietyFq
+intrinsic AbelianVariety( AVh::IsogenyClassFq , I::AlgAssVOrdIdl )->AbelianVarietyFq
 { returns the abelian variety defined by a fractional ideal I of the Z[F,V] order of the isogeny class AV(h), where h is the characteristic polynomial of the Frobenius } 
-    R,delta:=ZFV(AVh);
+    R,delta:=ZFVOrder(AVh);
     require R eq Order(I) : "the fractional ideal is not defined over the order Z[F,V] of the given isogeny class";
     UA:=UniverseAlgebra(AVh);
     require UA eq Algebra(R) : "one cannot define an abelian variety using a fractional ideal for the given isogeny class";
@@ -154,10 +193,9 @@ intrinsic AbelianVarietyFq( AVh::IsogenyClassFq , I::AlgAssVOrdIdl )->AbelianVar
     return AV;
 end intrinsic;
 
-
-intrinsic AbelianVarietyFq( AVh::IsogenyClassFq , seq::SeqEnum[AlgAssVOrdIdl] )-> AbelianVarietyFq
+intrinsic AbelianVariety( AVh::IsogenyClassFq , seq::SeqEnum[AlgAssVOrdIdl] )-> AbelianVarietyFq
 { returns the abelian variety defined by a direct sum of s fractional ideals  of the Z[F,V] order of the isogeny class AV(g^s), where g is the square-free characteristic polynomial of the Frobenius } 
-    R,delta:=ZFV(AVh);
+    R,delta:=ZFVOrder(AVh);
     g:=DefiningPolynomial(Algebra(R));
     s:=#seq;
     require forall{ I : I in seq | R eq Order(I) } : "the sequence of fractional ideals does not define an abelin variety in the given isogeny class";
@@ -173,14 +211,29 @@ intrinsic AbelianVarietyFq( AVh::IsogenyClassFq , seq::SeqEnum[AlgAssVOrdIdl] )-
         map:=hom<Algebra(R)->UA | [UA.i : i in [i0..i0+Degree(g)] ]>; // embedding of Ag->Ag^s into the ith component
         Append(~DM,<I,map>);
     end for;    
-    AV`DeligneModule:=DM;
+    AV`DeligneModuleAsDirectSum:=DM;
     AV`DeligneModuleZBasis:=&cat[ [ M[2](z) : z in ZBasis(M[1]) ] : M in DM];
     return AV;
 end intrinsic;
 
-intrinsic AbelianVarietyFq( AVh::IsogenyClassFq , seq::SeqEnum[Tup] )-> AbelianVarietyFq
+intrinsic AbelianVariety( AVh::IsogenyClassFq , seq::SeqEnum[AlgAssElt] )-> AbelianVarietyFq
+{ returns the abelian variety defined defined by elements of the universal algebra contained in seq } 
+    R,delta:=ZFVOrder(AVh);
+    UA:=UniverseAlgebra(AVh);
+    require forall{ g : g in seq | Parent(g) eq UA } : " the elements are not in the UniverseAlgebra(A)";
+    AV:=New(AbelianVarietyFq);
+    AV`IsogenyClass:=AVh;
+    is_lattice:=Rank( Matrix( seq ) ) eq Dimension(UA) ;
+    require is_lattice : "the elements in seq do not generate a lattice in the UniverseAlgebra(A) ";
+    // here we do not compute the direct sum decomposition, which is implemented only for squarefree and power-of-bass
+    // if you need it, you can call DeligneModuleAsDirectSum
+    AV`DeligneModuleZBasis:=seq;
+    return AV;
+end intrinsic;
+
+intrinsic AbelianVariety( AVh::IsogenyClassFq , seq::SeqEnum[Tup] )-> AbelianVarietyFq
 { given an isogeny class and sequence of pairs  <J_i,v_i> returns the abelin variety in the given isogeny class defined by the Deligne Module J_1v_1+...+J_sv_s }
-    R,delta:=ZFV(AVh);
+    R,delta:=ZFVOrder(AVh);
     g:=DefiningPolynomial(Algebra(R));
     UA:=UniverseAlgebra(AVh);
     s:=#seq;
@@ -196,10 +249,23 @@ intrinsic AbelianVarietyFq( AVh::IsogenyClassFq , seq::SeqEnum[Tup] )-> AbelianV
         i0:=Degree(g)*(i-1)+1;
         assert (UA.i0^2 eq UA.i0); //it should be an orthogonl idempotent
         map:=hom<Algebra(R)-> UA | [UA.i*vi : i in [i0..i0+Degree(g)] ]>; // embedding of Ag->Ag^s defined by 1:->vi
-        Append(~DM,<I,map>);
+        Append(~DM,<Ji,map>);
     end for;    
-    AV`DeligneModule:=DM;
+    AV`DeligneModuleAsDirectSum:=DM;
     AV`DeligneModuleZBasis:=&cat[ [ M[2](z) : z in ZBasis(M[1]) ] : M in DM];
+    return AV;
+end intrinsic;
+
+intrinsic AbelianVariety( AVh::IsogenyClassFq , M::BassMod )-> AbelianVarietyFq
+{ given an isogeny class and a BassMod it returns the corresponding abelian variety. }
+    R,delta:=ZFVOrder(AVh);
+    g:=DefiningPolynomial(Algebra(R));
+    UA:=UniverseAlgebra(AVh);
+    require Order(M) eq R and UniverseAlgebra(M) eq UA : "the given BassMod does not define an abelian variety in the given isogeny class";
+    AV:=New(AbelianVarietyFq);
+    AV`IsogenyClass:=AVh;
+    AV`DeligneModuleAsDirectSum:=DirectSumRep(M);
+    AV`DeligneModuleZBasis:=GensOverZ(M);
     return AV;
 end intrinsic;
 
@@ -212,40 +278,73 @@ intrinsic IsogenyClass( A::AbelianVarietyFq) -> IsogenyClassFq
     return A`IsogenyClass;
 end intrinsic;
 
+intrinsic WeilPolynomial(A::AbelianVarietyFq )-> RngUpolElt
+{ given an isogeny class AV(h) returns the Weil polynomial h defining it }
+    return WeilPolynomial(IsogenyClass(A));
+end intrinsic;
+
 intrinsic DeligneModuleZBasis( A :: AbelianVarietyFq) -> SeqEnum[AlgAssElt]
 { returns the DeligneModule defining the variety A }
     return A`DeligneModuleZBasis;
 end intrinsic;
 
-intrinsic DeligneModuleAsDirectSum( A :: AbelianVarietyFq) -> SeqEnum[Tup]
-{ returns the DeligneModule defining the variety A given as a sequence of pairs <J,m> where J is a fractional Z[F,V] ideal and m is a map from Algebra(J) to the UniverseAlgebra of the isogeny class }
-    return A`DeligneModuleAsDirectSum;
-end intrinsic;
-
-intrinsic FiniteField( I::IsogenyClassFq )-> RngInt
+intrinsic FiniteField( A :: AbelianVarietyFq )-> RngInt
 { given an isogeny class AV(h) returns the size of the finite field of definition }
-    return IsogenyClass(A)`FiniteField;
+    return FiniteField(IsogenyClass(A));
 end intrinsic;
 
-intrinsic CharacteristicFiniteField( I::IsogenyClassFq )-> RngInt
+intrinsic CharacteristicFiniteField( A :: AbelianVarietyFq )-> RngInt
 { given an isogeny class AV(h) returns the characteristic of the finite field of definition }
-    return IsogenyClass(A)`CharacteristicFiniteField;
+    return CharacteristicFiniteField(IsogenyClass(A));
 end intrinsic;
 
-intrinsic Dimension( I::IsogenyClassFq )-> RngInt
+intrinsic Dimension( A :: AbelianVarietyFq )-> RngInt
 { given an isogeny class AV(h) returns the dimension }
-    return IsogenyClass(A)`Dimension;
+    return Dimension(IsogenyClass(A));
 end intrinsic;
-
 
 intrinsic UniverseAlgebra( A :: AbelianVarietyFq) -> AlgAss
 { returns the UniverseAlgebra where the DeligneModule lives in }
-    return IsogenyClass(A)`Universelgebra;
+    return UniverseAlgebra(IsogenyClass(A));
 end intrinsic;
 
-intrinsic ZFV( A :: AbelianVarietyFq) -> AlgAssVOrd,Map
+intrinsic ZFVOrder( A :: AbelianVarietyFq) -> AlgAssVOrd,Map
 { returns the ZFV of the isogeny class of A }
-    return IsogenyClass(A)`ZFV;
+    return ZFVOrder(IsogenyClass(A));
+end intrinsic;
+
+intrinsic FrobeniusEndomorphism(A::AbelianVarietyFq)-> Map
+{ returns the Frobenius endomorphism (acting on the UniverseAlgebra) }
+    return FrobeniusEndomorphism(IsogenyClass(A));
+end intrinsic;
+
+/////////////////////////////////////////////////////
+// DeligneModule as Direct Sum
+//////////////////////////////////////////////////////
+
+intrinsic DeligneModuleAsDirectSum( A :: AbelianVarietyFq) -> SeqEnum[Tup]
+{ returns the DeligneModule defining the variety A given as a sequence of pairs <J,m> where J is a fractional Z[F,V] ideal and m is a map from Algebra(J) to the UniverseAlgebra of the isogeny class }
+    if not assigned A`DeligneModuleAsDirectSum then
+        assert assigned A`DeligneModuleZBasis;
+        I:=IsogenyClass(A);
+        require IsSquarefree(I) or IsPowerOfBass(I) : " we don't know a method to determine if a direct sumi represenatation exists and how to compute it :-) ";
+        R,mR:=ZFVOrder(A);
+        if IsSquarefree(I) then
+            id:=ideal<R|A`DeligneModuleZBasis>;
+            UA:=UniverseAlgebra(A);
+            assert UA eq Algebra(R);
+            one:=hom<UA->UA | [UA.i : i in [1..Dimension(UA)]]>;
+            A`DeligneModuleAsDirectSum:=[<id,one>];
+        else // PowerOfBass case
+//"DeligneModuleAsDirectSum \n";
+            M:=BassModule(R,mR,A`DeligneModuleZBasis);
+//"assigned M`DirectSumRep \n";
+//assigned M`DirectSumRep;
+            A`DeligneModuleAsDirectSum := DirectSumRep(M);
+//"A`DeligneModuleAsDirectSum :\n ",A`DeligneModuleAsDirectSum;
+        end if;
+    end if;
+    return A`DeligneModuleAsDirectSum;
 end intrinsic;
 
 /////////////////////////////////////////////////////
@@ -271,11 +370,19 @@ isHNFeq:=function(gensM,gensN)
     end if;
 end function;
 
+isUAeq:=function(gensM,gensN)
+// given generators in the Universal Algebra, we check if they generate the same Z-module
+    return isHNFeq(
+            [ ChangeUniverse(Eltseq(g),Rationals()) : g in gensM ], 
+            [ ChangeUniverse(Eltseq(g),Rationals()) : g in gensN ]
+                );
+end function;
+
 intrinsic 'eq'( A1 :: AbelianVarietyFq , A2 :: AbelianVarietyFq ) -> BoolElt
 { checks if two abelin varieties are equal the equal }
     if IsogenyClass(A1) eq IsogenyClass(A2) then
-        gens1:=DeligneModuleAsZBasis(A1);
-        gens2:=DeligneModuleAsZBasis(A2);
+        gens1:=DeligneModuleZBasis(A1);
+        gens2:=DeligneModuleZBasis(A2);
         return isHNFeq(gens1,gens2);
     else
         vprintf AbelianVarieties : "eq : the abelian varities are not in the same isogeny class \n";
@@ -283,44 +390,74 @@ intrinsic 'eq'( A1 :: AbelianVarietyFq , A2 :: AbelianVarietyFq ) -> BoolElt
     end if;
 end intrinsic;
 
-intrinsic IsIsomorphic( A1 :: AbelianVarietyFq , A2 :: AbelianVarietyFq ) -> BoolElt
+intrinsic IsIsomorphic( A1 :: AbelianVarietyFq , A2 :: AbelianVarietyFq ) -> BoolElt,Map
 { checks if two abelin varieties are isomorphic and eventually it returns also a Z[F,V]-linear isomorphism from the common UniverseAlgebra  }
+    vprintf AbelianVarieties,1 : " IsIsomorphic :";
     if IsogenyClass(A1) eq IsogenyClass(A2) then
         h:=WeilPolynomial(A1);
-        ZFV,mZFV:=ZFV(A1);
+        ZFV,mZFV:=ZFVOrder(A1);
         g:=DefiningPolynomial(Algebra(ZFV));
         DM1:=DeligneModuleAsDirectSum(A1);
+//"\n\n DM1:",DM1;
         DM2:=DeligneModuleAsDirectSum(A2);
+//"\n\n DM2:",DM2;
         s:=#DM1;
         assert s eq #DM2;
-        if IsSquarefree(h) then
+        if IsSquarefree(IsogenyClass(A1)) then
             assert s eq 1;
             I1:=DM1[1,1];
-            v1:=DM1[1,2];
+            v1:=DM1[1,2](One(Algebra(ZFV)));
             I2:=DM2[1,1];
-            v2:=DM2[1,2];
+            v2:=DM2[1,2](One(Algebra(ZFV)));
             test,iso_0:=IsIsomorphic2(I1,I2);
             if test then
                 assert I1 eq iso_0*I2;
-                iso:=v2/(iso_0*v2);
+                iso:=v2/(iso_0*v1);
                 map:=hom<UniverseAlgebra(A1)->UniverseAlgebra(A2) | x:->iso*x, y:->y/iso >;
+                assert isUAeq(DeligneModuleZBasis(A2),[ map(g) : g in  DeligneModuleZBasis(A1)]);
                 return true,map;
             else
                 return false,_;
             end if;
-        elif h eq g^s and Bass(ZFV) then
-            one:=One(Algebra(ZFV));
-            BC1:=[ <M[1],M[2](one)> : M in DM1 ];
-            BC2:=[ <M[1],M[2](one)> : M in DM2 ];
-            return IsBassIsomorphicWithMap(BC1,BC2);
+        elif IsPowerOfBass(IsogenyClass(A1)) then
+        //elif h eq g^s and IsBass(ZFV) then
+            BC1:=BassModule(ZFV,mZFV,DM1);
+//"\n\n AV.m , IsIso : BC1 ",DM1,BC1`DirectSumRep,DirectSumRep(BC1);
+            BC2:=BassModule(ZFV,mZFV,DM2);
+//"AV.m , IsIso : BC2 ",BC2`DirectSumRep,DirectSumRep(BC2);
+            out:=IsIsomorphic(BC1,BC2);
+            return out;
         else
             error "the isomorphism testing is implemented only for squarefree and power-of-Bass isogeny classes"; 
         end if; 
     else
         vprintf AbelianVarieties : "IsIsomorphic : the abelian varities are not in the same isogeny class \n";
-        return false;
+        return false,_;
     end if;
 end intrinsic;
+
+/////////////////////////////////////////////////////
+// Compute all isomorphism classes in a given Isogeny class
+/////////////////////////////////////////////////////
+
+intrinsic ComputeIsomorphismClasses( AVh::IsogenyClassFq )->SeqEnum[AbelianVarietyFq]
+{ computes a list of representatives of isomorphisms classes of abelian varieties in the given isogeny class }
+    if not assigned AVh`IsomorphismClasses then
+        h:=WeilPolynomial(AVh);
+        R,map:=ZFVOrder(AVh);
+        if IsSquarefree(h) then
+            icm:=ICM(R);
+            AVh`IsomorphismClasses:=[ AbelianVariety(AVh,I) : I in icm ];
+        elif #Factorization(h) eq 1 and IsBass(R) then
+            all_bc:=AllBassClasses(R,map);
+            AVh`IsomorphismClasses:=[ AbelianVariety(AVh,bc) : bc in all_bc ];
+        else
+            error "implemented only for squarefree and power-of-Bass isogeny classes"; 
+        end if;
+    end if;
+    return AVh`IsomorphismClasses;
+end intrinsic;
+
 
 /////////////////////////////////////////////////////
 // other useful instrinsics for Weil polynomials
@@ -377,7 +514,7 @@ end intrinsic;
 intrinsic IsCharacteristicPoly(f::RngUPolElt : Precision:=100) -> BoolElt,RngIntElt,RngIntElt,RngIntElt
 {Given an irreducible q-Weil polynomial f, returns the exponent e, such that there exists a simple abelian variety over \F_q with characteristic polynomial of the Frobenius equal to f^e.
 This abelian variety exists and it is uniquely determined up to \F_q-isogeny by Honda-Tate theory. For the method used, see [Wat69, paragraph before the last theorem on page 527].}
-    testWeil,q,p,d:=IsWeil(f : prec:=Precision);
+    testWeil,q,p,d:=IsWeil(f : Precision:=Precision);
 	require IsIrreducible(f) and testWeil: "the input must be an irreducible q-Weil polynomial";
 	Qp:=pAdicField(p,Precision);
 	Rp<y>:=PolynomialRing(Qp);
@@ -395,3 +532,29 @@ This abelian variety exists and it is uniquely determined up to \F_q-isogeny by 
 	end if;
 end intrinsic;
 
+/* TESTS
+ 
+AttachSpec("packages.spec");
+_<x>:=PolynomialRing(Integers());
+f:=x^6-x^5+2*x^4-2*x^3+4*x^2-4*x+8;
+AVf:=IsogenyClass(f);
+_:=ComputeIsomorphismClasses(AVf);
+time #ComputeIsomorphismClasses(AVf);
+for A,B in ComputeIsomorphismClasses(AVf) do t,s:=IsIsomorphic(A,B); end for;
+
+f:=x^6-x^5+2*x^4-2*x^3+4*x^2-4*x+8;
+AVf:=IsogenyClass(f^3);
+iso:=ComputeIsomorphismClasses(AVf);
+time #ComputeIsomorphismClasses(AVf); //it should be 0
+for A,B in iso do 
+    t,s:=IsIsomorphic(A,B);
+end for;
+
+f:=x^6-x^5+2*x^4-2*x^3+4*x^2-4*x+8;
+h:=x^2-x+2;
+AVf:=IsogenyClass(h*f^2);
+iso:=ComputeIsomorphismClasses(AVf); //this should give an error
+ZFV:=ZFVOrder(AVf);
+
+
+*/
