@@ -323,77 +323,80 @@ intrinsic DirectSumRep(M::BassMod)->SeqEnum[Tup]
         Rg,mR:=Order(M);
         Ag:=Algebra(Rg);
         n:=Dimension(Ag);
-        T:=MultiplicatorRing(M);
         UA:=UniverseAlgebra(M);
-        require IsBass(Rg) : "the order must be a Bass order";
-        gensZ:=GensOverZ(M);
-        
-        AgstoUA:=func< v | UA!&cat[Eltseq(vi) : vi in v] >;
-        UAtoAgs:=func< x | [Ag!p : p in Partition(Eltseq(x),Dimension(Ag))]  >;
-        gens:=[ UAtoAgs(g) : g in gensZ ] ;
-        
-        gens_loop:=gens;
-        mat_BaseChange:=IdentityMatrix(Ag,#gens[1]);
-        bass_decompI:=[];
-        repeat
-            bc_fac,gens_I0:=bass_factor(gens_loop,Rg);        
-            J:=bc_fac[1];
-            v0:=bc_fac[2];
-            v:=Eltseq(Vector(v0)*mat_BaseChange);
-            assert isMeqN_KBasis(gens cat [[vi*zbJ : vi in v]  : zbJ in ZBasis(J)],gens); //is v*J in M? 
-            Append(~bass_decompI,<J,v>);
-            //now gensI0 genreate a Zmodule of rank = rank(gens)-n. I need to rearrange them in a such a way that all zeros are in one column
-            //TODO remove the randomization
-            if #gens_I0 ne 0 then  
-                mI0:=Matrix(gens_I0);
-                rkI0:=Rank(mI0);
-                rowsI0:=Rows(mI0);
-                repeat
-                    m1:=Matrix( [Random(rowsI0) : i in [1..rkI0]] );
-                until Rank(m1) eq rkI0;
-                gens_loop:=[Eltseq(r) : r in Rows(Solution( m1 , mI0 ))];
-                mat_BaseChange:=m1*mat_BaseChange;
-            end if;
-        until #gens_I0 eq 0;
+        if IsBass(Rg) then
+            T:=MultiplicatorRing(M);
+            gensZ:=GensOverZ(M);
+            AgstoUA:=func< v | UA!&cat[Eltseq(vi) : vi in v] >;
+            UAtoAgs:=func< x | [Ag!p : p in Partition(Eltseq(x),Dimension(Ag))]  >;
+            gens:=[ UAtoAgs(g) : g in gensZ ] ;
+            gens_loop:=gens;
+            mat_BaseChange:=IdentityMatrix(Ag,#gens[1]);
+            bass_decompI:=[];
+            repeat
+                bc_fac,gens_I0:=bass_factor(gens_loop,Rg);        
+                J:=bc_fac[1];
+                v0:=bc_fac[2];
+                v:=Eltseq(Vector(v0)*mat_BaseChange);
+                assert isMeqN_KBasis(gens cat [[vi*zbJ : vi in v]  : zbJ in ZBasis(J)],gens); //is v*J in M? 
+                Append(~bass_decompI,<J,v>);
+                //now gensI0 genreate a Zmodule of rank = rank(gens)-n. I need to rearrange them in a such a way that all zeros are in one column
+                //TODO remove the randomization
+                if #gens_I0 ne 0 then  
+                    mI0:=Matrix(gens_I0);
+                    rkI0:=Rank(mI0);
+                    rowsI0:=Rows(mI0);
+                    repeat
+                        m1:=Matrix( [Random(rowsI0) : i in [1..rkI0]] );
+                    until Rank(m1) eq rkI0;
+                    gens_loop:=[Eltseq(r) : r in Rows(Solution( m1 , mI0 ))];
+                    mat_BaseChange:=m1*mat_BaseChange;
+                end if;
+            until #gens_I0 eq 0;
 
-        // TESTS //////////////////////////////////
-                gens_Test:=[];
-                for bc in bass_decompI do
-                J:=bc[1];
-                //"zbJ"; ZBasis(J);
-                v:=bc[2];
-                //"v"; v;
-                gens_Test:=gens_Test cat [  [j*vi : vi in v] : j in ZBasis(J) ];
-                end for;
-                //"gens"; gens; "gens_Test"; gens_Test;
-                assert isMeqN_KBasis(gens cat gens_Test,gens_Test);
-                // test using abelian groups. I will test also the intersections
-                gensZ:=[ &cat[Eltseq(gi) : gi in g] : g in gens ];
-                F:=FreeAbelianGroup(#gensZ[1]);
-                subs:=[];
-                for bc in bass_decompI do
-                J:=bc[1]; v:=bc[2];
-                gens_Jv:=[  [j*vi : vi in v] : j in ZBasis(J) ];
-                gensZ_Jv:=[ &cat[Eltseq(gi) : gi in g] : g in gens_Jv ];
-                mat_gensZ:=Matrix(Rationals() , gensZ);
-                mat_gensZ_Jv:=Matrix(Rationals() , gensZ_Jv);
-                den:=Denominator(VerticalJoin(mat_gensZ,mat_gensZ_Jv));
-                coordsZ_Jv:=Solution(ChangeRing(den*mat_gensZ,Integers()),ChangeRing(den*mat_gensZ_Jv,Integers()));
-                gensF_Jv:=[F!Eltseq(r) : r in Rows(coordsZ_Jv) ];
-                subF_Jv:=sub<F|gensF_Jv>;
-                Append(~subs,subF_Jv);
-                end for;
-                assert &+subs eq F; //the sum is ok
-                assert forall{H : H in subs | not exists{G : G in subs | G ne H and not IsTrivial(G meet H)}}; //the intersections are trivial, that is the sum is direct
-        // END TESTS //////////////////////////////////////
-        BC:= [ <bc[1],hom<Ag->UA| [mR(Ag.i)*AgstoUA(bc[2]): i in [1..Dimension(Ag)]]>> : bc in bass_decompI ];
-        // more TEST //
-        assert isUAeq( GensOverZ(M) , &cat[[ bc[2](z) : z in ZBasis(bc[1]) ] : bc in BC ]); // the sum is ok
-        V,v:=VectorSpace(UA);
-        subs:=[ sub<V| [ v(bc[2](z)) : z in ZBasis(bc[1])  ] > : bc in BC ];
-        for W1,W2 in subs do assert ((W1 eq W2) or IsZero(Dimension(W1 meet W2))); end for; 
-        assert forall{bc : bc in BC | Codomain(bc[2]) eq UA};
-        M`DirectSumRep:=BC;
+            // TESTS //////////////////////////////////
+                    gens_Test:=[];
+                    for bc in bass_decompI do
+                    J:=bc[1];
+                    //"zbJ"; ZBasis(J);
+                    v:=bc[2];
+                    //"v"; v;
+                    gens_Test:=gens_Test cat [  [j*vi : vi in v] : j in ZBasis(J) ];
+                    end for;
+                    //"gens"; gens; "gens_Test"; gens_Test;
+                    assert isMeqN_KBasis(gens cat gens_Test,gens_Test);
+                    // test using abelian groups. I will test also the intersections
+                    gensZ:=[ &cat[Eltseq(gi) : gi in g] : g in gens ];
+                    F:=FreeAbelianGroup(#gensZ[1]);
+                    subs:=[];
+                    for bc in bass_decompI do
+                    J:=bc[1]; v:=bc[2];
+                    gens_Jv:=[  [j*vi : vi in v] : j in ZBasis(J) ];
+                    gensZ_Jv:=[ &cat[Eltseq(gi) : gi in g] : g in gens_Jv ];
+                    mat_gensZ:=Matrix(Rationals() , gensZ);
+                    mat_gensZ_Jv:=Matrix(Rationals() , gensZ_Jv);
+                    den:=Denominator(VerticalJoin(mat_gensZ,mat_gensZ_Jv));
+                    coordsZ_Jv:=Solution(ChangeRing(den*mat_gensZ,Integers()),ChangeRing(den*mat_gensZ_Jv,Integers()));
+                    gensF_Jv:=[F!Eltseq(r) : r in Rows(coordsZ_Jv) ];
+                    subF_Jv:=sub<F|gensF_Jv>;
+                    Append(~subs,subF_Jv);
+                    end for;
+                    assert &+subs eq F; //the sum is ok
+                    assert forall{H : H in subs | not exists{G : G in subs | G ne H and not IsTrivial(G meet H)}}; //the intersections are trivial, that is the sum is direct
+            // END TESTS //////////////////////////////////////
+            BC:= [ <bc[1],hom<Ag->UA| [mR(Ag.i)*AgstoUA(bc[2]): i in [1..Dimension(Ag)]]>> : bc in bass_decompI ];
+            // more TEST //
+            assert isUAeq( GensOverZ(M) , &cat[[ bc[2](z) : z in ZBasis(bc[1]) ] : bc in BC ]); // the sum is ok
+            V,v:=VectorSpace(UA);
+            subs:=[ sub<V| [ v(bc[2](z)) : z in ZBasis(bc[1])  ] > : bc in BC ];
+            for W1,W2 in subs do assert ((W1 eq W2) or IsZero(Dimension(W1 meet W2))); end for; 
+            assert forall{bc : bc in BC | Codomain(bc[2]) eq UA};
+            M`DirectSumRep:=BC;
+        elif n eq Dimension(UA) then //squarefree case
+            M`DirectSumRep:=<ideal<Rg|GensOverZ(M)>,mR>;
+        else
+            error "implemented only for the squarefree or power-of-bass case";
+        end if;
     end if;
     return M`DirectSumRep;
 end intrinsic;
@@ -490,7 +493,6 @@ end intrinsic;
 std_Bass_map:=function(bc,UA)
 // given a sequence I1,...,Ir of ideals of K it returns the hom:UA->UA that sends I1+...+Is to S1+...+Ss-1+I1*..*Is acting on column vectors
 // with S1 Bass and S1 in S2 in S3 in ... in Ss-1 in Sr = (I1*...*Is:I1*...*Is)
-bc_0:=bc;
     s:=#bc;
     AR:=Algebra(bc[1]);
     id:=IdentityMatrix(AR,s);
@@ -499,10 +501,8 @@ bc_0:=bc;
         I1:=bc[i];
         I2:=bc[i+1];
         S:=MultiplicatorRing(I1);
-        I1:=S!I1;
-        I2:=S!I2;
-        c2I2,c2:=MakeIntegral(I2);
-        c1,c1I1:=CoprimeRepresentative(I1,c2I2);
+        c2I2,c2:=MakeIntegral(S!I2);
+        c1,c1I1:=CoprimeRepresentative(S!I1,c2I2);
         a2:=ChineseRemainderTheorem(c1I1,c2I2,AR!1,AR!0);
         a1:=1-a2;
         Mi:=InsertBlock(id,Matrix(AR,2,2,[c1,-c2,a2/c2,a1/c1]),i,i); //acts on column vectors
@@ -532,8 +532,8 @@ intrinsic StdDirectSumRep(M::BassMod)->SeqEnum[Tup],Map
         oneAR:=One(AR);
         dr:=Dimension(AR);
         DRS:=DirectSumRep(M);
-        oid:=OrthogonalIdempotents(UA);
         s:=#DRS;
+        oid:= [ UA!&cat[ j eq c select Eltseq(AR!1) else Eltseq(AR!0) : j in [1..s]]  : c in [1..s]]; //Orthogonal idempotent
         assert #oid eq s;
         Si_s:=[ i lt s select ideal<R|ZBasis(MultiplicatorRing(DRS[i,1]))> else SteinitzClass(M) : i in [1..s] ]; 
         ei_s:=[ hom<AR->UA | [mR(b)*oid[i] : b in Basis(AR) ] > : i in [1..s] ];
@@ -544,11 +544,11 @@ intrinsic StdDirectSumRep(M::BassMod)->SeqEnum[Tup],Map
         map:=hom<UA->UA | [hom_id(hom_vs(b)) : b in Basis(UA)]>; // not as a composition to make it cleaner.
         M`StdDirectSumRep:=<seq,map>;
         // TEST 
-                gens_in:=&cat[[ mR(z)*D[2](oneAR) : z in ZBasis(D[1])] : D in DRS];
-                gens_std:=&cat[[ mR(z)*D[2](oneAR) : z in ZBasis(D[1])] : D in M`StdDirectSumRep[1]];
-                assert isUAeq(GensOverZ(M),gens_in);
-                //assert isUAeq([ map(g) : g in GensOverZ(M)],gens_std);
-                assert isUAeq([ map(g) : g in gens_in],gens_std);
+//                gens_in:=&cat[[ mR(z)*D[2](oneAR) : z in ZBasis(D[1])] : D in DRS];
+//                gens_std:=&cat[[ mR(z)*D[2](oneAR) : z in ZBasis(D[1])] : D in M`StdDirectSumRep[1]];
+//                assert isUAeq(GensOverZ(M),gens_in);
+//                //assert isUAeq([ map(g) : g in GensOverZ(M)],gens_std);
+//                assert isUAeq([ map(g) : g in gens_in],gens_std);
         // end test
     end if;
 	return M`StdDirectSumRep[1],M`StdDirectSumRep[2];
@@ -559,82 +559,40 @@ end intrinsic;
 // ------------------- //
 intrinsic IsIsomorphic( M1::BassMod, M2::BassMod )->BoolElt,Map
 { returns wheter two BassMods M1 and M2 are isormophic and if so it returns also a map from the common universe algebra that sends M1 into M2.}    
-    A:=UniverseAlgebra(M1);
+    UA:=UniverseAlgebra(M1);
     R,mR:=Order(M1);
-    require UniverseAlgebra(M2) eq A : "the BassModules don't live in the same algebra";
+    AR:=Algebra(R);
+    require UniverseAlgebra(M2) eq UA : "the BassModules don't live in the same algebra";
     require R eq Order(M2) : "the Bass Modules are not defiend over the same order";
     Std1,mStd1:=StdDirectSumRep(M1);   
     Std2,mStd2:=StdDirectSumRep(M2);
     s:=#Std1;
-test:=&and[  j : j in [[1..s] ]; DA FINIRE
-/*    one:=One(Algebra(R));
-    BC1:=[ <D[1],D[2](one)> : D in DirectSumRep(M1) ];
-    BC2:=[ <D[1],D[2](one)> : D in DirectSumRep(M2) ];
-    bc1:=[BC1[i,1] : i in [1..#BC1]]; //only the ideals
-    bc2:=[BC2[i,1] : i in [1..#BC2]];
-	assert #bc1 eq #bc2;
-    r:=#bc1;
-	S1i:=MultiplicatorRing(bc1[1]);
-	S2i:=MultiplicatorRing(bc2[1]);
-	for i in [1..r-1] do
-		S1i_next:=MultiplicatorRing(bc1[i+1]);
-		S2i_next:=MultiplicatorRing(bc2[i+1]);
-		if i lt r then
-			require S1i subset S1i_next and S2i subset S2i_next : "the fractional ideals should be permuted such that the MultiplicatorRings are in incresing order";
-		end if;
-		if not S1i eq S2i then
-			return false,_;
-		end if;
-		S1i:=S1i_next;
-		S2i:=S2i_next;
-	end for;
-	//the orders are the same
-    st1:=SteinitzClass(M1); //Steinitz Class
-    st2:=SteinitzClass(M2);
-    test,isom_elt:=IsIsomorphic2(st1,st2); //st1=isom_elt*st2;
-    if not WithMap or not test then
-        return test,_;
-    else //the two decompostions are isomophic. let's produce the morphism
-        // we want map: A -> A , where A=K^r, K is the parent algebra of BC1[i,1] and r=#BC1.
-        K:=Algebra(BC1[1,1]);
-        dimK:=Dimension(K);
-        KrtoA:=func< v | A!&cat[Eltseq(vi) : vi in v] >;
-        AtoKr:=func< x | [K!p : p in Partition(Eltseq(x),dimK)]  >;
-        bc1_v_inK:=[ AtoKr(v[2]) : v in BC1];
-        N1:=Transpose(Matrix(K,r,r, bc1_v_inK)); //sends the ortoghonal basis of A to the vectors of BC1, acting on columns
-        bc2_v_inK:=[ AtoKr(v[2]) : v in BC2];
-        N2:=Transpose(Matrix(K,r,r, bc2_v_inK));
-        A:=Parent(BC1[1,2]);
-        B1:=std_Bass_mat(bc1);
-        B2:=std_Bass_mat(bc2);
-        D:=DiagonalMatrix(K,r,[One(K) : i in [1..r-1]] cat [1/isom_elt] );
-        mat:=N2* (B2^-1) * D * B1*(N1^-1) ; //acts on column vectors
-        mat:=Transpose(mat);
-        //mat now represents a map from K^r->K^r acting on row vectors.
-        Ais_in_Kr:=Matrix([ AtoKr(A.i) : i in [1..Dimension(A)]]);
-        images:=[ KrtoA(Eltseq(rr)) : rr in Rows( Ais_in_Kr*mat) ];
-        map:=hom<A->A | images >;
-*/
-        // TESTS
-            assert isUAeq( &cat[[mR(z)*bc[2](One(K)) : z in ZBasis(bc[1])] : bc in DirectSumRep(M1) ] , GensOverZ(M1));
-            assert isUAeq( &cat[[mR(z)*bc[2](One(K)) : z in ZBasis(bc[1])] : bc in DirectSumRep(M2) ] , GensOverZ(M2));
-            assert Dimension(Kernel(map)) eq 0;
-            assert Dimension(Image(map)) eq Dimension(A);
-"M2 : ", GensOverZ(M2);
-"map(M1) : ", [ map(g) : g in GensOverZ(M1)];
-
-            assert isUAeq( GensOverZ(M2),[ map(g) : g in GensOverZ(M1)]);
-// gens_2:=&cat[[ [ zbi*vj : vj in AtoKr(T[2]) ] : zbi in ZBasis(T[1]) ] : T in BC2 ];
-// gens_1_im:=&cat[[ AtoKr(map(KrtoA([ zbi*vj : vj in AtoKr(T[2]) ]))) : zbi in ZBasis(T[1]) ] : T in BC1 ];
-// gens_1:=&cat[[ [ zbi*vj : vj in AtoKr(T[2]) ] : zbi in ZBasis(T[1]) ] : T in BC1 ];
-// "gens_1_im=",gens_1_im,"gens_1=",gens_1,"gens_2=",gens_2;
-// "BC1=",[< ZBasis(b[1]), b[2]> : b in BC1];
-// "BC2=",[< ZBasis(b[1]), b[2]> : b in BC2];
-"N1=",N1; "B1=",B1; "D=",D; "B2=",B2; "N2=",N2; "mat=",mat;
-        // end tests
-        return test,map;
-     end if;
-end intrinsic;
+    test:=&and[ Std1[j,1] eq Std2[j,1] : j in [1..s-1] ];
+    if test then
+        test,x:=IsIsomorphic2(Std1[s,1],Std2[s,1]); // Std1[s]=x*Std2[s]
+        if test then 
+            UAtoARs:=func< x | [AR!p : p in Partition(Eltseq(x),Dimension(AR))]  >; //isom UA->AR^s
+            ARstoUA:=func< v | UA!&cat[Eltseq(vi) : vi in v] >; // isom AR^s->UA
+            images:=[ ARstoUA([ j lt s select UAtoARs(b)[j] else UAtoARs(b)[j]/x : j in [1..s]])  : b in Basis(UA) ];
+            map_x:=hom<UA->UA|images>; 
+            // TEST
+//                  oneAR:=AR!1;
+//                  gens1:=&cat[[ mR(z)*D[2](oneAR) : z in ZBasis(D[1])] : D in Std1 ];
+//                  gens2:=&cat[[ mR(z)*D[2](oneAR) : z in ZBasis(D[1])] : D in Std2 ];
+//                  assert isUAeq([map_x(g) : g in gens1] , gens2);
+            // end test
+            map:=hom<UA->UA| [ Inverse(mStd2)(map_x(mStd1(g))) : g in Basis(UA) ] > ;
+            // TEST
+            assert isUAeq([map(g) : g in GensOverZ(M1)] , GensOverZ(M2));
+            // end test
+            return true,map;
+         else
+            return false,_;
+         end if;
+    else
+        return false,_;
+    end if;
+end intrinsic;       
 
 
 /*

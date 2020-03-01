@@ -151,8 +151,8 @@ end intrinsic;
 intrinsic 'eq'(AVh1::IsogenyClassFq , AVh2::IsogenyClassFq ) -> BoolElt
 { checks if two isogeny classes are the equal }
     if WeilPolynomial(AVh1) eq WeilPolynomial(AVh2) then
-        assert2 UniverseAlgebra(AVh1) eq UniverseAlgebra(AVh2);
-        assert2 ZFVOrder(AVh1) eq ZFVOrder(AVh2);
+        assert UniverseAlgebra(AVh1) eq UniverseAlgebra(AVh2);
+        assert ZFVOrder(AVh1) eq ZFVOrder(AVh2);
         return true;
     else
         return false;
@@ -425,8 +425,7 @@ intrinsic IsIsomorphic( A1 :: AbelianVarietyFq , A2 :: AbelianVarietyFq ) -> Boo
 //"\n\n AV.m , IsIso : BC1 ",DM1,BC1`DirectSumRep,DirectSumRep(BC1);
             BC2:=BassModule(ZFV,mZFV,DM2);
 //"AV.m , IsIso : BC2 ",BC2`DirectSumRep,DirectSumRep(BC2);
-            out:=IsIsomorphic(BC1,BC2);
-            return out;
+            return IsIsomorphic(BC1,BC2);
         else
             error "the isomorphism testing is implemented only for squarefree and power-of-Bass isogeny classes"; 
         end if; 
