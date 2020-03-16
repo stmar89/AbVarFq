@@ -9,13 +9,6 @@
 
 declare verbose BaseFieldExtension, 1;
 
-// TODO 
-// - change everything in order to accept as input AbelianVarietyFq or IsogenyClassFq
-// - IsTwist for PowOfBass
-// - IsTwist should return also an isomorphism Kg^s->Kg^s (composition of the base change done in BaseFieldExtension and the map to vectors of the BassDecomposition)
-// - Implement IsTwist for non-isogenous inputs.
-
-
 
 // ------------------- //
 // Instrinsic: Extend q-Weil Poly
@@ -315,27 +308,27 @@ for c in ccsq do
     end if;
 end for;
 
-hs:=Setseq(Seqset(hs)); hs;
+hs:=[h] cat Exclude(Setseq(Seqset(hs)),h); hs;
+assert hs[1] eq h;
 
 all_iso:=&cat[ ComputeIsomorphismClasses(IsogenyClass(ht)) : ht in hs ];
 all_ext:=BaseFieldExtension(all_iso,Ah_4);
 #all_iso,#all_ext;
-TODO only for the irreducible isogeny cclasses. I don't knwo how to compute automorphisms of the power of bass case
 
-for i in [1..#all_ext] do
+for i in [1..#ComputeIsomorphismClasses(Ah)] do
     A:=all_iso[i];
     UA:=UniverseAlgebra(A);
     RA,mRA:=ZFVOrder(A);
     FA_elt:=mRA(PrimitiveElement(Algebra(RA)));
     FA:=FrobeniusEndomorphism(A);
     U,u:=UnitGroup2(MultiplicatorRing(DeligneModuleAsDirectSum(A)[1,1]));
-    TAut:=[ hom<UA->UA|[u(t)*b:b in Basis(UA)]> : t in TorsionSubgroup(U) ];
+    Tors:=[ t : t in TorsionSubgroup(U)];
+    TAut:=[ hom<UA->UA|[u(t)*b:b in Basis(UA)]> : t in Tors ];
     Ae:=all_ext[i,1];
     mAe:=all_ext[i,2];
     UAe:=UniverseAlgebra(Ae);
     TF_mAe:=[ Inverse(mAe)*t*FA*mAe : t in TAut ];
-//"\nTF_mAe:",#TAut,[Matrix([t(b) :b in Basis(UAe)]) : t in TF_mAe];
-TF_mAe_mats:=[Matrix([t(b) :b in Basis(UAe)]) : t in TF_mAe];
+    TF_mAe_mats:=[Matrix([t(b) :b in Basis(UAe)]) : t in TF_mAe];
     for j in [1..#all_ext] do
         B:=all_iso[j];
         Be:=all_ext[j,1];
@@ -345,13 +338,16 @@ TF_mAe_mats:=[Matrix([t(b) :b in Basis(UAe)]) : t in TF_mAe];
             RB,mRB:=ZFVOrder(B);
             FB_elt:=mRB(PrimitiveElement(Algebra(RB)));
             FB:=FrobeniusEndomorphism(B);
-//"\nFB:",Matrix([FB(b) : b in Basis(UniverseAlgebra(B))]);
             map:=iso*Inverse(mBe)*FB*mBe*Inverse(iso);
-//"\niso:",Matrix([iso(b) : b in Basis(UAe)]);
-//"\nmap:",Matrix([map(b) : b in Basis(UAe)]);
-map_mat:=Matrix([map(b) : b in Basis(UAe)]);
-            if exists{ a : a in TF_mAe_mats | a eq map_mat } then 
-                printf "1 ";
+            map_mat:=Matrix([map(b) : b in Basis(UAe)]);
+            if exists(a){ a : a in [1..#TF_mAe_mats] | TF_mAe_mats[a] eq map_mat } then 
+                aut:=u(Tors[a]);
+                phi:=HomsToC(Parent(aut))[1];
+                if aut eq 1 then printf "1 ";
+                elif aut eq -1 then printf "-1 ";
+                elif aut^2 eq -1 and Im(phi(aut)) gt 0 then printf "i ";
+                elif aut^2 eq -1 and Im(phi(aut)) lt 0 then printf "-i ";
+                end if;
             else printf "0 ";
             end if;
         else
@@ -396,13 +392,13 @@ for i in [1..#all_ext] do
     FA_elt:=mRA(PrimitiveElement(Algebra(RA)));
     FA:=FrobeniusEndomorphism(A);
     U,u:=UnitGroup2(MultiplicatorRing(DeligneModuleAsDirectSum(A)[1,1]));
-    TAut:=[ hom<UA->UA|[u(t)*b:b in Basis(UA)]> : t in TorsionSubgroup(U) ];
+    Tors:=[ t : t in TorsionSubgroup(U)];
+    TAut:=[ hom<UA->UA|[u(t)*b:b in Basis(UA)]> : t in Tors ];
     Ae:=all_ext[i,1];
     mAe:=all_ext[i,2];
     UAe:=UniverseAlgebra(Ae);
     TF_mAe:=[ Inverse(mAe)*t*FA*mAe : t in TAut ];
-//"\nTF_mAe:",#TAut,[Matrix([t(b) :b in Basis(UAe)]) : t in TF_mAe];
-TF_mAe_mats:=[Matrix([t(b) :b in Basis(UAe)]) : t in TF_mAe];
+    TF_mAe_mats:=[Matrix([t(b) :b in Basis(UAe)]) : t in TF_mAe];
     for j in [1..#all_ext] do
         B:=all_iso[j];
         Be:=all_ext[j,1];
@@ -412,57 +408,21 @@ TF_mAe_mats:=[Matrix([t(b) :b in Basis(UAe)]) : t in TF_mAe];
             RB,mRB:=ZFVOrder(B);
             FB_elt:=mRB(PrimitiveElement(Algebra(RB)));
             FB:=FrobeniusEndomorphism(B);
-//"\nFB:",Matrix([FB(b) : b in Basis(UniverseAlgebra(B))]);
             map:=iso*Inverse(mBe)*FB*mBe*Inverse(iso);
-//"\niso:",Matrix([iso(b) : b in Basis(UAe)]);
-//"\nmap:",Matrix([map(b) : b in Basis(UAe)]);
-map_mat:=Matrix([map(b) : b in Basis(UAe)]);
-            if exists{ a : a in TF_mAe_mats | a eq map_mat } then 
-                printf "1 ";
+            map_mat:=Matrix([map(b) : b in Basis(UAe)]);
+            if exists(a){ a : a in [1..#TF_mAe_mats] | TF_mAe_mats[a] eq map_mat } then 
+                aut:=u(Tors[a]);
+                phi:=HomsToC(Parent(aut))[1];
+                if aut eq 1 then printf "1 ";
+                    elif aut eq -1 then printf "-1 ";
+                    elif aut^2 eq -1 and Im(phi(aut)) gt 0 then printf "i ";
+                    elif aut^2 eq -1 and Im(phi(aut)) lt 0 then printf "-i ";
+                end if;
             else printf "0 ";
             end if;
         else
             printf "_ ";
         end if;
-    end for;
-    printf "\n";
-end for;
-
-
-
-[[FA(t(b)) : b in Basis(UA)] : t in TAut];
-[Inverse(mAe)(Inverse(iso)(FB(iso(mAe(b))))) : b in Basis(UA) ];
-
-if test then
-    FB:=FrobeniusEndomorphism(B[1]);
-    isoFB:=iso*FB*Inverse(iso);
-    if exists{ a : a in TF_mAe | a eq isoFB } then 
-        printf "1 ";
-    else printf "0 ";
-    end if;
-else
-    printf "_ ";
-end if;
-
-
-// not working //
-
-for i in [1..#all_ext] do
-    A:=all_iso[i];
-    UA:=UniverseAlgebra(A);
-    F:=FrobeniusEndomorphism(A);
-    U,u:=UnitGroup2(MultiplicatorRing(DeligneModuleAsDirectSum(A)[1,1]));
-    TAut:=[ hom<UA->UA|[u(t)*b:b in Basis(UA)]> : t in TorsionSubgroup(U) ];
-#TAut;
-    TF:=[ t*F : t in TAut ];
-    assert forall{ t : t in TAut | F*t eq t*F };
-    Ae:=all_ext[i,1];
-    UAe:=UniverseAlgebra(Ae);
-    mAe:=all_ext[i,2];
-    TF_mAe:=[Inverse(mAe)*tf*mAe : tf in TF];
-    for B in all_ext do
-        assert UniverseAlgebra(B[1]) eq UAe;
-        test,iso:=IsIsomorphic(Ae,B[1]);
     end for;
     printf "\n";
 end for;
