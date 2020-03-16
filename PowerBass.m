@@ -370,16 +370,16 @@ intrinsic DirectSumRep(M::BassMod)->SeqEnum[Tup]
                     F:=FreeAbelianGroup(#gensZ[1]);
                     subs:=[];
                     for bc in bass_decompI do
-                    J:=bc[1]; v:=bc[2];
-                    gens_Jv:=[  [j*vi : vi in v] : j in ZBasis(J) ];
-                    gensZ_Jv:=[ &cat[Eltseq(gi) : gi in g] : g in gens_Jv ];
-                    mat_gensZ:=Matrix(Rationals() , gensZ);
-                    mat_gensZ_Jv:=Matrix(Rationals() , gensZ_Jv);
-                    den:=Denominator(VerticalJoin(mat_gensZ,mat_gensZ_Jv));
-                    coordsZ_Jv:=Solution(ChangeRing(den*mat_gensZ,Integers()),ChangeRing(den*mat_gensZ_Jv,Integers()));
-                    gensF_Jv:=[F!Eltseq(r) : r in Rows(coordsZ_Jv) ];
-                    subF_Jv:=sub<F|gensF_Jv>;
-                    Append(~subs,subF_Jv);
+                        J:=bc[1]; v:=bc[2];
+                        gens_Jv:=[  [j*vi : vi in v] : j in ZBasis(J) ];
+                        gensZ_Jv:=[ &cat[Eltseq(gi) : gi in g] : g in gens_Jv ];
+                        mat_gensZ:=Matrix(Rationals() , gensZ);
+                        mat_gensZ_Jv:=Matrix(Rationals() , gensZ_Jv);
+                        den:=Denominator(VerticalJoin(mat_gensZ,mat_gensZ_Jv));
+                        coordsZ_Jv:=Solution(ChangeRing(den*mat_gensZ,Integers()),ChangeRing(den*mat_gensZ_Jv,Integers()));
+                        gensF_Jv:=[F!Eltseq(r) : r in Rows(coordsZ_Jv) ];
+                        subF_Jv:=sub<F|gensF_Jv>;
+                        Append(~subs,subF_Jv);
                     end for;
                     assert &+subs eq F; //the sum is ok
                     assert forall{H : H in subs | not exists{G : G in subs | G ne H and not IsTrivial(G meet H)}}; //the intersections are trivial, that is the sum is direct
@@ -455,7 +455,7 @@ intrinsic AllBassClasses(R::AlgAssVOrd, map::Map )->SeqEnum[BassMod]
 {Given a Bass order R and a map:Algebra(R)->UA, it returns representatives of all the isormorphism classes of torsion-free R modules inside R. We need UA to be isomorphic to a power of Algebra(R) }
     require IsBass(R) : "the first input must be a Bass order";
     UA:=Codomain(map);
-    Type(UA) eq AlgAss;
+    assert Type(UA) eq AlgAss;
     AR:=Algebra(R);
     assert Dimension(UA) mod Dimension(AR) eq 0;
     r:=Dimension(UA) div Dimension(AR);

@@ -398,9 +398,7 @@ intrinsic IsIsomorphic( A1 :: AbelianVarietyFq , A2 :: AbelianVarietyFq ) -> Boo
         ZFV,mZFV:=ZFVOrder(A1);
         g:=DefiningPolynomial(Algebra(ZFV));
         DM1:=DeligneModuleAsDirectSum(A1);
-//"\n\n DM1:",DM1;
         DM2:=DeligneModuleAsDirectSum(A2);
-//"\n\n DM2:",DM2;
         s:=#DM1;
         assert s eq #DM2;
         if IsSquarefree(IsogenyClass(A1)) then
@@ -422,9 +420,7 @@ intrinsic IsIsomorphic( A1 :: AbelianVarietyFq , A2 :: AbelianVarietyFq ) -> Boo
         elif IsPowerOfBass(IsogenyClass(A1)) then
         //elif h eq g^s and IsBass(ZFV) then
             BC1:=BassModule(ZFV,mZFV,DM1);
-//"\n\n AV.m , IsIso : BC1 ",DM1,BC1`DirectSumRep,DirectSumRep(BC1);
             BC2:=BassModule(ZFV,mZFV,DM2);
-//"AV.m , IsIso : BC2 ",BC2`DirectSumRep,DirectSumRep(BC2);
             return IsIsomorphic(BC1,BC2);
         else
             error "the isomorphism testing is implemented only for squarefree and power-of-Bass isogeny classes"; 
