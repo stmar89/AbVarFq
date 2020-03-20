@@ -1,5 +1,6 @@
+/* vim: set syntax=magma :*/
 
-//freeze;
+freeze;
 
 /////////////////////////////////////////////////////
 // Base Field Extension of IsogenyClassesFq and AbelianVarietiesFq
@@ -9,6 +10,9 @@
 
 declare verbose BaseFieldExtension, 1;
 
+declare attributes IsogenyClassFq : IsBaseFieldExtensionOf, // the isogeny classes that extend the the given one
+                                    IsBaseFieldExtensionOfPrimitive, // the primitive isogeny classes that extend the the given one
+                                    IsPrimitive; // is the isogeny class primitive
 
 // ------------------- //
 // Instrinsic: Extend q-Weil Poly
@@ -101,6 +105,51 @@ The VarArg prec determines the precision to which the complex roots of the Weil 
     assert Dimension(Kernel(map)) eq 0 and Dimension(Image(map)) eq Dimension(UAe);
     mUA:=(vUA*map)*Inverse(vUAe);
     return mUA;
+end intrinsic;
+
+intrinsic IsBaseFieldExtensionOf(Ie::IsogenyClassFq : Precision:=300)->SeqEnum
+{ given an isogeny class over F_(p^r) it returns the sequence of all isogeny classes over FF_(p^s) that extend to Ie.
+The computations is done by looking at the roots of the Weil polynomial of Ie. The precision of such computations can be set by using the vararg "Precision". }
+    if not assigned Ie`IsBaseFieldExtensionOf then
+        P:=PolynomialRing(Integers());
+        PC<x>:=PolynomialRing(ComplexField(Precision));
+        he:=WeilPolynomial(Ie);
+        rr:=Roots(PC!he);
+        _,p,r:=IsPrimePower(FiniteField(Ie));
+        out:={@ @};
+        for s in Divisors(r) do
+            ccsq:=[ Roots(x^s-r[1]) : i in [1..r[2]] ,  r in rr];
+            ccsq:=CartesianProduct(ccsq);
+            for c in ccsq do 
+                coCC:=Coefficients(&*[ x-cc[1] : cc in c ]); 
+                coZZ:=[ Round(Re(c)) : c in coCC ];
+                if forall{ i : i in [1..#coCC] | Abs(coCC[i] - coZZ[i]) lt 10^(-(Precision div 2)) } then
+                    ht:=P!coZZ;
+                    Include(~out,ht);
+                end if;
+            end for;
+        end for;
+        Ie`IsBaseFieldExtensionOf:=[IsogenyClass(ht) : ht in out];
+    end if;
+    return Ie`IsBaseFieldExtensionOf;
+end intrinsic;
+
+intrinsic IsPrimitive(I::IsogenyClassFq : Precision:=300)->SeqEnum
+{ Returns whether the given isogeny class is primitive.
+The computations is done by looking at the roots of the Weil polynomial of I. The precision of such computations can be set by using the vararg "Precision". }
+    if not assigned I`IsPrimitive then
+    I`IsPrimitive:=#IsBaseFieldExtensionOf(I : Precision:=Precision) eq 1;
+    end if;
+    return I`IsPrimitive;
+end intrinsic;
+
+intrinsic IsBaseFieldExtensionOfPrimitive(Ie::IsogenyClassFq : Precision:=300)->SeqEnum
+{ given an isogeny class over F_(p^r) it returns the sequence of all primitive isogeny classes over FF_(p^s) that extend to Ie.
+The computations is done by looking at the roots of the Weil polynomial of Ie. The precision of such computations can be set by using the vararg "Precision". }
+    if not assigned Ie`IsBaseFieldExtensionOfPrimitive then
+    Ie`IsBaseFieldExtensionOfPrimitive:=[ I : I in IsBaseFieldExtensionOf(Ie : Precision:=Precision) | IsPrimitive(I) ];
+    end if;
+    return Ie`IsBaseFieldExtensionOfPrimitive;
 end intrinsic;
 
 // ------------------- //
@@ -357,74 +406,5 @@ for i in [1..#ComputeIsomorphismClasses(Ah)] do
     printf "\n";
 end for;
 
-// Example 5 - this is absolutely simple
-
-AttachSpec("packages.spec");
-P<x>:=PolynomialRing(Integers());
-h:=x^6 - 4*x^5 + 12*x^4 - 36*x^3 + 60*x^2 - 100*x + 125;
-Ah:=IsogenyClass(h);
-Ah_4,_:=BaseFieldExtension(Ah,4);
-h_4:=WeilPolynomial(Ah_4);
-hs:=[];
-rr:=Roots(h_4,ComplexField());
-ccsq:=[ Roots(x^4-r[1]) : i in [1..r[2]] ,  r in rr];
-ccsq:=CartesianProduct(ccsq);
-for c in ccsq do 
-    coCC:=Coefficients(&*[ x-cc[1] : cc in c ]); 
-    coZZ:=[ Round(Re(c)) : c in coCC ];
-    if forall{ i : i in [1..#coCC] | Abs(coCC[i] - coZZ[i]) lt 10^(-15) } then
-        ht:=P!coZZ;
-        Append(~hs,ht);
-    end if;
-end for;
-
-hs;
-
-all_iso:=&cat[ ComputeIsomorphismClasses(IsogenyClass(ht)) : ht in hs ];
-all_ext:=BaseFieldExtension(all_iso,Ah_4);
-#all_iso,#all_ext;
-
-
-for i in [1..#all_ext] do
-    A:=all_iso[i];
-    UA:=UniverseAlgebra(A);
-    RA,mRA:=ZFVOrder(A);
-    FA_elt:=mRA(PrimitiveElement(Algebra(RA)));
-    FA:=FrobeniusEndomorphism(A);
-    U,u:=UnitGroup2(MultiplicatorRing(DeligneModuleAsDirectSum(A)[1,1]));
-    Tors:=[ t : t in TorsionSubgroup(U)];
-    TAut:=[ hom<UA->UA|[u(t)*b:b in Basis(UA)]> : t in Tors ];
-    Ae:=all_ext[i,1];
-    mAe:=all_ext[i,2];
-    UAe:=UniverseAlgebra(Ae);
-    TF_mAe:=[ Inverse(mAe)*t*FA*mAe : t in TAut ];
-    TF_mAe_mats:=[Matrix([t(b) :b in Basis(UAe)]) : t in TF_mAe];
-    for j in [1..#all_ext] do
-        B:=all_iso[j];
-        Be:=all_ext[j,1];
-        mBe:=all_ext[j,2];
-        test,iso:=IsIsomorphic(Ae,Be);
-        if test then
-            RB,mRB:=ZFVOrder(B);
-            FB_elt:=mRB(PrimitiveElement(Algebra(RB)));
-            FB:=FrobeniusEndomorphism(B);
-            map:=iso*Inverse(mBe)*FB*mBe*Inverse(iso);
-            map_mat:=Matrix([map(b) : b in Basis(UAe)]);
-            if exists(a){ a : a in [1..#TF_mAe_mats] | TF_mAe_mats[a] eq map_mat } then 
-                aut:=u(Tors[a]);
-                phi:=HomsToC(Parent(aut))[1];
-                if aut eq 1 then printf "1 ";
-                    elif aut eq -1 then printf "-1 ";
-                    elif aut^2 eq -1 and Im(phi(aut)) gt 0 then printf "i ";
-                    elif aut^2 eq -1 and Im(phi(aut)) lt 0 then printf "-i ";
-                end if;
-            else printf "0 ";
-            end if;
-        else
-            printf "_ ";
-        end if;
-    end for;
-    printf "\n";
-end for;
 
 */

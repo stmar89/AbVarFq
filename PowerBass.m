@@ -1,6 +1,6 @@
 /* vim: set syntax=magma :*/
 
-//freeze;
+freeze;
 
 /////////////////////////////////////////////////////
 // Modules over Bass Orders 

@@ -30,6 +30,7 @@ declare attributes IsogenyClassFq : WeilPolynomial, //the characteristic polynom
                                     FiniteField, // the prime power q=p^e
                                     CharacteristicFiniteField, // the prime p
                                     Dimension, // the dimension
+                                    NumberOfPoints, // number of points
                                     UniverseAlgebra, //the AlgAss that contains all the DeligneModules. eg. if h=g1^s1*g2^s2 then it equals (Q[x]/g1)^s1 x (Q[x]/g2)^s2 
                                     ZFV, //a pair <Z[F,q/F], delta>, where F is the Frobenius endomorphism and delta:Q(F)->EndomorphismAlgebra which gives the (diagonal) action of the Frobenius on the endomorphism algebra. 
                                     FrobeniusEndomorphism, //an endomorphism of the UniverseAlgebra representing the Frobenius
@@ -92,17 +93,37 @@ end intrinsic;
 
 intrinsic FiniteField( I::IsogenyClassFq )-> RngInt
 { given an isogeny class AV(h) returns the size of the finite field of definition }
+    if not assigned I`FiniteField then 
+        h:=WeilPolynomial(I);
+        I`FiniteField:=Integers() ! (ConstantCoefficient(h)^(2/Degree(h)));
+    end if;
     return I`FiniteField;
 end intrinsic;
 
 intrinsic CharacteristicFiniteField( I::IsogenyClassFq )-> RngInt
 { given an isogeny class AV(h) returns the characteristic of the finite field of definition }
+    if not assigned I`CharacteristicFiniteField then
+        test,p,_:=IsPrimePower(FiniteField(I));
+        assert test;
+        I`CharacteristicFiniteField:=p;
+    end if;
     return I`CharacteristicFiniteField;
 end intrinsic;
 
 intrinsic Dimension( I::IsogenyClassFq )-> RngInt
 { given an isogeny class AV(h) returns the dimension }
+    if not assigned I`Dimension then
+        I`Dimension:=Degree(WeilPolynomial(I)) div 2;
+    end if;
     return I`Dimension;
+end intrinsic;
+
+intrinsic NumberOfPoints( I::IsogenyClassFq )-> RngInt
+{ given an isogeny class AV(h) returns the number of rational points of the abelian varities in the isogeny class }
+    if not assigned I`NumberOfPoints then
+        I`NumberOfPoints := Evaluate(WeilPolynomial(I),1);
+    end if;
+    return I`NumberOfPoints;
 end intrinsic;
 
 intrinsic UniverseAlgebra( I::IsogenyClassFq )-> AlgAss
@@ -167,6 +188,7 @@ declare type AbelianVarietyFq;
 declare attributes AbelianVarietyFq : IsogenyClass,
                                       DeligneModuleZBasis,
                                       DeligneModuleAsDirectSum, //not all DeligneModules can be written as a direct sum. but if this is the case, here we store a sequence of pairs <J,m>, where J is a fractional Z[F,V] ideal and m is a map from the Algebr(J) to the UniverseAlgebra of the isogeny class.
+                                      EndomorphismRing,
                                       GroupOfRationalPoints,
                                       Polarizations,
                                       DualVariety;
@@ -316,6 +338,15 @@ end intrinsic;
 intrinsic FrobeniusEndomorphism(A::AbelianVarietyFq)-> Map
 { returns the Frobenius endomorphism (acting on the UniverseAlgebra) }
     return FrobeniusEndomorphism(IsogenyClass(A));
+end intrinsic;
+
+intrinsic EndomorphismRing(A::AbelianVarietyFq)-> AlgAssVOrd
+{ returns Endomrophism ring of the abelian variety }
+    require IsSquarefree(IsogenyClass(A)) : "at the moment it is implemented only for squarefree abelian varieties";
+    if not assigned A`EndomorphismRing then
+        A`EndomorphismRing:=MultiplicatorRing(DeligneModuleAsDirectSum(A)[1,1]);
+    end if;
+    return A`EndomorphismRing;
 end intrinsic;
 
 /////////////////////////////////////////////////////
