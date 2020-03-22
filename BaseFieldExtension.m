@@ -406,5 +406,23 @@ for i in [1..#ComputeIsomorphismClasses(Ah)] do
     printf "\n";
 end for;
 
+// new example
+
+AttachSpec("packages.spec");
+P<x>:=PolynomialRing(Integers());
+h:=x^4 - 205*x^2 + 10609;
+Ah:=IsogenyClass(h);
+Ah_4,map:=BaseFieldExtension(Ah,4);
+h_4:=WeilPolynomial(Ah_4);
+ext_of:=[ I : I in IsBaseFieldExtensionOfPrimitive(Ah_4) | FiniteField(I) eq FiniteField(Ah)]; ext_of;
+iso_all:=&cat[ ComputeIsomorphismClasses(I) : I in ext_of ];
+[#ComputeIsomorphismClasses(I) : I in ext_of];
+ext_all:=BaseFieldExtension(iso_all,Ah_4);
+assigned ext_all[1,1]`DeligneModuleAsBassMod`StdDirectSumRep;
+for iM0 in [1..#ext_all] do
+    M0:=ext_all[iM0];
+    time twists:=[ M : M in ext_all | IsIsomorphic(M[1],M0[1]) ];
+    iM0,#twists;
+end for;
 
 */

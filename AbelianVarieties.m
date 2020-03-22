@@ -188,6 +188,7 @@ declare type AbelianVarietyFq;
 declare attributes AbelianVarietyFq : IsogenyClass,
                                       DeligneModuleZBasis,
                                       DeligneModuleAsDirectSum, //not all DeligneModules can be written as a direct sum. but if this is the case, here we store a sequence of pairs <J,m>, where J is a fractional Z[F,V] ideal and m is a map from the Algebr(J) to the UniverseAlgebra of the isogeny class.
+                                      DeligneModuleAsBassMod, //when ZFV is Bass then we can also attach a BassMod
                                       EndomorphismRing,
                                       GroupOfRationalPoints,
                                       Polarizations,
@@ -288,6 +289,7 @@ intrinsic AbelianVariety( AVh::IsogenyClassFq , M::BassMod )-> AbelianVarietyFq
     AV`IsogenyClass:=AVh;
     AV`DeligneModuleAsDirectSum:=DirectSumRep(M);
     AV`DeligneModuleZBasis:=GensOverZ(M);
+    AV`DeligneModuleAsBassMod:=M;
     return AV;
 end intrinsic;
 
@@ -349,6 +351,22 @@ intrinsic EndomorphismRing(A::AbelianVarietyFq)-> AlgAssVOrd
     return A`EndomorphismRing;
 end intrinsic;
 
+intrinsic BassModule(A::AbelianVarietyFq)-> BassMod
+{ given an abelian variety in a PowerOfBass-isogeny class it returns the associated BassMod }
+    require IsPowerOfBass(IsogenyClass(A)) : "the isogeny class must a PowerOfBass";
+    if not assigned A`DeligneModuleAsBassMod then
+        R,mR:=ZFVOrder(A);
+        if assigned A`DeligneModuleAsDirectSum then
+            A`DeligneModuleAsBassMod:=BassModule(R,mR,A`DeligneModuleAsDirectSum);
+        else
+            M:=BassModule(R,mR,A`DeligneModuleZBasis);
+            A`DeligneModuleAsDirectSum := DirectSumRep(M);
+            A`DeligneModuleAsBassMod:=M;
+        end if;
+    end if;
+    return A`DeligneModuleAsBassMod;
+end intrinsic;
+
 /////////////////////////////////////////////////////
 // DeligneModule as Direct Sum
 //////////////////////////////////////////////////////
@@ -367,12 +385,9 @@ intrinsic DeligneModuleAsDirectSum( A :: AbelianVarietyFq) -> SeqEnum[Tup]
             one:=hom<UA->UA | [UA.i : i in [1..Dimension(UA)]]>;
             A`DeligneModuleAsDirectSum:=[<id,one>];
         else // PowerOfBass case
-//"DeligneModuleAsDirectSum \n";
             M:=BassModule(R,mR,A`DeligneModuleZBasis);
-//"assigned M`DirectSumRep \n";
-//assigned M`DirectSumRep;
             A`DeligneModuleAsDirectSum := DirectSumRep(M);
-//"A`DeligneModuleAsDirectSum :\n ",A`DeligneModuleAsDirectSum;
+            A`BassMod:=M;
         end if;
     end if;
     return A`DeligneModuleAsDirectSum;
@@ -425,14 +440,12 @@ intrinsic IsIsomorphic( A1 :: AbelianVarietyFq , A2 :: AbelianVarietyFq ) -> Boo
 { checks if two abelin varieties are isomorphic and eventually it returns also a Z[F,V]-linear isomorphism from the common UniverseAlgebra  }
     vprintf AbelianVarieties,1 : " IsIsomorphic :";
     if IsogenyClass(A1) eq IsogenyClass(A2) then
-        h:=WeilPolynomial(A1);
-        ZFV,mZFV:=ZFVOrder(A1);
-        g:=DefiningPolynomial(Algebra(ZFV));
-        DM1:=DeligneModuleAsDirectSum(A1);
-        DM2:=DeligneModuleAsDirectSum(A2);
-        s:=#DM1;
-        assert s eq #DM2;
         if IsSquarefree(IsogenyClass(A1)) then
+            ZFV,mZFV:=ZFVOrder(A1);
+            DM1:=DeligneModuleAsDirectSum(A1);
+            DM2:=DeligneModuleAsDirectSum(A2);
+            s:=#DM1;
+            assert s eq #DM2;
             assert s eq 1;
             I1:=DM1[1,1];
             v1:=DM1[1,2](One(Algebra(ZFV)));
@@ -449,10 +462,7 @@ intrinsic IsIsomorphic( A1 :: AbelianVarietyFq , A2 :: AbelianVarietyFq ) -> Boo
                 return false,_;
             end if;
         elif IsPowerOfBass(IsogenyClass(A1)) then
-        //elif h eq g^s and IsBass(ZFV) then
-            BC1:=BassModule(ZFV,mZFV,DM1);
-            BC2:=BassModule(ZFV,mZFV,DM2);
-            return IsIsomorphic(BC1,BC2);
+            return IsIsomorphic(BassModule(A1),BassModule(A2));
         else
             error "the isomorphism testing is implemented only for squarefree and power-of-Bass isogeny classes"; 
         end if; 
@@ -471,10 +481,10 @@ intrinsic ComputeIsomorphismClasses( AVh::IsogenyClassFq )->SeqEnum[AbelianVarie
     if not assigned AVh`IsomorphismClasses then
         h:=WeilPolynomial(AVh);
         R,map:=ZFVOrder(AVh);
-        if IsSquarefree(h) then
+        if IsSquarefree(AVh) then
             icm:=ICM(R);
             AVh`IsomorphismClasses:=[ AbelianVariety(AVh,I) : I in icm ];
-        elif #Factorization(h) eq 1 and IsBass(R) then
+        elif IsPowerOfBass(AVh) then
             all_bc:=AllBassClasses(R,map);
             AVh`IsomorphismClasses:=[ AbelianVariety(AVh,bc) : bc in all_bc ];
         else

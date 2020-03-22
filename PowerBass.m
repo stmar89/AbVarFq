@@ -447,8 +447,14 @@ intrinsic AllBassClasses(R::AlgAssVOrd, r::RngIntElt)->SeqEnum[BassMod]
     AR:=Algebra(R);
     UA,emb:=DirectSum([ AR : i in [1..r]]);
     map:=hom< AR->UA|[ &+[e(AR.i) : e in emb] : i in [1..Dimension(AR)]] >;
-    output:=[ BassModule(R,map, seq) : seq in output];
-	return output;
+    idUA:=hom< UA->UA | [UA.i : i in [1..Dimension(UA) ]]>;
+    out_modules:=[ ];
+    for seq in output do
+        M:=BassModule(R,map, seq);
+        M`StdDirectSumRep:=< DirectSumRep(M) , idUA >;  //in this case seq is already the StdDirectSumRep
+        Append(~out_modules,M);
+    end for;
+	return out_modules;
 end intrinsic;
 
 intrinsic AllBassClasses(R::AlgAssVOrd, map::Map )->SeqEnum[BassMod]
