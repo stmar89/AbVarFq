@@ -9,158 +9,8 @@ freeze;
 
 /*what follows overwrites "bugged" functions*/
 
-
-intrinsic 'in'(a::RngElt, I::AlgAssVOrdIdl) -> BoolElt
-{Return true iff a is in I. Here I must be an ideal (or fractional ideal) of an order
-in an associative algebra.}
-//overwrites the same fuction in ../package/Algebra/AlgAss/ideals-jv.m
-    A:= Algebra(I);
-    bool, a := IsCoercible(A, a);
-    require bool : "The given element must be coercible to the algebra of the ideal";
-    matrix:= Matrix(Basis(I, A));
-    ans, coords := IsConsistent(matrix, Vector(a));
-    assert ans;
-    if Type(I) eq AlgQuatOrdIdl then
-        ans:= forall{ i: i in [1..4] | IsIntegral(coords[i]) };
-    else
-        ideals:= CoefficientIdeals( PseudoMatrix(I) );
-        //next line was fixed by Stefano
-        //WRONG    ans:= forall{ i: i in [1..4] | coords[i] in ideals[i] };
-        ans:= forall{ i: i in [1..#ideals] | coords[i] in ideals[i] };
-    end if;
-    return ans;
-end intrinsic;
-
-function order_over(Z_F, S, I : Check := true)
-//modified from order-jv.m
-//quite different from the original 
-
-  A := Universe(S);
-  F := BaseRing(A);
-  n := Dimension(A);
-
-  if (A!1 notin S) then
-    Append(~S, 1);
-    Append(~I, 1*Z_F);
-  end if;
-
-/* //removed.
-    if Check and (A!1 notin S) then
-        // Always add 1 to the order
-        Append(~S, 1);
-        Append(~I, 1*Z_F);
-    end if;
-    if not Check then
-        error if #S ne n, "Argument 1 must have length ", n, " to be a basis";
-        M := MatrixRing(F,n) ! &cat[Eltseq(s) : s in S];
-        return Order(A, M, I);
-    end if;
-*/          
-  // Find an initial pseudobasis. not changed
-  M := Matrix(F,#S,n, &cat[Eltseq(s) : s in S]);
-  P := PseudoMatrix(I,M);
-  P := HermiteForm(P);
-  I := CoefficientIdeals(P);
-  M := ChangeRing(Matrix(P),F);
-  S := [A ! Eltseq(M[i]) : i in [1..Nrows(M)]];
-
-/*  
-  // Check that the module S tensor with the rationals is
-  // multiplicatively closed
-  if #S lt n then
-    for i := 1 to #S do
-      s := S[i];
-      j := 1;
-      while j le #S do
-        t := S[j];
-        Mst := VerticalJoin(M, Vector(s*t));
-        if Rank(Mst) gt NumberOfRows(M) then
-          Append(~S, s*t);
-          Append(~I, I[i]*I[j]);
-          M := Mst;
-          if #S eq n then
-            // We already have a full lattice
-            break i;
-          end if;
-        end if;
-
-        Mts := VerticalJoin(M, Vector(t*s));
-        if Rank(Mts) gt NumberOfRows(M) then
-          Append(~S, t*s);
-          Append(~I, I[j]*I[i]);
-          M := Mts;
-          if #S eq n then
-            // We already have a full lattice
-            break i;
-          end if;
-        end if;
-
-        j +:= 1;
-      end while;  
-    end for;
-  end if;
-*/
-//replaced by ....
-  P_old:=P;
-  repeat
-      P_old:=P;
-      M:=ChangeRing(Matrix(P_old),F);
-      S := [A ! Eltseq(M[i]) : i in [1..Nrows(M)]];
-      I:=CoefficientIdeals(P_old);
-      for i,j in [1..#S] do
-          s:=S[i]; id_i:=I[i];
-          t:=S[j]; id_j:=I[j];
-          M:=VerticalJoin(M,Matrix(F,1,n,Eltseq(s*t)));
-          Append(~I,id_i*id_j);
-          M:=VerticalJoin(M,Matrix(F,1,n,Eltseq(t*s)));
-          Append(~I,id_j*id_i);
-      end for;
-      P:=PseudoMatrix(I,M);
-      P:=HermiteForm(P);
-      M_new:=ChangeRing(Matrix(P),F);
-      rk:=Rank(M_new);
-      M_new:=Matrix( Rows(M_new)[1..rk] );
-      I_new:=CoefficientIdeals(P)[1..rk];
-      P:=PseudoMatrix(I_new,M_new);
-  until P eq P_old;
-  M:=M_new;
-
-  error if Rank(M) ne n,
-         "The given elements don't generate a lattice of full rank";
-  M := MatrixRing(F,n) ! M_new;
-  I:=I_new;
-  O := Order(A, M, I);
-//end replacement
-
-/*
-  // Check that (S,I) generates a ring
-  if not IsOrder(O) then
-    error "These generators do not generate a ring";
-  end if;
-*/
-//replaced by...
-  assert2 IsOrder(O);
-
-  return O;
-end function;
-
-intrinsic Order(S::SeqEnum[AlgAssVElt[FldAlg]], I::SeqEnum[RngOrdFracIdl] : Check := true) -> AlgAssVOrd
-  {Returns the order which has pseudobasis given by the basis elements S
-   and the coefficient ideals I}
-//nothing is changed. I need it in order to trigger the (heavily) over-written order_over(...), see above.
-  A := Universe(S);
-  F := BaseRing(A);
-  Z_F := MaximalOrder(F);
-  n := Dimension(A);
-  if I eq [] then
-    I := [ideal<Z_F | 1> : i in [1..#S]];
-  end if;
-  require R cmpeq Z_F or R cmpeq FieldOfFractions(Z_F) where R is Ring(Universe(I)) :
-        "Ideals in argument 2 must be of the ring of integers of the base ring of argument 1";
-  require not ISA(Type(A), AlgMatV) : "Argument 1 must not contain elements of a matrix algebra";
-  return order_over(Z_F, S, I : Check := Check);
-end intrinsic;
-
+/* I don't think this is used....
+ 
 intrinsic '+'(O1::AlgAssVOrd[RngOrd], O2::AlgAssVOrd[RngOrd]) -> AlgAssVOrd
   {Computes the sum O1+O2, the smallest order containing both O1 and O2.}
 //over-writes order-jv.m
@@ -188,6 +38,8 @@ intrinsic '+'(O1::AlgAssVOrd[RngOrd], O2::AlgAssVOrd[RngOrd]) -> AlgAssVOrd
     return O;
   end if;
 end intrinsic;
+*/
+
 
 intrinsic '*'(I::AlgAssVOrdIdl[RngOrd], J::AlgAssVOrdIdl[RngOrd]) -> AlgAssVOrdIdl
 {Product of ideals I and J.}
