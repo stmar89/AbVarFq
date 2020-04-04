@@ -16,7 +16,7 @@ declare verbose AbelianVarieties, 1;
 */
 
 /* TODO:
-- pRank, Functor, CMType
+- pRank, Functor
 - projection and inclusions of isogenyclasses
 */
 
@@ -36,8 +36,7 @@ declare attributes IsogenyClassFq : WeilPolynomial, //the characteristic polynom
                                     FrobeniusEndomorphism, //an endomorphism of the UniverseAlgebra representing the Frobenius
                                     IsomorphismClasses, //a sequence of DeligneModules representing the isomorphism classes inside the isogeny class
                                     IsSquarefree,
-                                    IsPowerOfBass,
-                                    CMType; //TODO
+                                    IsPowerOfBass;
 // TODO
 //                                  pRank, // the p-rank
 //                                  Functor, //a string describing which functor is used to describe the category "Deligne", "Centeleghe-Stix", "Oswal=Shankar"
