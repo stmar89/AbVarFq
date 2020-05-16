@@ -13,6 +13,166 @@ declare verbose IsogeniesPolarizations, 1;
 
 //TODO all these intrinsic should have as input AbelianVarietiesFq
 //TODO add DualAbelianVariety
+//TODO IsIsomorphic, FrobeniusEndomorphism, IsTwist and similar (everything that returns a Map) should return an HomAbelianVarieties. This might break the examples posted on the webpage
+//TODO TEST
+// I SHOULD create a new type..HomAbVarFq or something like that with domain, codomain, image, kernel and actual map
+// TODO Evaualte hom on points
+
+/////////////////////////////////////////////////////
+// NewType: HomAbelianVarietyFqA
+// a morphism of abelin varieties over Fq
+/////////////////////////////////////////////////////
+
+declare type HomAbelianVarietyFq;
+declare attributes HomAbelianVarietyFq : Domain,
+                                         Codomain,
+                                         // Image, //does it makes sense?
+                                         // Kernel, //what should this be? 
+                                         MapOnUniverseAlgebras,
+                                         IsIsogeny, // a pair < true/false, Degee >
+                                         IsIsomorphism,
+                                         IsEndomorphism,
+                                         IsAutomorphism;
+
+/////////////////////////////////////////////////////
+// Access, Print 
+/////////////////////////////////////////////////////
+
+intrinsic Print(m::HomAbelianVarietyFq)
+{ print the morphism abelian variety }
+    printf "Morphism from  %o to %o",Domain(m),Codomain(m);
+end intrinsic;
+
+intrinsic Domain(m::HomAbelianVarietyFq)->AbelianVarietyFq
+{returns the domain the morphism}
+    return m`Domain;
+end intrinsic;
+
+intrinsic Codomain(m::HomAbelianVarietyFq)->AbelianVarietyFq
+{returns the codomain the morphism}
+    return m`Codomain;
+end intrinsic;
+
+intrinsic MapOnUniverseAlgebras(m::HomAbelianVarietyFq)->Map
+{returns underlying homormorphism of Deligne Moduels as a Z[F,V]-linear hom on the UniverseAlgebras}
+    return m`MapOnUniverseAlgebras;
+end intrinsic;
+
+intrinsic IsEndomorphism(m::HomAbelianVarietyFq)->BoolElt 
+{returns whether the morphism is an endomorphism}
+    if not assigned m`IsEndomorphism then
+        m`IsEndomorphism:=Domain(m) eq Codomain(m);
+    end if;
+    return m`IsEndomorphism;
+end intrinsic;
+
+intrinsic IsIsogeny(m::HomAbelianVarietyFq)->BoolElt,RngInt
+{returns whether the morphism is an isogeny and if so it returns also the degree}
+    if not assigned m`IsIsogeny then
+        if IsogenyClass(Domain(m)) ne IsogenyClass(Codomain(m)) then
+            false,_;
+        else
+            h:=MapOnUniverseAlgebras(m);
+            A:=UniverseAlgebra(Domain(m));
+            //TODO
+        end if;
+    end if;
+    return m`IsIsogeny[1],m`IsIsogeny[2];
+end intrinsic;
+
+// TODO IsIsogeny, Degree, IsIsomorphsim, IsAutomrophism, IsPolarization, Kernel,
+
+/////////////////////////////////////////////////////
+// Creation
+/////////////////////////////////////////////////////
+
+intrinsic Hom(A::AbelianVarietyFq,B::AbelianVarietyFq,map::Map)->HomAbelianVarietyFq
+{ creates a morphisms of belin varieties A->B determined by map, where map is a morphisms of the universe algebras of A and B }
+    FA:=FrobeniusEndomorphism(A);
+    FB:=FrobeniusEndomorphism(B);
+    UA:=UniverseAlgebra(A);
+    require UA eq Domain(map) and UniverseAlgebra(B) eq Codomain(map) and 
+            forall{ i : i in Dimension(UA) | map(FA(UA.i)) eq FB(map(UA.i)) } //the map must be Frobanius-linear
+                      : "the map does not define a morphism of abelian varieties";
+    //the test might be time consuming .... maybe it should be moved to an assert2 ?
+    // also in the squarefree case it is superfluous ...
+    hom:=New(HomAbelianVarietyFq);
+    hom`Domain:=A;
+    hom`Codomain:=B;
+    hom`MapOnUniverseAlgebras:=map;
+    return hom;
+end intrinsic;
+
+/////////////////////////////////////////////////////
+// Isogenies
+/////////////////////////////////////////////////////
+
+intrinsic IsogeniesMany(AIS::SeqEnum[AbelianVarietyFq], AJ::AbelinVarietyFq, N::RngIntElt) -> BoolElt, Seq[HomAbelianVarietyFq]
+{
+    Given a sequence of source squarefree abelian varieties AIS, a target sqaurefree abelian varity AJ and a positive integet N, it returns for each AI in AIS if there exist an isogeny AI->AJ of degree N. 
+    For each AI in AIS, if there exists and isogeny AI->AJ, it is also returned a list of representatives of the isormopshim classes of pairs [*hom_x , K*] where:
+     hom_x:AI->AJ, and
+     K=xI subset J, with I and J the fractional ideals representing AI and AJ and x the element representing the isogeny.
+}
+
+    vprintf IsogeniesPolarizations : "IsogeniesMany AbVarFq\n";
+    require IsSquarefree(IsogenyClass(AJ)) : "implemented only for Squarefree isogeny classes ";
+    J,mJ:=DeligneModuleAsDirectSum(AJ)[1]; // squarefree case
+    UA:=UniverseAAlgebra(AJ);
+	isogenies_of_degree_N := [* [* *] : i in [1..#AIS] *];
+	for K in IdealsOfIndex(J, N) do
+		for i := 1 to #AIS do
+            if IsogenyClass(AIS[i]) eq IsogenyClass(AJ) then
+                ISi,mIi:=DeligneModuleAsDirectSum(AIS[i])[1]; //squarefree case
+                test, x := IsIsomorphic2(K, ISi); //x*ISi=K
+                if test then
+                    hom_x:=Hom(AIS[i],AJ, hom<UA->UA | [ x*UA.i : i in [1..Dimension(UA)] ] >);
+                    hom_x`IsIsogeny:=true;
+                    if N eq 1 then
+                        hom_x`IsIsomorphism:=true;
+                    end if;
+                    Append(~isogenies_of_degree_N[i], [*hom_x, K*]);
+                end if;
+            end if;
+		end for;
+	end for;
+	return isogenies_of_degree_N;
+end intrinsic;
+
+intrinsic Isogenies(A::AbelianVarietyFq, B::AbelianVarietyFq, N::RngIntElt)->BoolElt, List
+{
+    Given a source abelian variety A, a target abelian varity B and a positive integet N, it returns if there exist an isogeny A->B of degree N.
+    If so it is also returned a list of representatives of the isormopshim classes of pairs [*hom_x , K*] where:
+     hom_x:A->A, and
+     K=xI subset J, with I and J the fractional ideals representing A and B and x the element representing the isogeny.
+     At the moment it is implement ed only for squarefree abelin varieties.
+}
+	isogenies_of_degree_N := IsogeniesMany([A], B, N);
+	return #isogenies_of_degree_N[1] ge 1, isogenies_of_degree_N[1];
+end intrinsic;
+
+/////////////////////////////////////////////////////
+// Dual Abelian Variety 
+/////////////////////////////////////////////////////
+/*
+intrinsic DualAbelianVariety(A::AbelianVarietyFq)->Av::AbelianVarietyFq
+{ given an abelian vareity A returns the dual abelian variety }
+    require IsOrdinary(A) : "implemented only for ordinary isogeny classes";
+        if 
+    return Av;
+end intrinsic;
+*/
+/////////////////////////////////////////////////////
+// Polarizations
+/////////////////////////////////////////////////////
+
+
+//TODO : need dualabvar
+
+
+/////////////////////////////////////////////////////
+// OLD functions. Kept for retro-compatibility
+/////////////////////////////////////////////////////
 
 intrinsic IsogeniesMany(IS::SeqEnum[AlgAssVOrdIdl], J::AlgAssVOrdIdl, N::RngIntElt) -> BoolElt, List
 {Given a sequence of source abelian varieties IS, a target abelian varity J and a positive integet N, it returns for each I in IS if there exist an isogeny I->J of degree N. 

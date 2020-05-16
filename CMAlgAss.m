@@ -53,16 +53,16 @@ end intrinsic;
 // CMType for AlgAss
 /////////////////////////////////////////////////////
 
-declare type CMType;
-declare attributes CMType : Homs, // homs from Q(Frob) of the isogeny class to CC
-                            CMPosElt; // a totally imaginary element b in Q(Frob), which is positive for the cm-type. such b is not unique: b and b' define the same cm-type iff b/b' is totally positive
+declare type AlgAssCMType;
+declare attributes AlgAssCMType : Homs, // homs from Q(Frob) of the isogeny class to CC
+                                  CMPosElt; // a totally imaginary element b in Q(Frob), which is positive for the cm-type. such b is not unique: b and b' define the same cm-type iff b/b' is totally positive
 
 
 /////////////////////////////////////////////////////
 // Creation, print, access and equality testing for CMType for IsogenyClassFq
 /////////////////////////////////////////////////////
 
-intrinsic CreateCMType(seq::SeqEnum[Map]) -> CMType
+intrinsic CreateCMType(seq::SeqEnum[Map]) -> AlgAssCMType
 { given a sequence seq of homomorphisms from a CM-algebra to CC, one per conjugate pair, it returns the corresponding CMType }
     A:=Domain(seq[1]);
     assert &and[Domain(s) eq A : s in seq[2..#seq]];
@@ -71,25 +71,25 @@ intrinsic CreateCMType(seq::SeqEnum[Map]) -> CMType
     F:=PrimitiveElement(A);
     CC_vals:=[ h(F) : h in seq ];
     assert forall{ c : c in CC_vals | not exists{ d : d in CC_vals | Abs( ComplexConjugate(c)-d) lt 10^(2-Precision(d)) }  };
-    PHI:=New(CMType);
+    PHI:=New(AlgAssCMType);
     PHI`Homs:=seq;
     return PHI;
 end intrinsic;
 
-intrinsic CreateCMType( b::AlgAssElt  ) -> CMType
+intrinsic CreateCMType( b::AlgAssElt  ) -> AlgAssCMType
 { given a totally imginary element b, it returns the CMType PHI for which b is PHI-positive }
     assert not IsZeroDivisor2(b) and (b eq -ComplexConjugate(b));
-    PHI:=New(CMType);
+    PHI:=New(AlgAssCMType);
     PHI`CMPosElt:=b;
     return PHI;
 end intrinsic;
 
-intrinsic Print( PHI :: CMType)
-{ print the CMType }
+intrinsic Print( PHI :: AlgAssCMType)
+{ print the AlgAssCMType }
     printf "CMType of the Associative Algebra %o determined by the element %o",Domain(PHI[1]),CMPosElt(PHI);
 end intrinsic;
 
-intrinsic CMPosElt( PHI::CMType )->AlgAssElt
+intrinsic CMPosElt( PHI::AlgAssCMType )->AlgAssElt
 { given a CMType PHI returns a totally imaginary PHI-positive element (which uniquely determines PHI) }
     if not assigned PHI`CMPosElt then
         A:=Domain(Homs(PHI)[1]);
@@ -123,8 +123,8 @@ intrinsic CMPosElt( PHI::CMType )->AlgAssElt
     return PHI`CMPosElt;
 end intrinsic;
 
-intrinsic Homs( PHI::CMType : Precision:=30 )->SeqEnum[Map]
-{ given a CMType PHI returns the sequence of maps to CC defining it  }
+intrinsic Homs( PHI::AlgAssCMType : Precision:=30 )->SeqEnum[Map]
+{ given a AlgAssCMType PHI returns the sequence of maps to CC defining it  }
     if not assigned PHI`Homs then
         b:=CMPosElt(PHI);
         A:=Parent(b); 
@@ -136,7 +136,7 @@ intrinsic Homs( PHI::CMType : Precision:=30 )->SeqEnum[Map]
     return PHI`Homs;
 end intrinsic;
 
-intrinsic 'eq'(PHI1 :: CMType, PHI2::CMType : Precision:=30)->BoolElt
+intrinsic 'eq'(PHI1 :: AlgAssCMType, PHI2::AlgAssCMType : Precision:=30)->BoolElt
 { returns whether two cm types are equal }
     A:=Domain(Homs(PHI1)[1]);
     assert forall{ phi : phi in Homs(PHI1) cat Homs(PHI2) | Domain(phi) eq A };
@@ -152,10 +152,10 @@ end intrinsic;
 /////////////////////////////////////////////////////
 
 declare attributes IsogenyClassFq : pAdicPosCMType; //this will be of type 'CMType'
-declare attributes CMType : pAdicData; // it stores a tuple < p,rrtspp,rtsCC > where p is a prime and rtspp and rtsCC are p-adic and complex roots of the defining polynomial sorted according to a Galois-equivariant bijection. This boils down to determine the restriction of an embedding \bar Qp into CC.
+declare attributes AlgAssCMType : pAdicData; // it stores a tuple < p,rrtspp,rtsCC > where p is a prime and rtspp and rtsCC are p-adic and complex roots of the defining polynomial sorted according to a Galois-equivariant bijection. This boils down to determine the restriction of an embedding \bar Qp into CC.
 
-intrinsic pAdicPosCMType(AVh::IsogenyClassFq : precpAdic := 30, precCC := 30 ) -> CMType
-{ given an ordinary isogeny class AVh, it computes a CMType of the Algebra determined by the Frobenius of AVh such that the Frobenius has positive p-adic valuation according to some embedding of \barQp in C.
+intrinsic pAdicPosCMType(AVh::IsogenyClassFq : precpAdic := 30, precCC := 30 ) -> AlgAssCMType
+{ given an ordinary isogeny class AVh, it computes a AlgAssCMType of the Algebra determined by the Frobenius of AVh such that the Frobenius has positive p-adic valuation according to some embedding of \barQp in C.
   The varargs precpAdic and precCC specify (minimum) output padic and complex precision.}
     if not assigned AVh`pAdicPosCMType then
         require IsSquarefree(AVh) and IsOrdinary(WeilPolynomial(AVh)) : "implemented only for squarefree and ordinary isogeny classes";
@@ -176,7 +176,7 @@ intrinsic pAdicPosCMType(AVh::IsogenyClassFq : precpAdic := 30, precCC := 30 ) -
             end if;
         end for;
         assert #cmtype_homs eq (Degree(h) div 2);
-        // creation CMType
+        // creation AlgAssCMType
         PHI:=CreateCMType(cmtype_homs);
         if not assigned PHI`pAdicData then
             PHI`pAdicData:=[< p, rtspp, rtsCC >];
@@ -193,8 +193,8 @@ end intrinsic;
 // AllCMType 
 /////////////////////////////////////////////////////
 
-intrinsic AllCMTypes(AVh::IsogenyClassFq : precCC := 30 ) -> SeqEnum[CMType]
-{ returns all the CMTypes of Q(Frob) }
+intrinsic AllCMTypes(AVh::IsogenyClassFq : precCC := 30 ) -> SeqEnum[AlgAssCMType]
+{ returns all the AlgAssCMTypes of Q(Frob) }
     A:=Algebra(ZFVOrder(AVh));
     cc:=CartesianProduct(Partition([ h: h in HomsToC(A : Precision:=precCC )],2));
     cc:=[ [ci : ci in c] : c in cc ]; //from tuple to seq
@@ -203,7 +203,6 @@ end intrinsic;
 
 /////////////////////////////////////////////////////
 // OLD CODE: kept for retro-compatibility.
-// Note I had to change the name of the intrinsic from CMType to ComputeCMType ... Sorry!
 // old way to compute the CM-type for both ordinary and non-ordinary abelian varieties
 // this is quite slow beause it requires to compute a splitting field
 /////////////////////////////////////////////////////
@@ -243,7 +242,7 @@ cm_type_internal:=function(A,prec)
 	return cm_p_pos;
 end function;
 
-intrinsic ComputeCMType(A::AlgAss : Precision:=30 , TestOrdinary:=true)->SeqEnum[Map]
+intrinsic CMType(A::AlgAss : Precision:=30 , TestOrdinary:=true)->SeqEnum[Map]
 {given a product of CM number fields A=Q[x]/(f), where f is q-Weil polynomial, returns a subset of HomsToC consisting of one map A->C per conjugate pair such that the induced p-adic valuation v on \bar(Q_p) in C is such that v(a)>0, where a is a root of f. If f is ordinary then it should return only one output. Otherwise more. The precision of the computations is set by the optional parameter "Precision" (Default Value 30).}
 	f:=DefiningPolynomial(A);
 	test_Weil,q:=IsWeil(f);
@@ -266,7 +265,7 @@ end intrinsic;
 //TESTS
 //
 
-    AttachSpec("packages_github/AbVarFq/packages.spec");
+    AttachSpec("~/packages_github/AbVarFq/packages.spec");
     _<x>:=PolynomialRing(Integers());
     polys:=[
     x^4+x^2+529,

@@ -1,6 +1,6 @@
 /* vim: set syntax=magma :*/
 
-//freeze;
+freeze;
 
 /////////////////////////////////////////////////////
 // Abelian varieties and Isogeny classes
@@ -180,7 +180,7 @@ intrinsic 'eq'(AVh1::IsogenyClassFq , AVh2::IsogenyClassFq ) -> BoolElt
 end intrinsic;
 
 /////////////////////////////////////////////////////
-// defining the type AbelianVarietyFq
+
 /////////////////////////////////////////////////////
 
 declare type AbelianVarietyFq;
@@ -190,8 +190,7 @@ declare attributes AbelianVarietyFq : IsogenyClass,
                                       DeligneModuleAsBassMod, //when ZFV is Bass then we can also attach a BassMod
                                       EndomorphismRing,
                                       GroupOfRationalPoints,
-                                      Polarizations,
-                                      DualVariety;
+                                      Polarizations;
 intrinsic Print(I::AbelianVarietyFq)
 { print the abelian variety }
     printf "Abelian variety over FF_%o in the %o",FiniteField(I),IsogenyClass(I);
@@ -537,9 +536,21 @@ intrinsic IsWeil(f::RngUPolElt : Precision:=3000) -> BoolElt,RngIntElt,RngIntElt
 	end if;
 end intrinsic;
 
+intrinsic IsOrdinary(AVf::IsogenyClassFq) -> BoolElt
+{returns if the isogeny class is ordinary}
+    f:=WeilPolynomial(AVf);
+	coeff:=Coefficients(f);
+	return IsCoprime(coeff[Degree(f) div 2 +1], coeff[1] );
+end intrinsic;
+
+intrinsic IsOrdinary(A::AbelianVarietyFq) -> BoolElt
+{returns if the abelian variety is ordinary}
+	return IsOrdinary(IsogenyClass(A));
+end intrinsic;
+
 intrinsic IsOrdinary(f::RngUPolElt) -> BoolElt
 {returns if the input polynomial is an Ordinary q-Weil polynomial, where q is a power of a prime number p, that is if the mid coefficient is coprime with p}
-test,q:=IsWeil(f);
+    test,q:=IsWeil(f);
 	require test:"the input must be a q-Weil polynomial for some prime power q";
 	deg:=Degree(f);
 	coeff:=Coefficients(f);
