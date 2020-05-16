@@ -151,7 +151,7 @@ end intrinsic;
 // pAdicPosCMType for ordinary IsogenyClassFq
 /////////////////////////////////////////////////////
 
-declare attributes IsogenyClassFq : pAdicPosCMType; //this will be of type 'CMType'
+declare attributes IsogenyClassFq : pAdicPosCMType; //this will be of type 'AlgAssCMType'
 declare attributes AlgAssCMType : pAdicData; // it stores a tuple < p,rrtspp,rtsCC > where p is a prime and rtspp and rtsCC are p-adic and complex roots of the defining polynomial sorted according to a Galois-equivariant bijection. This boils down to determine the restriction of an embedding \bar Qp into CC.
 
 intrinsic pAdicPosCMType(AVh::IsogenyClassFq : precpAdic := 30, precCC := 30 ) -> AlgAssCMType

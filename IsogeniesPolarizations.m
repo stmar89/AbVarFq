@@ -1,6 +1,6 @@
 /* vim: set syntax=magma :*/
 
-freeze;
+// freeze;
 
 /////////////////////////////////////////////////////
 // Isogeny functions and polarizations for fractional ideals
@@ -29,7 +29,7 @@ declare attributes HomAbelianVarietyFq : Domain,
                                          // Image, //does it makes sense?
                                          // Kernel, //what should this be? 
                                          MapOnUniverseAlgebras,
-                                         IsIsogeny, // a pair < true/false, Degee >
+                                         IsIsogeny, // a pair true or false, Degree
                                          IsIsomorphism,
                                          IsEndomorphism,
                                          IsAutomorphism;
@@ -66,19 +66,19 @@ intrinsic IsEndomorphism(m::HomAbelianVarietyFq)->BoolElt
     return m`IsEndomorphism;
 end intrinsic;
 
-intrinsic IsIsogeny(m::HomAbelianVarietyFq)->BoolElt,RngInt
-{returns whether the morphism is an isogeny and if so it returns also the degree}
-    if not assigned m`IsIsogeny then
-        if IsogenyClass(Domain(m)) ne IsogenyClass(Codomain(m)) then
-            false,_;
-        else
-            h:=MapOnUniverseAlgebras(m);
-            A:=UniverseAlgebra(Domain(m));
-            //TODO
-        end if;
-    end if;
-    return m`IsIsogeny[1],m`IsIsogeny[2];
-end intrinsic;
+// intrinsic IsIsogeny(m::HomAbelianVarietyFq)->BoolElt,RngInt
+// {returns whether the morphism is an isogeny and if so it returns also the degree}
+//     if not assigned m`IsIsogeny then
+//         if IsogenyClass(Domain(m)) ne IsogenyClass(Codomain(m)) then
+//             return false,_;
+//         else
+//             h:=MapOnUniverseAlgebras(m);
+//             A:=UniverseAlgebra(Domain(m));
+//             //TODO
+//         end if;
+//     end if;
+//     return m`IsIsogeny[1],m`IsIsogeny[2];
+// end intrinsic;
 
 // TODO IsIsogeny, Degree, IsIsomorphsim, IsAutomrophism, IsPolarization, Kernel,
 
@@ -87,7 +87,7 @@ end intrinsic;
 /////////////////////////////////////////////////////
 
 intrinsic Hom(A::AbelianVarietyFq,B::AbelianVarietyFq,map::Map)->HomAbelianVarietyFq
-{ creates a morphisms of belin varieties A->B determined by map, where map is a morphisms of the universe algebras of A and B }
+{ creates a morphisms of abelian varieties A->B determined by map, where map is a morphisms of the universe algebras of A and B }
     FA:=FrobeniusEndomorphism(A);
     FB:=FrobeniusEndomorphism(B);
     UA:=UniverseAlgebra(A);
@@ -107,7 +107,7 @@ end intrinsic;
 // Isogenies
 /////////////////////////////////////////////////////
 
-intrinsic IsogeniesMany(AIS::SeqEnum[AbelianVarietyFq], AJ::AbelinVarietyFq, N::RngIntElt) -> BoolElt, Seq[HomAbelianVarietyFq]
+intrinsic IsogeniesMany(AIS::SeqEnum[AbelianVarietyFq], AJ::AbelinVarietyFq, N::RngIntElt) -> SeqEnum[HomAbelianVarietyFq]
 {
     Given a sequence of source squarefree abelian varieties AIS, a target sqaurefree abelian varity AJ and a positive integet N, it returns for each AI in AIS if there exist an isogeny AI->AJ of degree N. 
     For each AI in AIS, if there exists and isogeny AI->AJ, it is also returned a list of representatives of the isormopshim classes of pairs [*hom_x , K*] where:
@@ -118,7 +118,7 @@ intrinsic IsogeniesMany(AIS::SeqEnum[AbelianVarietyFq], AJ::AbelinVarietyFq, N::
     vprintf IsogeniesPolarizations : "IsogeniesMany AbVarFq\n";
     require IsSquarefree(IsogenyClass(AJ)) : "implemented only for Squarefree isogeny classes ";
     J,mJ:=DeligneModuleAsDirectSum(AJ)[1]; // squarefree case
-    UA:=UniverseAAlgebra(AJ);
+    UA:=UniverseAlgebra(AJ);
 	isogenies_of_degree_N := [* [* *] : i in [1..#AIS] *];
 	for K in IdealsOfIndex(J, N) do
 		for i := 1 to #AIS do
@@ -127,7 +127,7 @@ intrinsic IsogeniesMany(AIS::SeqEnum[AbelianVarietyFq], AJ::AbelinVarietyFq, N::
                 test, x := IsIsomorphic2(K, ISi); //x*ISi=K
                 if test then
                     hom_x:=Hom(AIS[i],AJ, hom<UA->UA | [ x*UA.i : i in [1..Dimension(UA)] ] >);
-                    hom_x`IsIsogeny:=true;
+                    hom_x`IsIsogeny:=<true, N>;
                     if N eq 1 then
                         hom_x`IsIsomorphism:=true;
                     end if;
@@ -139,7 +139,7 @@ intrinsic IsogeniesMany(AIS::SeqEnum[AbelianVarietyFq], AJ::AbelinVarietyFq, N::
 	return isogenies_of_degree_N;
 end intrinsic;
 
-intrinsic Isogenies(A::AbelianVarietyFq, B::AbelianVarietyFq, N::RngIntElt)->BoolElt, List
+intrinsic Isogenies(A::AbelianVarietyFq, B::AbelianVarietyFq, N::RngIntElt)->BoolElt,SeqEnum[HomAbelianVarietyFq]
 {
     Given a source abelian variety A, a target abelian varity B and a positive integet N, it returns if there exist an isogeny A->B of degree N.
     If so it is also returned a list of representatives of the isormopshim classes of pairs [*hom_x , K*] where:
@@ -155,7 +155,7 @@ end intrinsic;
 // Dual Abelian Variety 
 /////////////////////////////////////////////////////
 
-intrinsic DualAbelianVariety(A::AbelianVarietyFq)->Av::AbelianVarietyFq
+intrinsic DualAbelianVariety(A::AbelianVarietyFq)->AbelianVarietyFq
 { given an abelian vareity A returns the dual abelian variety }
     require IsOrdinary(A) : "implemented only for ordinary isogeny classes";
     B:=DeligneModuleZBasis(A);
@@ -173,7 +173,9 @@ end intrinsic;
 /////////////////////////////////////////////////////
 
 
-//TODO : need dualabvar
+//TODO 
+
+
 
 
 /////////////////////////////////////////////////////
@@ -217,8 +219,6 @@ end intrinsic;
 
 intrinsic IsPolarized(I0::AlgAssVOrdIdl, phi::SeqEnum[Map], N::RngIntElt)->BoolElt, SeqEnum[AlgAssElt]
 {returns if the abelian variety has a polarization of degree N and if so it returns also all the non isomorphic polarizations}
-    // TODO correct this function
-    //
 	S := MultiplicatorRing(I0);
 	I := ideal<S|ZBasis(I0)>;
 	A := Algebra(S);
@@ -231,28 +231,45 @@ intrinsic IsPolarized(I0::AlgAssVOrdIdl, phi::SeqEnum[Map], N::RngIntElt)->BoolE
 		return false, [];
 	end if;
 
-	U, m := UnitGroup2(S); //m:U->S
-	// B = Subgroup of S^* generated by u*\bar{u} : u in S^*
-	relB := Seqset([ (( m(U.i)*(ComplexConjugate(A!m(U.i))) ) )@@m : i in [1..Ngens(U)] ] ); //B is generated by u*\bar{u}
-	UqB, q := quo<U|relB>; // UqB = U/B, q:U->UqB
-	UqBinS := [ m(u@@q) :  u in UqB ]; //elements of U/B as elements of the order S
-	polarizations_of_degree_N :=[];
+    zbS:=ZBasis(S);
+    T:=Order(zbS cat [ ComplexConjugate(z) : z in zbS ]);
+    UT,uT:=UnitGroup2(T); //uT:UT->T
+    US, uS := UnitGroup2(S); //uS:US->S
+    gensUinS:=[ uS(US.i) : i in [1..Ngens(US)]];
+    USUSb:=sub< UT | [ (g*ComplexConjugate(g))@@uT : g in gensUinS ]>;
+    USinUT:=sub<UT | [ g@@uT : g in gensUinS ]>;
+    Q,q:=quo< USinUT | USinUT meet USUSb >; // q:=USinUT->Q
+                                            // Q = S*/<v bar(v) : v in S*> meet S*
+    QinT:=[ uT(UT!(b@@q)) : b in Q];
+	pols_deg_N_allKs :=[]; // it will contain pols for each K up to iso. 
+                           // note that given a and a' with aI=K and a'I=K', a and a' might be isomorphic.
+                           // we get rid of these 'doubles' later
 
 	for elt in isogenies_of_degree_N do
 		// x*I = J
 		x := elt[1];
 		J := elt[2];
-		assert (J) subset Itbar;
-		for uu in UqBinS do
+		assert J subset Itbar;
+		for uu in QinT do
 			pol := (x*(A ! uu));
 			assert (pol*I) eq J;
 			//pol is a polarization if totally imaginary and \Phi-positive
 			C := [g(pol): g in phi];
 			if (ComplexConjugate(pol) eq (-pol)) and (forall{c : c in C | Im(c) gt (RR ! 0)}) then
-				Append(~polarizations_of_degree_N, pol);
+				Append(~pols_deg_N_allKs, pol);
 			end if;
 		end for;
 	end for;
+    
+    // now we remove the isomorphic polarizations with different 'kernels'
+    polarizations_of_degree_N:=[];
+    for a in pols_deg_N_allKs do
+        if not exists{ a1 : a1 in polarizations_of_degree_N | 
+                            (a/a1) in T and (a1/a) in T and // a/a1 is a unit in T=S bar(S) 
+                            ((a/a1)@@uT) in USUSb } then
+            Append(~polarizations_of_degree_N, a);
+        end if;
+    end for;
 
 	if #polarizations_of_degree_N ge 1 then
 		return true, polarizations_of_degree_N;
@@ -267,4 +284,18 @@ intrinsic AutomorphismsPol(I::AlgAssVOrdIdl) -> GpAb
 	//require IsFiniteEtale(Algebra(I)): "the algebra of definition must be finite and etale over Q";
 	return TorsionSubgroup(UnitGroup2(MultiplicatorRing(I)));
 end intrinsic;
+
+
+/* TEST
+    
+   AttachSpec("~/packages_github/AbVarFq/packages.spec");
+
+
+
+
+
+*/
+
+
+
 
