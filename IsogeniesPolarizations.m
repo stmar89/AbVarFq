@@ -16,7 +16,7 @@ declare verbose IsogeniesPolarizations, 1;
 //TODO IsIsomorphic, FrobeniusEndomorphism, IsTwist and similar (everything that returns a Map) should return an HomAbelianVarieties. This might break the examples posted on the webpage
 //TODO TEST
 // I SHOULD create a new type..HomAbVarFq or something like that with domain, codomain, image, kernel and actual map
-// TODO Evaualte hom on points
+// TODO Evaluate hom on points
 
 /////////////////////////////////////////////////////
 // NewType: HomAbelianVarietyFqA
@@ -154,14 +154,20 @@ end intrinsic;
 /////////////////////////////////////////////////////
 // Dual Abelian Variety 
 /////////////////////////////////////////////////////
-/*
+
 intrinsic DualAbelianVariety(A::AbelianVarietyFq)->Av::AbelianVarietyFq
 { given an abelian vareity A returns the dual abelian variety }
     require IsOrdinary(A) : "implemented only for ordinary isogeny classes";
-        if 
+    B:=DeligneModuleZBasis(A);
+    n:=#B;
+    Q:=MatrixRing(RationalField(), n)![Trace(B[i]*B[j]): i, j in [1..n] ];
+    QQ:=Q^-1;
+    BB:=[&+[ (QQ[i,j]*B[j]): j in [1..n]] : i in [1..n]] ;
+    BBc:=[ ComplexConjugate(b) : b in BB ];
+    Av:=AbelianVariety(IsogenyClass(A),BBc); //the direct sum of ideal is not computed here
     return Av;
 end intrinsic;
-*/
+
 /////////////////////////////////////////////////////
 // Polarizations
 /////////////////////////////////////////////////////
@@ -211,7 +217,8 @@ end intrinsic;
 
 intrinsic IsPolarized(I0::AlgAssVOrdIdl, phi::SeqEnum[Map], N::RngIntElt)->BoolElt, SeqEnum[AlgAssElt]
 {returns if the abelian variety has a polarization of degree N and if so it returns also all the non isomorphic polarizations}
-	//require IsFiniteEtale(Algebra(I0)): "the algebra of definition must be finite and etale over Q";
+    // TODO correct this function
+    //
 	S := MultiplicatorRing(I0);
 	I := ideal<S|ZBasis(I0)>;
 	A := Algebra(S);

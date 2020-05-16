@@ -22,7 +22,7 @@ declare verbose AbelianVarieties, 1;
 
 
 /////////////////////////////////////////////////////
-// defining the type IsogenyClassFq
+// New Type IsogenyClassFq
 /////////////////////////////////////////////////////
 
 declare type IsogenyClassFq;
@@ -39,7 +39,7 @@ declare attributes IsogenyClassFq : WeilPolynomial, //the characteristic polynom
                                     IsPowerOfBass;
 // TODO
 //                                  pRank, // the p-rank
-//                                  Functor, //a string describing which functor is used to describe the category "Deligne", "Centeleghe-Stix", "Oswal=Shankar"
+//                                  Functor, //a string describing which functor is used to describe the category "Deligne", "Centeleghe-Stix", "Oswal-Shankar"
 
 /////////////////////////////////////////////////////
 // Creation and access functions of IsogenyClassFq
@@ -180,7 +180,7 @@ intrinsic 'eq'(AVh1::IsogenyClassFq , AVh2::IsogenyClassFq ) -> BoolElt
 end intrinsic;
 
 /////////////////////////////////////////////////////
-
+// New Type AbelianVarietyFq
 /////////////////////////////////////////////////////
 
 declare type AbelianVarietyFq;
