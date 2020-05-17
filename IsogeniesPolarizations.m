@@ -1,4 +1,4 @@
-/* vim: set syntax=magma :*/
+* vim: set syntax=magma :*/
 
 // freeze;
 
@@ -10,98 +10,6 @@
 /////////////////////////////////////////////////////
 
 declare verbose IsogeniesPolarizations, 1;
-
-//TODO all these intrinsic should have as input AbelianVarietiesFq
-//TODO add DualAbelianVariety
-//TODO IsIsomorphic, FrobeniusEndomorphism, IsTwist and similar (everything that returns a Map) should return an HomAbelianVarieties. This might break the examples posted on the webpage
-//TODO TEST
-// I SHOULD create a new type..HomAbVarFq or something like that with domain, codomain, image, kernel and actual map
-// TODO Evaluate hom on points
-
-/////////////////////////////////////////////////////
-// NewType: HomAbelianVarietyFqA
-// a morphism of abelin varieties over Fq
-/////////////////////////////////////////////////////
-
-declare type HomAbelianVarietyFq;
-declare attributes HomAbelianVarietyFq : Domain,
-                                         Codomain,
-                                         // Image, //does it makes sense?
-                                         // Kernel, //what should this be? 
-                                         MapOnUniverseAlgebras,
-                                         IsIsogeny, // a pair true or false, Degree
-                                         IsIsomorphism,
-                                         IsEndomorphism,
-                                         IsAutomorphism;
-
-/////////////////////////////////////////////////////
-// Access, Print 
-/////////////////////////////////////////////////////
-
-intrinsic Print(m::HomAbelianVarietyFq)
-{ print the morphism abelian variety }
-    printf "Morphism from  %o to %o",Domain(m),Codomain(m);
-end intrinsic;
-
-intrinsic Domain(m::HomAbelianVarietyFq)->AbelianVarietyFq
-{returns the domain the morphism}
-    return m`Domain;
-end intrinsic;
-
-intrinsic Codomain(m::HomAbelianVarietyFq)->AbelianVarietyFq
-{returns the codomain the morphism}
-    return m`Codomain;
-end intrinsic;
-
-intrinsic MapOnUniverseAlgebras(m::HomAbelianVarietyFq)->Map
-{returns underlying homormorphism of Deligne Moduels as a Z[F,V]-linear hom on the UniverseAlgebras}
-    return m`MapOnUniverseAlgebras;
-end intrinsic;
-
-intrinsic IsEndomorphism(m::HomAbelianVarietyFq)->BoolElt 
-{returns whether the morphism is an endomorphism}
-    if not assigned m`IsEndomorphism then
-        m`IsEndomorphism:=Domain(m) eq Codomain(m);
-    end if;
-    return m`IsEndomorphism;
-end intrinsic;
-
-// intrinsic IsIsogeny(m::HomAbelianVarietyFq)->BoolElt,RngInt
-// {returns whether the morphism is an isogeny and if so it returns also the degree}
-//     if not assigned m`IsIsogeny then
-//         if IsogenyClass(Domain(m)) ne IsogenyClass(Codomain(m)) then
-//             return false,_;
-//         else
-//             h:=MapOnUniverseAlgebras(m);
-//             A:=UniverseAlgebra(Domain(m));
-//             //TODO
-//         end if;
-//     end if;
-//     return m`IsIsogeny[1],m`IsIsogeny[2];
-// end intrinsic;
-
-// TODO IsIsogeny, Degree, IsIsomorphsim, IsAutomrophism, IsPolarization, Kernel,
-
-/////////////////////////////////////////////////////
-// Creation
-/////////////////////////////////////////////////////
-
-intrinsic Hom(A::AbelianVarietyFq,B::AbelianVarietyFq,map::Map)->HomAbelianVarietyFq
-{ creates a morphisms of abelian varieties A->B determined by map, where map is a morphisms of the universe algebras of A and B }
-    FA:=FrobeniusEndomorphism(A);
-    FB:=FrobeniusEndomorphism(B);
-    UA:=UniverseAlgebra(A);
-    require UA eq Domain(map) and UniverseAlgebra(B) eq Codomain(map) and 
-            forall{ i : i in Dimension(UA) | map(FA(UA.i)) eq FB(map(UA.i)) } //the map must be Frobanius-linear
-                      : "the map does not define a morphism of abelian varieties";
-    //the test might be time consuming .... maybe it should be moved to an assert2 ?
-    // also in the squarefree case it is superfluous ...
-    hom:=New(HomAbelianVarietyFq);
-    hom`Domain:=A;
-    hom`Codomain:=B;
-    hom`MapOnUniverseAlgebras:=map;
-    return hom;
-end intrinsic;
 
 /////////////////////////////////////////////////////
 // Isogenies
@@ -124,7 +32,7 @@ intrinsic IsogeniesMany(AIS::SeqEnum[AbelianVarietyFq], AJ::AbelianVarietyFq, N:
 	for K in IdealsOfIndex(J, N) do
 		for i := 1 to #AIS do
             if IsogenyClass(AIS[i]) eq IsogenyClass(AJ) then
-                DISi,mIi:=DeligneModuleAsDirectSum(AIS[i])[1]; //squarefree case
+                DISi:=DeligneModuleAsDirectSum(AIS[i])[1]; //squarefree case
                 ISi:=DISi[1]; mISi:=DISi[2];
                 test, x := IsIsomorphic2(K, ISi); //x*ISi=K
                 if test then
@@ -223,7 +131,7 @@ intrinsic IsPolarized(A::AbelianVarietyFq, PHI::AlgAssCMType , N::RngIntElt)->Bo
 
 	for elt in isogenies_of_degree_N do
 		// x*I = J
-		x := elt[1](One(UA));
+		x := (MapOnUniverseAlgebras(elt[1]))(One(UA));
 		J := elt[2];
 		for uu in QinT do
 			pol := (x*(UA ! uu));
@@ -241,15 +149,18 @@ intrinsic IsPolarized(A::AbelianVarietyFq, PHI::AlgAssCMType , N::RngIntElt)->Bo
         if not exists{ a1 : a1 in polarizations_of_degree_N | 
                             (a/a1) in T and (a1/a) in T and // a/a1 is a unit in T=S bar(S) 
                             ((a/a1)@@uT) in USUSb } then
-            pol:=Homs(A,Av,hom<UA->UA | [ a*UA.i : i in [1..Dimension(UA)]]>);
-            pol`IsIsogeny:=<true,N>;
-            pol`IsPolarization:=<true,PHI>;
-            Append(~polarizations_of_degree_N, pol);
+            Append(~polarizations_of_degree_N, a);
         end if;
     end for;
-
-	if #polarizations_of_degree_N ge 1 then
-		return true, polarizations_of_degree_N;
+    output:=[];
+    for a in polarizations_of_degree_N do
+        pol:=Hom(A,Av,hom<UA->UA | [ a*UA.i : i in [1..Dimension(UA)]]>);
+        pol`IsIsogeny:=<true,N>;
+        //pol`IsPolarization:=<true,PHI>;
+        Append(~output,pol);
+    end for;
+	if #output ge 1 then
+		return true, output;
 	else
 		return false,[];
 	end if;
@@ -374,7 +285,9 @@ end intrinsic;
     
     AttachSpec("~/packages_github/AbVarFq/packages.spec");
     
+    //////////////////////////////////
     //Example 7.2
+    //////////////////////////////////
     
     _<x>:=PolynomialRing(Integers());
     h:=x^4+2*x^3-7*x^2+22*x+121;
@@ -385,6 +298,7 @@ end intrinsic;
         A;
         N:=0;
         repeat
+            printf ".";
             N+:=1;
             test,pols_deg_N:=IsPolarized(A,PHI,N);
         until test;
@@ -394,7 +308,41 @@ end intrinsic;
         end for;
     end for;
 
-        
+    //////////////////////////////////    
+    //Example 7.3
+    //////////////////////////////////
+    
+    _<x>:=PolynomialRing(Integers());
+    h:=x^6-2*x^5-3*x^4+24*x^3-15*x^2-50*x+125;
+    AVh:=IsogenyClass(h);
+    iso:=ComputeIsomorphismClasses(AVh);
+    PHI:=pAdicPosCMType(AVh);
+    for A in iso do
+        A;
+        test,princ_pols:=IsPrincipallyPolarized(A,PHI);
+        for pol in princ_pols do
+            PolarizedAutomorphismGroup(pol);
+        end for;
+    end for;
+
+
+    //////////////////////////////////    
+    //Example 7.4
+    //////////////////////////////////
+    
+    _<x>:=PolynomialRing(Integers());
+    h:=x^8-5*x^7+13*x^6-25*x^5+44*x^4-75*x^3+1177*x^2-135*x+81;
+    AVh:=IsogenyClass(h);
+    iso:=ComputeIsomorphismClasses(AVh);
+    PHI:=pAdicPosCMType(AVh);
+    for A in iso do
+        A;
+        test,princ_pols:=IsPrincipallyPolarized(A,PHI);
+        for pol in princ_pols do
+            PolarizedAutomorphismGroup(pol);
+        end for;
+    end for;
+
 
 
 

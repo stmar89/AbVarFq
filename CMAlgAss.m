@@ -86,7 +86,7 @@ end intrinsic;
 
 intrinsic Print( PHI :: AlgAssCMType)
 { print the AlgAssCMType }
-    printf "CMType of the Associative Algebra %o determined by the element %o",Domain(PHI[1]),CMPosElt(PHI);
+    printf "CMType of the Associative Algebra %o determined by the element %o",Domain(Homs(PHI)[1]),CMPosElt(PHI);
 end intrinsic;
 
 intrinsic CMPosElt( PHI::AlgAssCMType )->AlgAssElt

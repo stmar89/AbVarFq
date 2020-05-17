@@ -21,6 +21,8 @@ declare verbose AbelianVarieties, 1;
 */
 
 
+//TODO IsIsomorphic, IsTwist and similar (everything that returns a Map) should return an HomAbelianVarieties. This might break the examples posted on the webpage
+
 /////////////////////////////////////////////////////
 // New Type IsogenyClassFq
 /////////////////////////////////////////////////////
@@ -33,7 +35,7 @@ declare attributes IsogenyClassFq : WeilPolynomial, //the characteristic polynom
                                     NumberOfPoints, // number of points
                                     UniverseAlgebra, //the AlgAss that contains all the DeligneModules. eg. if h=g1^s1*g2^s2 then it equals (Q[x]/g1)^s1 x (Q[x]/g2)^s2 
                                     ZFV, //a pair <Z[F,q/F], delta>, where F is the Frobenius endomorphism and delta:Q(F)->EndomorphismAlgebra which gives the (diagonal) action of the Frobenius on the endomorphism algebra. 
-                                    FrobeniusEndomorphism, //an endomorphism of the UniverseAlgebra representing the Frobenius
+                                    FrobeniusEndomorphismOnUniverseAlgebra, //an endomorphism of the UniverseAlgebra representing the Frobenius
                                     IsomorphismClasses, //a sequence of DeligneModules representing the isomorphism classes inside the isogeny class
                                     IsSquarefree,
                                     IsPowerOfBass;
@@ -137,11 +139,14 @@ end intrinsic;
 
 intrinsic FrobeniusEndomorphism(I::IsogenyClassFq)-> Map
 { given an isogeny class AV(h) returns the Frobenius endomorphism (acting on the UniverseAlgebra) }
-    UA:=UniverseAlgebra(I);
-    R,mR:=ZFVOrder(I);
-    FUA:=mR(PrimitiveElement(Algebra(R)));
-    F:=hom<UA->UA | [FUA*UA.i : i in [1..Dimension(UA)] ] >;
-    return F;
+    if not assigned I`FrobeniusEndomorphismOnUniverseAlgebra then
+        UA:=UniverseAlgebra(I);
+        R,mR:=ZFVOrder(I);
+        FUA:=mR(PrimitiveElement(Algebra(R)));
+        F:=hom<UA->UA | [FUA*UA.i : i in [1..Dimension(UA)] ] >;
+        I`FrobeniusEndomorphismOnUniverseAlgebra:=F;
+    end if;
+    return I`FrobeniusEndomorphismOnUniverseAlgebra;
 end intrinsic;
 
 intrinsic IsSquarefree(I::IsogenyClassFq)-> BoolElt
@@ -189,6 +194,7 @@ declare attributes AbelianVarietyFq : IsogenyClass,
                                       DeligneModuleAsDirectSum, //not all DeligneModules can be written as a direct sum. but if this is the case, here we store a sequence of pairs <J,m>, where J is a fractional Z[F,V] ideal and m is a map from the Algebr(J) to the UniverseAlgebra of the isogeny class.
                                       DeligneModuleAsBassMod, //when ZFV is Bass then we can also attach a BassMod
                                       EndomorphismRing,
+                                      FrobeniusEndomorphism,
                                       GroupOfRationalPoints,
                                       Polarizations;
 intrinsic Print(I::AbelianVarietyFq)
@@ -333,11 +339,6 @@ end intrinsic;
 intrinsic ZFVOrder( A :: AbelianVarietyFq) -> AlgAssVOrd,Map
 { returns the ZFV of the isogeny class of A }
     return ZFVOrder(IsogenyClass(A));
-end intrinsic;
-
-intrinsic FrobeniusEndomorphism(A::AbelianVarietyFq)-> Map
-{ returns the Frobenius endomorphism (acting on the UniverseAlgebra) }
-    return FrobeniusEndomorphism(IsogenyClass(A));
 end intrinsic;
 
 intrinsic EndomorphismRing(A::AbelianVarietyFq)-> AlgAssVOrd
@@ -492,6 +493,103 @@ intrinsic ComputeIsomorphismClasses( AVh::IsogenyClassFq )->SeqEnum[AbelianVarie
     return AVh`IsomorphismClasses;
 end intrinsic;
 
+/////////////////////////////////////////////////////
+// NewType: HomAbelianVarietyFqA
+// a morphism of abelin varieties over Fq
+/////////////////////////////////////////////////////
+
+declare type HomAbelianVarietyFq;
+declare attributes HomAbelianVarietyFq : Domain,
+                                         Codomain,
+                                         // Image, //does it makes sense?
+                                         // Kernel, //what should this be? 
+                                         MapOnUniverseAlgebras,
+                                         IsIsogeny, // a pair true or false, Degree
+                                         IsIsomorphism,
+                                         IsEndomorphism,
+                                         IsAutomorphism;
+
+/////////////////////////////////////////////////////
+// Access, Print 
+/////////////////////////////////////////////////////
+
+intrinsic Print(m::HomAbelianVarietyFq)
+{ print the morphism abelian variety }
+    printf "Morphism from  %o to %o",Domain(m),Codomain(m);
+end intrinsic;
+
+intrinsic Domain(m::HomAbelianVarietyFq)->AbelianVarietyFq
+{returns the domain the morphism}
+    return m`Domain;
+end intrinsic;
+
+intrinsic Codomain(m::HomAbelianVarietyFq)->AbelianVarietyFq
+{returns the codomain the morphism}
+    return m`Codomain;
+end intrinsic;
+
+intrinsic MapOnUniverseAlgebras(m::HomAbelianVarietyFq)->Map
+{returns underlying homormorphism of Deligne Moduels as a Z[F,V]-linear hom on the UniverseAlgebras}
+    return m`MapOnUniverseAlgebras;
+end intrinsic;
+
+intrinsic IsEndomorphism(m::HomAbelianVarietyFq)->BoolElt 
+{returns whether the morphism is an endomorphism}
+    if not assigned m`IsEndomorphism then
+        m`IsEndomorphism:=Domain(m) eq Codomain(m);
+    end if;
+    return m`IsEndomorphism;
+end intrinsic;
+
+// intrinsic IsIsogeny(m::HomAbelianVarietyFq)->BoolElt,RngInt
+// {returns whether the morphism is an isogeny and if so it returns also the degree}
+//     if not assigned m`IsIsogeny then
+//         if IsogenyClass(Domain(m)) ne IsogenyClass(Codomain(m)) then
+//             return false,_;
+//         else
+//             h:=MapOnUniverseAlgebras(m);
+//             A:=UniverseAlgebra(Domain(m));
+//             //TODO
+//         end if;
+//     end if;
+//     return m`IsIsogeny[1],m`IsIsogeny[2];
+// end intrinsic;
+
+// TODO IsIsogeny, Degree, IsIsomorphsim, IsAutomrophism, IsPolarization, Kernel,
+
+/////////////////////////////////////////////////////
+// Creation
+/////////////////////////////////////////////////////
+
+intrinsic Hom(A::AbelianVarietyFq,B::AbelianVarietyFq,map::Map)->HomAbelianVarietyFq
+{ creates a morphisms of abelian varieties A->B determined by map, where map is a morphisms of the universe algebras of A and B }
+    FA:=MapOnUniverseAlgebras(FrobeniusEndomorphism(A));
+    FB:=MapOnUniverseAlgebras(FrobeniusEndomorphism(B));
+    UA:=UniverseAlgebra(A);
+    require UA eq Domain(map) and UniverseAlgebra(B) eq Codomain(map) and 
+            forall{ i : i in [1..Dimension(UA)] | map(FA(UA.i)) eq FB(map(UA.i)) } //the map must be Frobanius-linear
+                      : "the map does not define a morphism of abelian varieties";
+    //the test might be time consuming .... maybe it should be moved to an assert2 ?
+    // also in the squarefree case it is superfluous ...
+    hom:=New(HomAbelianVarietyFq);
+    hom`Domain:=A;
+    hom`Codomain:=B;
+    hom`MapOnUniverseAlgebras:=map;
+    return hom;
+end intrinsic;
+
+/////////////////////////////////////////////////////
+// Frobenius
+/////////////////////////////////////////////////////
+
+intrinsic FrobeniusEndomorphism(A::AbelianVarietyFq)-> HomAbelianVarietyFq
+{ returns the Frobenius endomorphism (acting on the UniverseAlgebra) }
+    if not assigned A`FrobeniusEndomorphism then
+        FUA:=FrobeniusEndomorphism(IsogenyClass(A));
+        A`FrobeniusEndomorphism:=Hom(A,A,FUA);
+    end if;
+    return A`FrobeniusEndomorphism;
+end intrinsic;
 
 /////////////////////////////////////////////////////
 // other useful instrinsics for Weil polynomials
@@ -580,27 +678,31 @@ end intrinsic;
 
 /* TESTS
  
-AttachSpec("packages.spec");
-_<x>:=PolynomialRing(Integers());
-f:=x^6-x^5+2*x^4-2*x^3+4*x^2-4*x+8;
-AVf:=IsogenyClass(f);
-_:=ComputeIsomorphismClasses(AVf);
-time #ComputeIsomorphismClasses(AVf);
-for A,B in ComputeIsomorphismClasses(AVf) do t,s:=IsIsomorphic(A,B); end for;
+    AttachSpec("~/packages_github/AbVarFq/packages.spec");
+    _<x>:=PolynomialRing(Integers());
+    f:=x^6-x^5+2*x^4-2*x^3+4*x^2-4*x+8;
+    AVf:=IsogenyClass(f);
+    _:=ComputeIsomorphismClasses(AVf);
+    time #ComputeIsomorphismClasses(AVf);
+    for A,B in ComputeIsomorphismClasses(AVf) do t,s:=IsIsomorphic(A,B); end for;
 
-f:=x^6-x^5+2*x^4-2*x^3+4*x^2-4*x+8;
-AVf:=IsogenyClass(f^3);
-iso:=ComputeIsomorphismClasses(AVf);
-time #ComputeIsomorphismClasses(AVf); //it should be 0
-for A,B in iso do 
-    t,s:=IsIsomorphic(A,B);
-end for;
+    f:=x^6-x^5+2*x^4-2*x^3+4*x^2-4*x+8;
+    AVf:=IsogenyClass(f^3);
+    FrobeniusEndomorphism(AVf);
+    iso:=ComputeIsomorphismClasses(AVf);
+    time #ComputeIsomorphismClasses(AVf); //it should be 0
+    for A,B in iso do 
+        t,s:=IsIsomorphic(A,B);
+    end for;
+    for A in iso do
+        FrobeniusEndomorphism(A);
+    end for;
 
-f:=x^6-x^5+2*x^4-2*x^3+4*x^2-4*x+8;
-h:=x^2-x+2;
-AVf:=IsogenyClass(h*f^2);
-iso:=ComputeIsomorphismClasses(AVf); //this should give an error
-ZFV:=ZFVOrder(AVf);
+    f:=x^6-x^5+2*x^4-2*x^3+4*x^2-4*x+8;
+    h:=x^2-x+2;
+    AVf:=IsogenyClass(h*f^2);
+    iso:=ComputeIsomorphismClasses(AVf); //this should give an error
+    ZFV:=ZFVOrder(AVf);
 
 
 */
