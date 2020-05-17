@@ -506,8 +506,7 @@ declare attributes HomAbelianVarietyFq : Domain,
                                          MapOnUniverseAlgebras,
                                          IsIsogeny, // a pair true or false, Degree
                                          IsIsomorphism,
-                                         IsEndomorphism,
-                                         IsAutomorphism;
+                                         IsEndomorphism;
 
 /////////////////////////////////////////////////////
 // Access, Print 
@@ -555,22 +554,24 @@ end intrinsic;
 //     return m`IsIsogeny[1],m`IsIsogeny[2];
 // end intrinsic;
 
-// TODO IsIsogeny, Degree, IsIsomorphsim, IsAutomrophism, IsPolarization, Kernel,
+// TODO IsIsogeny, Degree, IsIsomorphsim 
 
 /////////////////////////////////////////////////////
 // Creation
 /////////////////////////////////////////////////////
 
-intrinsic Hom(A::AbelianVarietyFq,B::AbelianVarietyFq,map::Map)->HomAbelianVarietyFq
-{ creates a morphisms of abelian varieties A->B determined by map, where map is a morphisms of the universe algebras of A and B }
-    FA:=MapOnUniverseAlgebras(FrobeniusEndomorphism(A));
-    FB:=MapOnUniverseAlgebras(FrobeniusEndomorphism(B));
-    UA:=UniverseAlgebra(A);
-    require UA eq Domain(map) and UniverseAlgebra(B) eq Codomain(map) and 
-            forall{ i : i in [1..Dimension(UA)] | map(FA(UA.i)) eq FB(map(UA.i)) } //the map must be Frobanius-linear
-                      : "the map does not define a morphism of abelian varieties";
-    //the test might be time consuming .... maybe it should be moved to an assert2 ?
-    // also in the squarefree case it is superfluous ...
+intrinsic Hom(A::AbelianVarietyFq,B::AbelianVarietyFq,map::Map : Check:=true)->HomAbelianVarietyFq
+{ creates a morphisms of abelian varieties A->B determined by map, where map is a morphisms of the universe algebras of A and B 
+  The vararg Check allows to skip the test of the compatibility with the Frobenius
+}
+    if Check then
+        FA:=MapOnUniverseAlgebras(FrobeniusEndomorphism(A));
+        FB:=MapOnUniverseAlgebras(FrobeniusEndomorphism(B));
+        UA:=UniverseAlgebra(A);
+        require UA eq Domain(map) and UniverseAlgebra(B) eq Codomain(map) and 
+                forall{ i : i in [1..Dimension(UA)] | map(FA(UA.i)) eq FB(map(UA.i)) } //the map must be Frobanius-linear
+                          : "the map does not define a morphism of abelian varieties";
+    end if;
     hom:=New(HomAbelianVarietyFq);
     hom`Domain:=A;
     hom`Codomain:=B;
@@ -586,7 +587,7 @@ intrinsic FrobeniusEndomorphism(A::AbelianVarietyFq)-> HomAbelianVarietyFq
 { returns the Frobenius endomorphism (acting on the UniverseAlgebra) }
     if not assigned A`FrobeniusEndomorphism then
         FUA:=FrobeniusEndomorphism(IsogenyClass(A));
-        A`FrobeniusEndomorphism:=Hom(A,A,FUA);
+        A`FrobeniusEndomorphism:=Hom(A,A,FUA : Check:=false ); //the Check:=false is necessary to prevent a loop
     end if;
     return A`FrobeniusEndomorphism;
 end intrinsic;
@@ -691,11 +692,11 @@ end intrinsic;
     FrobeniusEndomorphism(AVf);
     iso:=ComputeIsomorphismClasses(AVf);
     time #ComputeIsomorphismClasses(AVf); //it should be 0
-    for A,B in iso do 
-        t,s:=IsIsomorphic(A,B);
-    end for;
     for A in iso do
         FrobeniusEndomorphism(A);
+    end for;
+    for A,B in iso do 
+        t,s:=IsIsomorphic(A,B);
     end for;
 
     f:=x^6-x^5+2*x^4-2*x^3+4*x^2-4*x+8;

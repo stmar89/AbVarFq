@@ -1,4 +1,4 @@
-* vim: set syntax=magma :*/
+/* vim: set syntax=magma :*/
 
 // freeze;
 
