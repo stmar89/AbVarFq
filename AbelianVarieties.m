@@ -21,7 +21,7 @@ declare verbose AbelianVarieties, 1;
 */
 
 
-//TODO IsIsomorphic, IsTwist and similar (everything that returns a Map) should return an HomAbelianVarieties. This might break the examples posted on the webpage
+//TODO IsTwist should return an HomAbelianVarieties. This might break the examples posted on the webpage
 
 /////////////////////////////////////////////////////
 // New Type IsogenyClassFq
@@ -199,7 +199,7 @@ declare attributes AbelianVarietyFq : IsogenyClass,
                                       Polarizations;
 intrinsic Print(I::AbelianVarietyFq)
 { print the abelian variety }
-    printf "Abelian variety over FF_%o in the %o",FiniteField(I),IsogenyClass(I);
+    printf "Abelian variety over FF_%o",FiniteField(I);
 end intrinsic;
 
 /////////////////////////////////////////////////////
@@ -435,7 +435,7 @@ intrinsic 'eq'( A1 :: AbelianVarietyFq , A2 :: AbelianVarietyFq ) -> BoolElt
     end if;
 end intrinsic;
 
-intrinsic IsIsomorphic( A1 :: AbelianVarietyFq , A2 :: AbelianVarietyFq ) -> BoolElt,Map
+intrinsic IsIsomorphic( A1 :: AbelianVarietyFq , A2 :: AbelianVarietyFq ) -> BoolElt,HomAbelianVarietyFq
 { checks if two abelin varieties are isomorphic and eventually it returns also a Z[F,V]-linear isomorphism from the common UniverseAlgebra  }
     vprintf AbelianVarieties,1 : " IsIsomorphic :";
     if IsogenyClass(A1) eq IsogenyClass(A2) then
@@ -456,12 +456,17 @@ intrinsic IsIsomorphic( A1 :: AbelianVarietyFq , A2 :: AbelianVarietyFq ) -> Boo
                 iso:=v2/(iso_0*v1);
                 map:=hom<UniverseAlgebra(A1)->UniverseAlgebra(A2) | x:->iso*x, y:->y/iso >;
                 assert isUAeq(DeligneModuleZBasis(A2),[ map(g) : g in  DeligneModuleZBasis(A1)]);
-                return true,map;
+                return true,Hom(A1,A2,map);
             else
                 return false,_;
             end if;
         elif IsPowerOfBass(IsogenyClass(A1)) then
-            return IsIsomorphic(BassModule(A1),BassModule(A2));
+            test,map:=IsIsomorphic(BassModule(A1),BassModule(A2));
+            if test then
+                return test,Hom(A1,A2,map);
+            else
+                return test,_;
+            end if;
         else
             error "the isomorphism testing is implemented only for squarefree and power-of-Bass isogeny classes"; 
         end if; 
@@ -514,7 +519,7 @@ declare attributes HomAbelianVarietyFq : Domain,
 
 intrinsic Print(m::HomAbelianVarietyFq)
 { print the morphism abelian variety }
-    printf "Morphism from  %o to %o",Domain(m),Codomain(m);
+    printf "Morphism from %o to %o",Domain(m),Codomain(m);
 end intrinsic;
 
 intrinsic Domain(m::HomAbelianVarietyFq)->AbelianVarietyFq
