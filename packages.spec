@@ -1,5 +1,6 @@
 {
 AbelianVarieties.m
+HomAbelianVarieties.m
 CMAlgAss.m
 IsogeniesPolarizations.m
 BaseFieldExtension.m
