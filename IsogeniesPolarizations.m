@@ -1,6 +1,6 @@
 /* vim: set syntax=magma :*/
 
-// freeze;
+freeze;
 
 /////////////////////////////////////////////////////
 // Isogeny functions and polarizations for fractional ideals
