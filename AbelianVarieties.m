@@ -21,8 +21,6 @@ declare verbose AbelianVarieties, 1;
 */
 
 
-//TODO IsTwist should return an HomAbelianVarieties. This might break the examples posted on the webpage
-
 /////////////////////////////////////////////////////
 // New Type IsogenyClassFq
 /////////////////////////////////////////////////////
@@ -393,7 +391,7 @@ intrinsic DeligneModuleAsDirectSum( A :: AbelianVarietyFq) -> SeqEnum[Tup]
 end intrinsic;
 
 /////////////////////////////////////////////////////
-// Equality testing for AbelianVarietyFq
+// Equality and isomorphism testing for AbelianVarietyFq
 /////////////////////////////////////////////////////
 
 isHNFeq:=function(gensM,gensN)
