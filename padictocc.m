@@ -1,3 +1,8 @@
+/* vim: set syntax=magma :*/
+
+freeze;
+
+
 // Must change lines 2010, 2132, and 2247 of 
 //     package/Ring/GaloisGroup/Galois.m
 // to read "prec := 20" (instead of 'prec := 1').

@@ -1,3 +1,8 @@
+/* vim: set syntax=magma :*/
+
+freeze;
+
+
 /////////////////////////////////////////////////////
 // Period matrices.
 // // Stefano Marseglia, Utrecht University, s.marseglia@uu.nl

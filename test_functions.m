@@ -1,4 +1,6 @@
-/*TEST functions*/
+/* vim: set syntax=magma :*/
+
+freeze;
 
 /////////////////////////////////////////////////////
 // test functions for the other packages
