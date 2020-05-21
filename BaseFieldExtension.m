@@ -179,7 +179,7 @@ end intrinsic;
 // Instrinsic: IsTwistOfOrder
 // ------------------- //
 
-intrinsic IsTwistOfOrder( A1::AbelianVarietyFq, A2::AbelianVarietyFq ,r :: RngIntElt )-> BoolElt,Map
+intrinsic IsTwistOfOrder( A1::AbelianVarietyFq, A2::AbelianVarietyFq ,r :: RngIntElt )-> BoolElt,HomAbelianVarietyFq
 { given two abelian varieties A1 and A2 (possibly non isogenous) over Fq checks itf they are twist of order r, that is, if they become isomorphic after a base field extension to F_q^r  }
     Ie,me:=BaseFieldExtension(IsogenyClass(A1),r);
     Ie2,_:=BaseFieldExtension(IsogenyClass(A2),r);
@@ -212,7 +212,7 @@ for A in iso do
     Ae:=BaseFieldExtension(A,I6,m6);
     R,mR:=ZFVOrder(Ae);
     Me:=BassModule(R,mR,DeligneModuleZBasis(Ae));
-    exists{ B : B in iso_6 | IsIsomorphic(Ae,B) }; //I get an error in IsIsomorphic BassMod
+    exists{ B : B in iso_6 | IsIsomorphic(Ae,B) }; 
 end for;
 
 for A in iso do
@@ -311,7 +311,7 @@ Ah4:=IsogenyClass(h4);
 isoh4:=ComputeIsomorphismClasses(Ah4);
 A:=isoh1[1];
 UA:=UniverseAlgebra(A);
-F:=FrobeniusEndomorphism(A);
+F:=MapOnUniverseAlgebras(FrobeniusEndomorphism(A));
 U,u:=UnitGroup2(MultiplicatorRing(DeligneModuleAsDirectSum(A)[1,1]));
 TAut:=[ hom<UA->UA|[u(t)*b:b in Basis(UA)]> : t in TorsionSubgroup(U) ];
 TF:=[ t*F : t in TAut ];
@@ -324,11 +324,11 @@ mAe:=all_ext[1,2];
 TF_mAe:=[ tf*mAe : tf in TF];
 
 
-the next lines are wrong I should use the Frobenius over Fq not the one over Fq^r!!!!!
 for B in all_ext do
     test,iso:=IsIsomorphic(Ae,B[1]);
     if test then
-        FB:=FrobeniusEndomorphism(B[1]);
+        iso:=MapOnUniverseAlgebras(iso);
+        FB:=MapOnUniverseAlgebras(FrobeniusEndomorphism(B[1]));
         mB:=iso*FB*Inverse(iso);
         exists{ a : a in TF_mAe | a eq mB };
     end if;
