@@ -12,10 +12,10 @@ freeze;
 declare verbose HomAbelianVarieties, 1;
 
 
-
+//TODO Composition of morphisms, Automorphism/EndomorphismRing,PolarizedAutomorphismGroup should all return also a funciton to create an HomAbelianVarietyFq
 
 /////////////////////////////////////////////////////
-// NewType: HomAbelianVarietyFqA
+// NewType: HomAbelianVarietyFq
 // a morphism of abelin varieties over Fq
 /////////////////////////////////////////////////////
 
