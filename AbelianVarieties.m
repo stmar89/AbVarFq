@@ -36,9 +36,9 @@ declare attributes IsogenyClassFq : WeilPolynomial, //the characteristic polynom
                                     FrobeniusEndomorphismOnUniverseAlgebra, //an endomorphism of the UniverseAlgebra representing the Frobenius
                                     IsomorphismClasses, //a sequence of DeligneModules representing the isomorphism classes inside the isogeny class
                                     IsSquarefree,
-                                    IsPowerOfBass;
+                                    IsPowerOfBass,
+                                    pRank; // the p-rank
 // TODO
-//                                  pRank, // the p-rank
 //                                  Functor, //a string describing which functor is used to describe the category "Deligne", "Centeleghe-Stix", "Oswal-Shankar"
 
 /////////////////////////////////////////////////////
@@ -181,6 +181,18 @@ intrinsic 'eq'(AVh1::IsogenyClassFq , AVh2::IsogenyClassFq ) -> BoolElt
         return false;
     end if;
 end intrinsic;
+
+intrinsic pRank(I::IsogenyClassFq)->RngIntElt
+{ returns the p-Rank of the isogeny class }
+    if not assigned I`pRank then
+        f:=WeilPolynomial(I);
+        p:=CharacteristicFiniteField(I);  
+        vv:=InnerVertices(NewtonPolygon(f,p));
+        I`pRank:=Degree(f)-vv[#vv,1];
+    end if;
+    return I`pRank;
+end intrinsic;
+
 
 /////////////////////////////////////////////////////
 // New Type AbelianVarietyFq
@@ -552,6 +564,11 @@ intrinsic IsOrdinary(A::AbelianVarietyFq) -> BoolElt
 	return IsOrdinary(IsogenyClass(A));
 end intrinsic;
 
+intrinsic pRank(A::AbelianVarietyFq)->RngIntElt
+{ returns the p-Rank of the isogeny class }
+    return pRank(IsogenyClass(A));
+end intrinsic;
+
 intrinsic IsOrdinary(f::RngUPolElt) -> BoolElt
 {returns if the input polynomial is an Ordinary q-Weil polynomial, where q is a power of a prime number p, that is if the mid coefficient is coprime with p}
     test,q:=IsWeil(f);
@@ -588,6 +605,7 @@ end intrinsic;
     _<x>:=PolynomialRing(Integers());
     f:=x^6-x^5+2*x^4-2*x^3+4*x^2-4*x+8;
     AVf:=IsogenyClass(f);
+    pRank(AVf);
     _:=ComputeIsomorphismClasses(AVf);
     time #ComputeIsomorphismClasses(AVf);
     for A,B in ComputeIsomorphismClasses(AVf) do t,s:=IsIsomorphic(A,B); end for;
