@@ -16,7 +16,7 @@ declare verbose AbelianVarieties, 1;
 */
 
 /* TODO:
-- pRank, Functor
+- Functor
 - projection and inclusions of isogenyclasses
 */
 
@@ -45,26 +45,25 @@ declare attributes IsogenyClassFq : WeilPolynomial, //the characteristic polynom
 // Creation and access functions of IsogenyClassFq
 /////////////////////////////////////////////////////
 
-intrinsic IsogenyClass( h::RngUPolElt ) -> IsogenyClassFq
-{ given a WeilPolynomial h creates the isogeny class determined by h via Honda-Tate theory }
-    test_weil,q,p:=IsWeil(h);
-    require test_weil : "the given polynomial is not a Weil polynomial";
+intrinsic IsogenyClass( h::RngUPolElt : Check:=true ) -> IsogenyClassFq
+{ given a WeilPolynomial h creates the isogeny class determined by h via Honda-Tate theory. The Check parameter (Default true) allows to decide whether the polynomial defines an isogeny class }
     fac:=Factorization(h);
-    for f in fac do
-        _,e:=IsCharacteristicPoly(f[1]);
-        require (f[2] mod e) eq 0 : "the given polynomial does not define an isogeny class";
-    end for;
+    if Check then
+        test_weil,q,p:=IsWeil(h);
+        require test_weil : "the given polynomial is not a Weil polynomial";
+        for f in fac do
+            _,e:=IsCharacteristicPoly(f[1]);
+            require (f[2] mod e) eq 0 : "the given polynomial does not define an isogeny class";
+        end for;
+    end if;
 
     I:=New(IsogenyClassFq);
     I`WeilPolynomial:=h;
-    I`FiniteField:=q;
-    I`CharacteristicFiniteField:=p;
-    I`Dimension:=Degree(h) div 2;
-    //TODO pRank and functor
     nf_h:=&cat[[ NumberField(f[1]) : i in [1..f[2]] ] : f in fac]; 
     Ah:=AssociativeAlgebra(nf_h);
     I`UniverseAlgebra:=Ah;
     if IsSquarefree(h) then
+        I`IsSquarefree:=true;
         Ag:=Ah;
         delta:=hom<Ag->Ah | [Ah.i : i in [1..Dimension(Ah)]] >; //this is just the identity
     else
@@ -73,13 +72,16 @@ intrinsic IsogenyClass( h::RngUPolElt ) -> IsogenyClassFq
         i:=0;
         img:=[];
         for f in fac do
-            img cat:=[ &+[ Ah.(i+j+k*Degree(f[1])) : k in [0..f[2]-1]] : j in [1..Degree(f[1])] ]; //this is wrong
+            img cat:=[ &+[ Ah.(i+j+k*Degree(f[1])) : k in [0..f[2]-1]] : j in [1..Degree(f[1])] ];
             i:=i+Degree(f[1])*f[2];
         end for;
         delta:=hom<Ag->Ah | img >;
         assert delta(One(Ag)) eq One(Ah); 
     end if;
     F:=PrimitiveElement(Ag); //the Frobenius
+    if not assigned q then
+        q:=Integers() ! (ConstantCoefficient(h)^(2/Degree(h)));
+    end if;
     ZFV:=Order([F,q/F]);
     I`ZFV:=<ZFV,delta>;
     return I;
@@ -611,7 +613,8 @@ end intrinsic;
     for A,B in ComputeIsomorphismClasses(AVf) do t,s:=IsIsomorphic(A,B); end for;
 
     f:=x^6-x^5+2*x^4-2*x^3+4*x^2-4*x+8;
-    AVf:=IsogenyClass(f^3);
+    time AVf:=IsogenyClass(f^3 );
+    time AVf:=IsogenyClass(f^3 : Check:=false );
     FrobeniusEndomorphism(AVf);
     iso:=ComputeIsomorphismClasses(AVf);
     time #ComputeIsomorphismClasses(AVf); //it should be 0
