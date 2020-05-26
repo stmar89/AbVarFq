@@ -27,6 +27,7 @@ declare verbose AbelianVarieties, 1;
 
 declare type IsogenyClassFq;
 declare attributes IsogenyClassFq : WeilPolynomial, //the characteristic polynomial of the Frobenius
+                                    WeilPolynomialFactorization,
                                     FiniteField, // the prime power q=p^e
                                     CharacteristicFiniteField, // the prime p
                                     Dimension, // the dimension
@@ -47,10 +48,10 @@ declare attributes IsogenyClassFq : WeilPolynomial, //the characteristic polynom
 
 intrinsic IsogenyClass( h::RngUPolElt : Check:=true ) -> IsogenyClassFq
 { given a WeilPolynomial h creates the isogeny class determined by h via Honda-Tate theory. The Check parameter (Default true) allows to decide whether the polynomial defines an isogeny class }
-    fac:=Factorization(h);
     if Check then
-        test_weil,q,p:=IsWeil(h);
-        require test_weil : "the given polynomial is not a Weil polynomial";
+        fac:=Factorization(h);
+        // test_weil,q,p:=IsWeil(h);
+        // require test_weil : "the given polynomial is not a Weil polynomial";
         for f in fac do
             _,e:=IsCharacteristicPoly(f[1]);
             require (f[2] mod e) eq 0 : "the given polynomial does not define an isogeny class";
@@ -59,37 +60,65 @@ intrinsic IsogenyClass( h::RngUPolElt : Check:=true ) -> IsogenyClassFq
 
     I:=New(IsogenyClassFq);
     I`WeilPolynomial:=h;
-    nf_h:=&cat[[ NumberField(f[1]) : i in [1..f[2]] ] : f in fac]; 
-    Ah:=AssociativeAlgebra(nf_h);
-    I`UniverseAlgebra:=Ah;
-    if IsSquarefree(h) then
-        I`IsSquarefree:=true;
-        Ag:=Ah;
-        delta:=hom<Ag->Ah | [Ah.i : i in [1..Dimension(Ah)]] >; //this is just the identity
-    else
-        nf_g:=&cat[[ NumberField(f[1]) ] : f in fac]; 
-        Ag:=AssociativeAlgebra(nf_g);
-        i:=0;
-        img:=[];
-        for f in fac do
-            img cat:=[ &+[ Ah.(i+j+k*Degree(f[1])) : k in [0..f[2]-1]] : j in [1..Degree(f[1])] ];
-            i:=i+Degree(f[1])*f[2];
-        end for;
-        delta:=hom<Ag->Ah | img >;
-        assert delta(One(Ag)) eq One(Ah); 
+    if assigned fac then
+        I`WeilPolynomialFactorization:=fac;
     end if;
-    F:=PrimitiveElement(Ag); //the Frobenius
-    if not assigned q then
-        q:=Integers() ! (ConstantCoefficient(h)^(2/Degree(h)));
-    end if;
-    ZFV:=Order([F,q/F]);
-    I`ZFV:=<ZFV,delta>;
     return I;
 end intrinsic;
 
 intrinsic WeilPolynomial( I::IsogenyClassFq )-> RngUpolElt
 { given an isogeny class AV(h) returns the Weil polynomial h defining it }
     return I`WeilPolynomial;
+end intrinsic;
+
+intrinsic WeilPolynomialFactorization( I::IsogenyClassFq )-> RngUpolElt
+{ given an isogeny class AV(h) returns the Weil polynomial h defining it }
+    if not assigned I`WeilPolynomialFactorization then
+        I`WeilPolynomialFactorization:=Factorization(WeilPolynomial(I));
+    end if;
+    return I`WeilPolynomialFactorization;
+end intrinsic;
+
+intrinsic UniverseAlgebra( I::IsogenyClassFq )-> AlgAss
+{ given an isogeny class AV(h) returns the algebra where all the Deligne modules live in }
+    if not assigned I`UniverseAlgebra then
+        nf_h:=&cat[[ NumberField(f[1]) : i in [1..f[2]] ] : f in WeilPolynomialFactorization(I)]; 
+        Ah:=AssociativeAlgebra(nf_h);
+        I`UniverseAlgebra:=Ah;
+    end if;
+    return I`UniverseAlgebra;
+end intrinsic;
+
+intrinsic ZFVOrder(I::IsogenyClassFq)-> AlgAssVOrd,Map
+{ given an isogeny class AV(h) returns the algebra where all the Deligne modules live in }
+    if not assigned I`ZFV then
+        h:=WeilPolynomial(I); 
+        fac:=WeilPolynomialFactorization(I);
+        Ah:=UniverseAlgebra(I);
+        if IsSquarefree(h) then
+            I`IsSquarefree:=true;
+            Ag:=Ah;
+            delta:=hom<Ag->Ah | [Ah.i : i in [1..Dimension(Ah)]] >; //this is just the identity
+        else
+            nf_g:=&cat[[ NumberField(f[1]) ] : f in fac]; 
+            Ag:=AssociativeAlgebra(nf_g);
+            i:=0;
+            img:=[];
+            for f in fac do
+                img cat:=[ &+[ Ah.(i+j+k*Degree(f[1])) : k in [0..f[2]-1]] : j in [1..Degree(f[1])] ];
+                i:=i+Degree(f[1])*f[2];
+            end for;
+            delta:=hom<Ag->Ah | img >;
+            assert delta(One(Ag)) eq One(Ah); 
+        end if;
+        F:=PrimitiveElement(Ag); //the Frobenius
+        if not assigned q then
+            q:=Integers() ! (ConstantCoefficient(h)^(2/Degree(h)));
+        end if;
+        ZFV:=Order([F,q/F]);
+        I`ZFV:=<ZFV,delta>;
+    end if;
+    return I`ZFV[1],I`ZFV[2];
 end intrinsic;
 
 intrinsic FiniteField( I::IsogenyClassFq )-> RngInt
@@ -125,16 +154,6 @@ intrinsic NumberOfPoints( I::IsogenyClassFq )-> RngInt
         I`NumberOfPoints := Evaluate(WeilPolynomial(I),1);
     end if;
     return I`NumberOfPoints;
-end intrinsic;
-
-intrinsic UniverseAlgebra( I::IsogenyClassFq )-> AlgAss
-{ given an isogeny class AV(h) returns the algebra where all the Deligne modules live in }
-    return I`UniverseAlgebra;
-end intrinsic;
-
-intrinsic ZFVOrder(I::IsogenyClassFq)-> AlgAssVOrd,Map
-{ given an isogeny class AV(h) returns the algebra where all the Deligne modules live in }
-    return I`ZFV[1],I`ZFV[2];
 end intrinsic;
 
 intrinsic FrobeniusEndomorphism(I::IsogenyClassFq)-> Map
@@ -517,27 +536,15 @@ end intrinsic;
 
 intrinsic LPolyToWeilPoly(l::RngUPolElt) -> RngUPolElt
 {given an L-polynomial l(T) returns the associated Weil polynomial w(T):=T^(2g)*l(1/T)}
-	R:=Parent(l);
-	T:=R.1;
-	coeff:=Coefficients(l);
-	deg:=Degree(l);
-	w:=&+([T^(deg-i)*coeff[i+1] : i in [0..deg]]);
-	assert IsWeil(w);
-	return w;
+    return Parent(l)!Reverse(Coefficients(l));
 end intrinsic;
 
 intrinsic WeilPolyToLPoly(w::RngUPolElt) -> RngUPolElt
 {given a Weil polynomial w(T) returns the associated L-polynomial l(T):=T^(2g)*l(1/T)}
-	require IsWeil(w): "the input must be a Weil polynomial";
-	R:=Parent(w);
-	T:=R.1;
-	coeff:=Coefficients(w);
-	deg:=Degree(w);
-	l:=&+([T^(deg-i)*coeff[i+1] : i in [0..deg]]);
-	return l;
+    return Parent(w)!Reverse(Coefficients(w));
 end intrinsic;
 
-intrinsic IsWeil(f::RngUPolElt : Precision:=3000) -> BoolElt,RngIntElt,RngIntElt,RngIntElt
+intrinsic IsWeil(f::RngUPolElt : Precision:=30) -> BoolElt,RngIntElt,RngIntElt,RngIntElt
 {Returns whether f is a q-WeilPolynomial, q,p and e, where q=p^e is a prime power polynomial. A polynomial is q-Weil if all the roots have complex absolute value q^(1/2). The check is done with precision "Precision" given as optional parameter (default precision is 30)}
 	require forall{c :c in Coefficients(f) | IsIntegral(c)} and IsEven(Degree(f)): "the input must be an integral polynomial of even degree";
 	roots:=Roots(f,ComplexField(Precision));
@@ -556,9 +563,17 @@ end intrinsic;
 
 intrinsic IsOrdinary(AVf::IsogenyClassFq) -> BoolElt
 {returns if the isogeny class is ordinary}
-    f:=WeilPolynomial(AVf);
-	coeff:=Coefficients(f);
-	return IsCoprime(coeff[Degree(f) div 2 +1], coeff[1] );
+    if assigned AVf`pRank then 
+        return pRank(AVf) eq Dimension(AVf);
+    else
+        f:=WeilPolynomial(AVf);
+        coeff:=Coefficients(f);
+        test:=IsCoprime(coeff[Degree(f) div 2 +1], coeff[1] );
+        if test then
+            AVf`pRank:=Dimension(AVf);
+        end if;
+        return test;
+    end if;
 end intrinsic;
 
 intrinsic IsOrdinary(A::AbelianVarietyFq) -> BoolElt
@@ -571,13 +586,13 @@ intrinsic pRank(A::AbelianVarietyFq)->RngIntElt
     return pRank(IsogenyClass(A));
 end intrinsic;
 
-intrinsic IsOrdinary(f::RngUPolElt) -> BoolElt
+intrinsic IsOrdinary(f::RngUPolElt : Precision:=100) -> BoolElt
 {returns if the input polynomial is an Ordinary q-Weil polynomial, where q is a power of a prime number p, that is if the mid coefficient is coprime with p}
-    test,q:=IsWeil(f);
-	require test:"the input must be a q-Weil polynomial for some prime power q";
+    testWeil,_,p,_:=IsWeil(f : Precision:=Precision);
+	require testWeil:"the input must be a q-Weil polynomial for some prime power q";
 	deg:=Degree(f);
 	coeff:=Coefficients(f);
-	return IsCoprime(coeff[deg div 2 +1],q);
+	return IsCoprime(coeff[deg div 2 +1],p);
 end intrinsic;
 
 intrinsic IsCharacteristicPoly(f::RngUPolElt : Precision:=100) -> BoolElt,RngIntElt,RngIntElt,RngIntElt
@@ -606,8 +621,14 @@ end intrinsic;
     AttachSpec("~/packages_github/AbVarFq/packages.spec");
     _<x>:=PolynomialRing(Integers());
     f:=x^6-x^5+2*x^4-2*x^3+4*x^2-4*x+8;
+    time IsogenyClass(f);
+    time ZFVOrder(IsogenyClass(f));
+    time pRank(IsogenyClass(f));
+    time pRank(IsogenyClass(f : Check:=false ));
+    IsOrdinary(f);
+    
     AVf:=IsogenyClass(f);
-    pRank(AVf);
+    IsOrdinary(AVf);
     _:=ComputeIsomorphismClasses(AVf);
     time #ComputeIsomorphismClasses(AVf);
     for A,B in ComputeIsomorphismClasses(AVf) do t,s:=IsIsomorphic(A,B); end for;
