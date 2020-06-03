@@ -143,8 +143,12 @@ intrinsic 'eq'(PHI1 :: AlgAssCMType, PHI2::AlgAssCMType : Precision:=30)->BoolEl
     homs:=HomsToC(A : Precision:=Precision);
     b1:=CMPosElt(PHI1);
     b2:=CMPosElt(PHI2);
-    b:=b1/b2;
-    return forall{ h : h in homs | Re(h(b)) gt 0 };
+    if b1 eq b2 then
+        return true;
+    else
+        b:=b1/b2;
+        return forall{ h : h in homs | Re(h(b)) gt 0 };
+    end if;
 end intrinsic;
 
 /////////////////////////////////////////////////////

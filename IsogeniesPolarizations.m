@@ -11,6 +11,7 @@ freeze;
 
 declare verbose IsogeniesPolarizations, 1;
 
+
 /////////////////////////////////////////////////////
 // Isogenies
 /////////////////////////////////////////////////////
@@ -81,6 +82,20 @@ end intrinsic;
 /////////////////////////////////////////////////////
 // Polarizations
 /////////////////////////////////////////////////////
+
+intrinsic IsPolarization(pol::HomAbelianVarrietyFq, phi::AlgAssCMType)->BoolElt
+{returns whether the hommorphisms is known to be a polarizations for the CM-type phi }
+    A:=Domain(pol);
+    require IsSquarefree(A) and IsOrdinary(A) : "implemented only for square-free ordinary abelian varieties";
+    x0:=Hom(pol)(1); //the element of the UniverseAlgebra representing the map
+    //pol is a polarization if x0 is totally imaginary and \Phi-positive
+    C := [g(x0): g in phi];
+    if (x0 eq -ComplexConjugate(x0) and forall{c : c in C | Im(c) gt 0}) then
+        return true;
+    else
+        return false;
+    end if;
+end intrinsic;
 
 intrinsic IsPrincipallyPolarized(A::AbelianVarietyFq, phi::AlgAssCMType)->BoolElt, SeqEnum[HomAbelianVarietyFq]
 {returns if the abelian variety is principally polarized and if so returns also all the non isomorphic polarizations}
@@ -156,7 +171,6 @@ intrinsic IsPolarized(A::AbelianVarietyFq, PHI::AlgAssCMType , N::RngIntElt)->Bo
     for a in polarizations_of_degree_N do
         pol:=Hom(A,Av,hom<UA->UA | [ a*UA.i : i in [1..Dimension(UA)]]>);
         pol`IsIsogeny:=<true,N>;
-        //pol`IsPolarization:=<true,PHI>;
         Append(~output,pol);
     end for;
 	if #output ge 1 then
@@ -294,18 +308,18 @@ end intrinsic;
     AVh:=IsogenyClass(h);
     iso:=ComputeIsomorphismClasses(AVh);
     PHI:=pAdicPosCMType(AVh);
-    for A in iso do
-        A;
+    for iA in [1..#iso] do
+        A:=iso[iA];
         N:=0;
         repeat
             printf ".";
             N+:=1;
             test,pols_deg_N:=IsPolarized(A,PHI,N);
         until test;
-        N;
         for pol in pols_deg_N do
-            PolarizedAutomorphismGroup(pol);
+            aut:=#PolarizedAutomorphismGroup(pol);
         end for;
+        iA,#pols_deg_N,N,aut;
     end for;
 
     //////////////////////////////////    
@@ -331,7 +345,7 @@ end intrinsic;
     //////////////////////////////////
     
     _<x>:=PolynomialRing(Integers());
-    h:=x^8-5*x^7+13*x^6-25*x^5+44*x^4-75*x^3+1177*x^2-135*x+81;
+    h:=x^8-5*x^7+13*x^6-25*x^5+44*x^4-75*x^3+117*x^2-135*x+81;
     AVh:=IsogenyClass(h);
     iso:=ComputeIsomorphismClasses(AVh);
     PHI:=pAdicPosCMType(AVh);
