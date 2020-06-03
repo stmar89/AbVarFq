@@ -317,6 +317,7 @@ end intrinsic;
             test,pols_deg_N:=IsPolarized(A,PHI,N);
         until test;
         for pol in pols_deg_N do
+            PeriodMatrix(pol,PHI);
             aut:=#PolarizedAutomorphismGroup(pol);
         end for;
         iA,#pols_deg_N,N,aut;

@@ -23,7 +23,7 @@ intrinsic PeriodMatrix(pol::HomAbelianVarietyFq , PHI::AlgAssCMType ) -> AlgMatE
 	N:=#zb;
     phi:=Homs(PHI);
 	prec:=Precision(Codomain(phi[1]));
-    x0:=Hom(pol)(1);
+    x0:=MapOnUniverseAlgebras(pol)(1);
 	E := Matrix(Integers(),N,N,[Trace(x0*cc(a)*b) : b in zb, a in zb]); // added sign
 	D, C := FrobeniusFormAlternating(E);
 	newb := ElementToSequence(Matrix(A,C)*Matrix(A,N,1,zb));
