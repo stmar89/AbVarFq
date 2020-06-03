@@ -18,9 +18,8 @@ intrinsic PeriodMatrix(pol::HomAbelianVarietyFq , PHI::AlgAssCMType ) -> AlgMatE
     AV:=Domain(pol);
     require IsPolarization(pol,PHI) : "the input is not a polarization for the given cm-type";
     A:=UniverseAlgebra(AV);
-    I:=DeligneModuleAsDirectSum(AV);
 	cc:=ComplexConjugate;
-	zb:=ZBasis(I);
+    zb:=DeligneModuleZBasis(AV);
 	N:=#zb;
     phi:=Homs(PHI);
 	prec:=Precision(Codomain(phi[1]));
