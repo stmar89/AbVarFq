@@ -86,7 +86,7 @@ end intrinsic;
 intrinsic IsPolarization(pol::HomAbelianVarietyFq, phi::AlgAssCMType)->BoolElt
 {returns whether the hommorphisms is known to be a polarizations for the CM-type phi }
     A:=Domain(pol);
-    require IsSquarefree(A) and IsOrdinary(A) : "implemented only for square-free ordinary abelian varieties";
+    require IsSquarefree(IsogenyClass(A)) and IsOrdinary(A) : "implemented only for square-free ordinary abelian varieties";
     x0:=Hom(pol)(1); //the element of the UniverseAlgebra representing the map
     //pol is a polarization if x0 is totally imaginary and \Phi-positive
     C := [g(x0): g in phi];
