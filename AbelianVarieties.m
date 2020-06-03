@@ -529,6 +529,18 @@ intrinsic ComputeIsomorphismClasses( AVh::IsogenyClassFq )->SeqEnum[AbelianVarie
     return AVh`IsomorphismClasses;
 end intrinsic;
 
+intrinsic ComputeIsomorphismClassesWithEndomorphismRing( AVh::IsogenyClassFq , S::AlgAssVOrd )->SeqEnum[AbelianVarietyFq]
+{ computes a list of representatives of isomorphisms classes of abelian varieties with endomorphism ring S in the given squarefree isogeny class }
+    require IsSquarefree(AVh) : "the given isogeny class is not squarefree ";
+    R,_:=ZFVOrder(AVh);
+    require R subset S : "the given order is not the endomorphism ring of an abelian variety in the given isogeny class";
+    if assigned AVh`IsomorphismClasses then
+        isoS:=[ A : A in ComputeIsomorphismClasses(AVh) | EndomorphismRing(A) eq S ];
+    else
+        isoS:=[ AbelianVariety(AVh,R!I) : I in ICM_bar(S) ];
+    end if;
+    return isoS;
+end intrinsic;
 
 /////////////////////////////////////////////////////
 // other useful instrinsics for Weil polynomials
