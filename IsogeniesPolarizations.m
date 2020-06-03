@@ -83,7 +83,7 @@ end intrinsic;
 // Polarizations
 /////////////////////////////////////////////////////
 
-intrinsic IsPolarization(pol::HomAbelianVarrietyFq, phi::AlgAssCMType)->BoolElt
+intrinsic IsPolarization(pol::HomAbelianVarietyFq, phi::AlgAssCMType)->BoolElt
 {returns whether the hommorphisms is known to be a polarizations for the CM-type phi }
     A:=Domain(pol);
     require IsSquarefree(A) and IsOrdinary(A) : "implemented only for square-free ordinary abelian varieties";
