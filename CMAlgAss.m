@@ -151,6 +151,16 @@ intrinsic 'eq'(PHI1 :: AlgAssCMType, PHI2::AlgAssCMType : prec:=30)->BoolElt
     end if;
 end intrinsic;
 
+intrinsic Precision(PHI :: AlgAssCMType)->RngIntElt 
+{ the precision of the given CM-type, that is, the codomain of each homomorphism will be ComplexField(Precision) }
+    if assigned PHI`Homs then
+        phi0:=Homs(PHI);
+        return Precision(Codomain(phi0[1]));
+    else
+        return 30; //the default precision
+    end if;
+end intrinsic;
+
 intrinsic ChangePrecision(PHI0 :: AlgAssCMType, prec::RngIntElt )->AlgAssCMType
 { changes the precision of the given CM-type, that is, the codomain of each homomorphism will be ComplexField(Precision) }
     require prec gt 0 : "Precision must be a positive integer";
