@@ -123,12 +123,12 @@ intrinsic CMPosElt( PHI::AlgAssCMType )->AlgAssElt
     return PHI`CMPosElt;
 end intrinsic;
 
-intrinsic Homs( PHI::AlgAssCMType : Precision:=30 )->SeqEnum[Map]
+intrinsic Homs( PHI::AlgAssCMType : prec:=30 )->SeqEnum[Map]
 { given a AlgAssCMType PHI returns the sequence of maps to CC defining it  }
     if not assigned PHI`Homs then
         b:=CMPosElt(PHI);
         A:=Parent(b); 
-        homs:=HomsToC(A : Precision:=Precision);
+        homs:=HomsToC(A : Precision:=prec);
         phi:=[ ff : ff in homs | Im(ff( b )) gt 0 ];
         assert #phi eq #homs div 2;
         PHI`Homs:=phi;    
@@ -136,11 +136,11 @@ intrinsic Homs( PHI::AlgAssCMType : Precision:=30 )->SeqEnum[Map]
     return PHI`Homs;
 end intrinsic;
 
-intrinsic 'eq'(PHI1 :: AlgAssCMType, PHI2::AlgAssCMType : Precision:=30)->BoolElt
+intrinsic 'eq'(PHI1 :: AlgAssCMType, PHI2::AlgAssCMType : prec:=30)->BoolElt
 { returns whether two cm types are equal }
     A:=Domain(Homs(PHI1)[1]);
     assert forall{ phi : phi in Homs(PHI1) cat Homs(PHI2) | Domain(phi) eq A };
-    homs:=HomsToC(A : Precision:=Precision);
+    homs:=HomsToC(A : Precision:=prec);
     b1:=CMPosElt(PHI1);
     b2:=CMPosElt(PHI2);
     if b1 eq b2 then
@@ -150,6 +150,67 @@ intrinsic 'eq'(PHI1 :: AlgAssCMType, PHI2::AlgAssCMType : Precision:=30)->BoolEl
         return forall{ h : h in homs | Re(h(b)) gt 0 };
     end if;
 end intrinsic;
+
+intrinsic ChangePrecision(PHI0 :: AlgAssCMType, prec::RngIntElt )->AlgAssCMType
+{ changes the precision of the given CM-type, that is, the codomain of each homomorphism will be ComplexField(Precision) }
+    require prec gt 0 : "Precision must be a positive integer";
+    PHI:=PHI0;
+    if assigned PHI`CMPosElt then
+        b:=CMPosElt(PHI);
+        A:=Parent(b); 
+        homs:=HomsToC(A : Precision:=prec);
+        phi:=[ ff : ff in homs | Im(ff( b )) gt 0 ];
+        assert #phi eq #homs div 2;
+        PHI`Homs:=phi; //this might over-write the attribute
+    elif assigned PHI`Homs then
+        phi0:=Homs(PHI);
+        prec0:=Precision(Codomain(phi0[1]));
+        A:=Domain(phi0[1]);
+        FA:=PrimitiveElement(A);
+        homs:=HomsToC(A : Precision:=prec);
+        phi:=[];
+        for ff in phi0 do
+            guess:=[ gg : gg in homs | Abs(gg(FA)-ff(FA)) lt 10^-(prec0-1)];
+            assert #guess eq 1;
+            Append(~phi,guess[1]);
+        end for;
+        assert #phi eq #homs div 2;
+        PHI`Homs:=phi; //this might over-write the attribute
+    else
+        error "there is a problem with the definition of the CM-Type";
+    end if;
+    return PHI;
+end intrinsic;
+
+intrinsic ChangePrecision(~PHI :: AlgAssCMType, prec::RngIntElt )
+{ changes the precision of the given CM-type, that is, the codomain of each homomorphism will be ComplexField(Precision) }
+    require prec gt 0 : "Precision must be a positive integer";
+    if assigned PHI`CMPosElt then
+        b:=CMPosElt(PHI);
+        A:=Parent(b); 
+        homs:=HomsToC(A : Precision:=prec);
+        phi:=[ ff : ff in homs | Im(ff( b )) gt 0 ];
+        assert #phi eq #homs div 2;
+        PHI`Homs:=phi; //this might over-write the attribute
+    elif assigned PHI`Homs then
+        phi0:=Homs(PHI);
+        prec0:=Precision(Codomain(phi0[1]));
+        A:=Domain(phi0[1]);
+        FA:=PrimitiveElement(A);
+        homs:=HomsToC(A : Precision:=prec);
+        phi:=[];
+        for ff in phi0 do
+            guess:=[ gg : gg in homs | Abs(gg(FA)-ff(FA)) lt 10^-(prec0-1)];
+            assert #guess eq 1;
+            Append(~phi,guess[1]);
+        end for;
+        assert #phi eq #homs div 2;
+        PHI`Homs:=phi; //this might over-write the attribute
+    else
+        error "there is a problem with the definition of the CM-Type";
+    end if;
+end intrinsic;
+
 
 /////////////////////////////////////////////////////
 // pAdicPosCMType for ordinary IsogenyClassFq
@@ -298,7 +359,12 @@ end intrinsic;
         assert pPHI in all;
     end for;
 
-
+    _<x>:=PolynomialRing(Integers());
+    f:=x^4+x^2+529;
+    AVf:=IsogenyClass(f);
+    PHI:=pAdicPosCMType(AVf);
+    PHI2:=ChangePrecision(PHI,100);
+    ChangePrecision(~PHI,200);
 
 
 */
