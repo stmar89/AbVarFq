@@ -1,0 +1,151 @@
+/* vim: set syntax=magma : */
+
+///////////////////////////////////////////////////////////////////////////////////
+//                                                                               //
+// Stefano Marseglia, Utrecht University, s.marseglia@uu.nl                      //
+// http://www.staff.science.uu.nl/~marse004/                                     //
+//                                                                               //
+// Code to compute the examples in the paper:                                    //
+// "Computing square-free polarized abelian varieties over finite fields" //
+// http://arxiv.org/abs/2003.09977                                               //
+//                                                                               //
+///////////////////////////////////////////////////////////////////////////////////
+
+//////////////
+// The packages are available at:
+// https://github.com/stmar89/AbVarFq
+//
+// The following examples where computed using the master branch on 04/06/2020
+//////////////
+
+    AttachSpec("~/packages_github/AbVarFq/packages.spec");
+
+//////////////////////////////////
+//Example 7.2
+//////////////////////////////////
+
+    _<x>:=PolynomialRing(Integers());
+    h:=x^4+2*x^3-7*x^2+22*x+121;
+    AVh:=IsogenyClass(h);
+    iso:=ComputeIsomorphismClasses(AVh);
+    PHI:=pAdicPosCMType(AVh);                                                                                                            for iA in [1..#iso] do
+        A:=iso[iA];                                                                                                                          N:=0;
+        repeat
+            printf ".";
+            N+:=1;
+            test,pols_deg_N:=IsPolarized(A,PHI,N);
+        until test;
+        for pol in pols_deg_N do
+            aut:=#PolarizedAutomorphismGroup(pol);                                                                                           end for;
+        printf "\nThe %o-th abelian variety of the list has %o polarizations of minimal degree %o, each with %o polarized automorphisms\n",iA,#pols_deg_N,N,aut;
+    end for;
+
+//////////////////////////////////
+//Example 7.3
+//////////////////////////////////
+
+    _<x>:=PolynomialRing(Integers());
+    h:=x^6-2*x^5-3*x^4+24*x^3-15*x^2-50*x+125;
+    AVh:=IsogenyClass(h);
+    "The isogeny class determined by the polynomial ",WeilPolynomial(AVh),"is defined over ",FiniteField(AVh)," and has dimension ",Dimension(AVh);
+    S1:=ZFVOrder(AVh);
+    over_orders:=FindOverOrders(S1);
+    for S in over_orders do
+        "Is maximal?\t",IsMaximal(S),"\tIs Gorenstein?\t", IsGorenstein(S),
+        "\tIs conjugate stable?\t", S eq ComplexConjugate(S);
+    end for;
+    
+    iso:=ComputeIsomorphismClasses(AVh);
+    "There are",#iso, "isomorphism classes.";
+    
+    for iA in [1..#iso] do
+        A:=iso[iA];
+        dir_sum:=DeligneModuleAsDirectSum(A);
+        I:=dir_sum[1,1];
+        map:=dir_sum[1,2];
+        assert map(1) eq 1;
+        S:=EndomorphismRing(A);
+        assert S eq MultiplicatorRing(I);
+        "Is the ideal representing the",iA,"-th abelian variety invertible in its multiplicator ring?",IsInvertible(S!I);
+    end for;
+        
+    "We compute a CM-type with the prescribed p-adic positivity:";
+    PHI:=pAdicPosCMType(AVh);
+    
+    for iA in [1..#iso] do
+        A:=iso[iA];
+        test,princ_pols:=IsPrincipallyPolarized(A,PHI);
+        if test then
+            aut:=#PolarizedAutomorphismGroup(princ_pols[1]);
+            assert forall{ pol : pol in princ_pols | #PolarizedAutomorphismGroup(pol) eq aut};
+        end if;
+        "The",iA,"-th abelian variety has",#princ_pols,"principal polarizations, with",aut,"polarized automorphisms.";
+    end for;
+
+//////////////////////////////////
+//Example 7.4
+//////////////////////////////////
+
+    _<x>:=PolynomialRing(Integers());
+    h:=x^8-5*x^7+13*x^6-25*x^5+44*x^4-75*x^3+117*x^2-135*x+81;
+    AVh:=IsogenyClass(h);
+    "The isogeny class determined by the polynomial ",WeilPolynomial(AVh),"is defined over ",FiniteField(AVh)," and has dimension ",Dimension(AVh);
+    S1:=ZFVOrder(AVh);
+    over_orders:=FindOverOrders(S1);
+    for S in over_orders do
+        "Is maximal?\t",IsMaximal(S),"\tIs Gorenstein?\t", IsGorenstein(S),
+        "\tIs conjugate stable?\t", S eq ComplexConjugate(S);
+    end for;
+    
+    over_orders:=FindOverOrders(ZFVOrder(AVh));
+    "We compute the isomorphism classes with endomorphism ring which is conjugate stable";
+    iso:=&cat[ ComputeIsomorphismClassesWithEndomorphismRing(AVh,S) : S in over_orders | ComplexConjugate(S) eq S];
+    "There are",#iso, "such isomorphism classes.";
+    
+           
+    "We compute a CM-type with the prescribed p-adic positivity:";
+    PHI:=pAdicPosCMType(AVh);
+    
+    for iA in [1..#iso] do
+        A:=iso[iA];
+        test,princ_pols:=IsPrincipallyPolarized(A,PHI);
+        if test then
+            aut:=#PolarizedAutomorphismGroup(princ_pols[1]);
+            assert forall{ pol : pol in princ_pols | #PolarizedAutomorphismGroup(pol) eq aut};
+        end if;
+        "The",iA,"-th abelian variety has",#princ_pols,"principal polarizations, with",aut,"polarized automorphisms.";
+    end for; 
+
+    
+    
+//////////////////////////////////
+//Example 8.1
+//////////////////////////////////
+
+    _<x>:=PolynomialRing(Integers());
+    h:=(x^4-4*x^3+8*x^2-12*x+9)*(x^4-2*x^3+2*x^2-6*x+9);
+    AVh:=IsogenyClass(h);
+    "The isogeny class determined by the polynomial ",WeilPolynomial(AVh),"is defined over ",FiniteField(AVh)," and has dimension ",Dimension(AVh);
+
+    over_orders:=FindOverOrders(ZFVOrder(AVh));
+    "We compute the isomorphism classes with endomorphism ring which is conjugate stable";
+    iso:=&cat[ ComputeIsomorphismClassesWithEndomorphismRing(AVh,S) : S in over_orders | ComplexConjugate(S) eq S];
+    "There are",#iso, "such isomorphism classes.";
+    
+    "We compute a CM-type with the prescribed p-adic positivity:";
+    PHI:=pAdicPosCMType(AVh);
+    
+    for iA in [1..#iso] do
+        A:=iso[iA];
+        test,princ_pols:=IsPrincipallyPolarized(A,PHI);
+        if test then 
+            for pol in princ_pols do
+                PeriodMatrix(pol,PHI);
+            end for;
+        end if;
+    end for;
+    
+    
+    
+    
+    
