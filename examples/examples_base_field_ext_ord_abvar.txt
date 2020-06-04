@@ -1,0 +1,340 @@
+/* vim: set syntax=magma : */
+
+///////////////////////////////////////////////////////////////////////////////////
+//                                                                               //
+// Stefano Marseglia, Utrecht University, s.marseglia@uu.nl                      //
+// http://www.staff.science.uu.nl/~marse004/                                     //
+//                                                                               //
+// Code to compute the examples in the paper:                                    //
+// "Computing base extensions of ordinary abelian varieties over a finite field" //
+// http://arxiv.org/abs/2003.09977                                               //
+//                                                                               //
+///////////////////////////////////////////////////////////////////////////////////
+
+//////////////
+// The packages are available at:
+// https://github.com/stmar89/AbVarFq
+//
+// The following examples where computed using the master branch on 21/05/2020
+//////////////
+
+    AttachSpec("~/packages_github/AbVarFq/packages.spec");
+
+//////////////
+// Example 5.4
+//////////////
+
+    _<x>:=PolynomialRing(Integers());
+    h:=x^6-x^3+8;
+    // we create the isogeny class
+    AVh:=IsogenyClass(h);
+    FiniteField(AVh);
+    Dimension(AVh);
+    Rh:=ZFVOrder(AVh);
+    IsMaximal(Rh);
+    PicardGroup(Rh);
+    
+    //there are 3 isomorphism classes ov abelian varieties
+    iso_h:=ComputeIsomorphismClasses(AVh);
+    for M in iso_h do
+        DeligneModuleAsDirectSum(M);
+    end for;
+
+    //extend to FF_{2^6}
+    r:=6;
+    AVh6,map:=BaseFieldExtension(AVh,r);
+    h6:=WeilPolynomial(AVh6);
+    h6;
+    g:=x^2 + 15*x + 64;
+    h6 eq g^3;
+    Rg:=ZFVOrder(AVh6);
+    IsMaximal(Rg);
+    PicardGroup(Rg);
+
+    iso_h6:=ComputeIsomorphismClasses(AVh6);
+    // as we can see there are 3 isomorphism classes in the extension
+    for M in iso_h6 do
+        DeligneModuleAsDirectSum(M);
+    end for;
+    // we check that each isomorphism class in Ih extends to a different class in Ih6.
+    IsIsomorphic(BaseFieldExtension(iso_h[1],AVh6,map),iso_h6[1]);
+    IsIsomorphic(BaseFieldExtension(iso_h[2],AVh6,map),iso_h6[2]);
+    IsIsomorphic(BaseFieldExtension(iso_h[3],AVh6,map),iso_h6[3]);
+
+//////////////
+// Example 6.3 and 8.4
+//////////////
+
+    _<x>:=PolynomialRing(Integers());
+    h:=x^4-205*x^2+10609;
+    // we create the isogeny class
+    AVh:=IsogenyClass(h);
+    FiniteField(AVh);
+    Dimension(AVh);
+    Rh:=ZFVOrder(AVh);
+    
+    //there are 12 isomorphism classes ov abelian varieties
+    iso_h:=ComputeIsomorphismClasses(AVh);
+    #iso_h;
+
+    //extend to FF_{103^2}
+    r:=2;
+    AVh2,map:=BaseFieldExtension(AVh,r);
+    h2:=WeilPolynomial(AVh2);
+    h2;
+    g:=x^2-205*x+10609;
+    h2 eq g^2;
+    Rg:=ZFVOrder(AVh2);
+    IsMaximal(Rg);
+    PicardGroup(Rg);
+    
+    // we check that there is no other isogeny class over FF_103 other than Ih that extends to Ih2.
+    IsBaseFieldExtensionOf(AVh2); 
+
+    iso_h2:=ComputeIsomorphismClasses(AVh2);
+    // as we can see there are 6 isomorphism classes in the extension
+    // we see that each isomorphism class has only one non-trivial 2-twist. we print the output in matrix for: 1 stays for true and 0 for false.
+    for I in iso_h do
+        for J in iso_h do
+            s:=IsTwistOfOrder(I,J,2) select "1 " else "0 ";
+            printf s;
+        end for;
+        printf "\n";
+    end for;
+    // IsTwistOfOrder recomputes the decomposition of the modules everytime. This can be avoided by using the following faster code
+    ext:=[ BaseFieldExtension(M,AVh2,map) : M in iso_h ];
+    for I in ext do
+        for J in ext do 
+            s:=IsIsomorphic(I,J) select "1 " else "0 ";
+            printf s;
+        end for;
+        printf "\n";
+    end for;
+    // we check that all classes over AVh2 are extension from AVh:
+    for M in iso_h2 do
+        exists{ I : I in ext | IsIsomorphic(I,M) };
+    end for;
+
+//////////////
+// Example 6.4 and 8.5
+//////////////
+
+    _<x>:=PolynomialRing(Integers());
+    h:=x^4-18*x^2+169;
+    AVh:=IsogenyClass(h);
+    Dimension(AVh);
+    Rh:=ZFVOrder(AVh);
+    //Rh is not Bass
+    IsBass(Rh);
+    for S in FindOverOrders(Rh) do 
+        IsGorenstein(S);
+    end for;
+
+
+    g:=x^2-18*x+169;
+    AVg2:=IsogenyClass(g^2);
+    map:=BaseFieldExtension(AVh,AVg2);
+    // AVh is the only isogeny class that extends to AVg2
+    IsBaseFieldExtensionOf(AVg2);
+
+    Rg:=ZFVOrder(AVg2);
+    //Rg is Bass
+    IsBass(Rg);
+    #FindOverOrders(Rg);
+    iso_g2:=ComputeIsomorphismClasses(AVg2);
+    //there are 8 isomorphsim classes in AVg2
+    #iso_g2;
+    //we extend the isormophsim classes of AVh to Avg2
+    ext:=[ BaseFieldExtension(I,AVg2,map) : I in ComputeIsomorphismClasses(AVh) ];
+    for I in ext do 
+        for M in iso_g2 do
+            s:=IsIsomorphic(I,M) select "1 " else "0 ";
+            printf s;
+        end for;
+        printf "\n";
+    end for;
+    // observe that each isomorphism class in AVh has a unique non-trivial 2-twist.
+    // moreover the 1st and 3rd classes over AVg2 are not extension, so they cannot be defined over a FF_169, while all the others are extension from AVh.
+
+// the following code is useful to write down the modules as in the paper 
+    S:=FindOverOrders(Rh)[2];
+    T:=FindOverOrders(Rh)[3];
+    Oh:=FindOverOrders(Rh)[4];
+    PRh,pRh:=PicardGroup(Rh); PRh;
+    IsGorenstein(S); PS,pS:=PicardGroup(S); PS;
+    IsGorenstein(T); PT,pT:=PicardGroup(T); PT;
+    IsMaximal(Oh); POh,pOh:=PicardGroup(Oh); POh;
+    iso_h:=[ DeligneModuleAsDirectSum(A)[1,1] : A in ComputeIsomorphismClasses(AVh)];
+    iso_h[1]@@pRh;
+    iso_h[2]@@pRh;
+    iso_h[3]@@pRh;
+    iso_h[4]@@pRh;
+    IsWeakEquivalent(S!iso_h[5],TraceDualIdeal(S)),IsIsomorphic2(S!iso_h[5],TraceDualIdeal(S)); // PS.1*S^t
+    (S!iso_h[6])@@pS; // S
+    IsIsomorphic2(S!iso_h[7],TraceDualIdeal(S)); // S^t
+    (S!iso_h[8])@@pS; // PS.1
+    (T!iso_h[9])@@pT; // T
+    (T!iso_h[10])@@pT; // PT.1
+    (Oh!iso_h[11])@@pOh; // Oh
+    (Oh!iso_h[12])@@pOh; // POh.1
+
+    Og:=FindOverOrders(Rg)[2];
+    IsMaximal(Og);
+    PRg,pRg:=PicardGroup(Rg); PRg; 
+    I:=pRg(PRg.1); // above 47
+    J:=pRg(PRg.2); // above 87
+    POg,pOg:=PicardGroup(Og); POg;
+
+    DeligneModuleAsDirectSum(iso_g2[1])[1,1]@@pRg;
+    DeligneModuleAsDirectSum(iso_g2[1])[2,1]@@pRg;
+    DeligneModuleAsDirectSum(iso_g2[2])[1,1]@@pRg;
+    DeligneModuleAsDirectSum(iso_g2[2])[2,1]@@pRg;
+    DeligneModuleAsDirectSum(iso_g2[3])[1,1]@@pRg;
+    DeligneModuleAsDirectSum(iso_g2[3])[2,1]@@pRg;
+    DeligneModuleAsDirectSum(iso_g2[4])[1,1]@@pRg;
+    DeligneModuleAsDirectSum(iso_g2[4])[2,1]@@pRg;
+    DeligneModuleAsDirectSum(iso_g2[5])[1,1]@@pRg;
+    (Og!DeligneModuleAsDirectSum(iso_g2[5])[2,1])@@pOg;
+    DeligneModuleAsDirectSum(iso_g2[6])[1,1]@@pRg;
+    (Og!DeligneModuleAsDirectSum(iso_g2[6])[2,1])@@pOg;
+    (Og!DeligneModuleAsDirectSum(iso_g2[7])[1,1])@@pOg;
+    (Og!DeligneModuleAsDirectSum(iso_g2[7])[2,1])@@pOg;
+    (Og!DeligneModuleAsDirectSum(iso_g2[8])[1,1])@@pOg;
+    (Og!DeligneModuleAsDirectSum(iso_g2[8])[2,1])@@pOg;
+
+
+
+
+//////////////
+// Example 7.5
+//////////////
+
+    _<x>:=PolynomialRing(Integers());
+    h:=x^6 - 4*x^5 + 12*x^4 - 36*x^3 + 60*x^2 - 100*x + 125;
+    Ah:=IsogenyClass(h);
+    Ah4,map:=BaseFieldExtension(Ah,4);
+
+    // there are 4 primitive isogeny classes that extend to AVh4, including AVh.
+    ext_of:=IsBaseFieldExtensionOfPrimitive(Ah4); ext_of;
+    all_iso:=&cat[ ComputeIsomorphismClasses(I) : I in ext_of ];
+    all_ext:=BaseFieldExtension(all_iso,Ah4);
+    #all_iso,#all_ext;
+    // these 4 isogeny classes contain 30 isomorphism classes of abelian varities 
+
+    // for each pair of isomorphsim classes we check if they are 4-twists, and if so we determine which torsion automorphism induces the isormophism over FF_5^4.
+    // note that only 4 isomorphism classes have 4 torsion autormophisms, which we will denote by 1,-1,i,-i, while the remaining have only 1 and -1.
+    // a "_" is printed if the two isomorphism classes are not 4-twists.
+    // one can also verify that if the twist is induced by -1 then it already happens over FF_5^2,
+    // while this is not the case if the the twist is induced by i or -i, which have order 4.
+    for i in [1..#all_ext] do
+        A:=all_iso[i];
+        UA:=UniverseAlgebra(A);
+        RA,mRA:=ZFVOrder(A);
+        FA_elt:=mRA(PrimitiveElement(Algebra(RA)));
+        FA:=MapOnUniverseAlgebras(FrobeniusEndomorphism(A));
+        U,u:=UnitGroup2(MultiplicatorRing(DeligneModuleAsDirectSum(A)[1,1]));
+        Tors:=[ t : t in TorsionSubgroup(U)];
+        TAut:=[ hom<UA->UA|[u(t)*b:b in Basis(UA)]> : t in Tors ];
+        Ae:=all_ext[i,1];
+        mAe:=all_ext[i,2];
+        UAe:=UniverseAlgebra(Ae);
+        TF_mAe:=[ Inverse(mAe)*t*FA*mAe : t in TAut ];
+        TF_mAe_mats:=[Matrix([t(b) :b in Basis(UAe)]) : t in TF_mAe];
+        for j in [1..#all_ext] do
+            B:=all_iso[j];
+            Be:=all_ext[j,1];
+            mBe:=all_ext[j,2];
+            test,iso:=IsIsomorphic(Ae,Be);            
+            if test then
+                iso:=MapOnUniverseAlgebras(iso);
+                RB,mRB:=ZFVOrder(B);
+                FB_elt:=mRB(PrimitiveElement(Algebra(RB)));
+                FB:=MapOnUniverseAlgebras(FrobeniusEndomorphism(B));
+                map:=iso*Inverse(mBe)*FB*mBe*Inverse(iso);
+                map_mat:=Matrix([map(b) : b in Basis(UAe)]);
+                if exists(a){ a : a in [1..#TF_mAe_mats] | TF_mAe_mats[a] eq map_mat } then 
+                    aut:=u(Tors[a]);
+                    phi:=HomsToC(Parent(aut))[1];
+                    if aut eq 1 then printf "1 ";
+                        elif aut eq -1 then printf "-1 "; assert IsTwistOfOrder(A,B,2);
+                        elif aut^2 eq -1 and Im(phi(aut)) gt 0 then printf "i "; assert not IsTwistOfOrder(A,B,2);
+                        elif aut^2 eq -1 and Im(phi(aut)) lt 0 then printf "-i "; assert not IsTwistOfOrder(A,B,2);
+                    end if;
+                else printf "0 ";
+                end if;
+            else
+                printf "_ ";
+            end if;
+        end for;
+        printf "\n";
+    end for;
+
+//////////////
+// Example 8.1 and 8.3
+//////////////
+
+    _<x>:=PolynomialRing(Integers());
+    h:=x^2-x+16;
+    AVh:=IsogenyClass(h);
+    ext_of:=IsBaseFieldExtensionOfPrimitive(AVh);
+    ext_of;
+    // AVh is the extension of 3 primitive isogeny classes, the first over FF_4 and the other two over FF_2.
+    // each of these 3 primitive isogeny classes contians only one isomorphism class of elliptic curves.
+    AVh4:=ext_of[1];
+    FiniteField(AVh4);
+    iso_h4:=ComputeIsomorphismClasses(AVh4); #iso_h4;
+    NumberOfPoints(AVh4);
+
+    AVh2_1:=ext_of[3];
+    FiniteField(AVh2_1);
+    iso_h2_1:=ComputeIsomorphismClasses(AVh2_1); #iso_h2_1;
+    NumberOfPoints(AVh2_1);
+    
+    AVh2_2:=ext_of[2];
+    FiniteField(AVh2_2);
+    iso_h2_2:=ComputeIsomorphismClasses(AVh2_2);
+    NumberOfPoints(AVh2_2);
+
+    // by counting points we can identify an equation that represents the 3 isormopshism classes.
+    FF4<S>:=FiniteField(4);
+    S^2+S+1;
+    E4:=EllipticCurve([1,0,S,0,S]); E4;
+    #Points(E4); 
+    // So E4 is the unique isomorphism class of AVh4
+    FF2:=FiniteField(2);
+    E2_1:=EllipticCurve([FF2!1,0,0,0,1]); E2_1;
+    #Points(E2_1);
+    E2_2:=EllipticCurve([FF2!1,0,1,0,1]); E2_2;
+    #Points(E2_2);
+    // E2_1 (resp. E2_2) is the unique isormorphism class in AVh2_1 (resp. AVh2_2)
+    //Now we turn our attention to AVh: there are 5 IsomorphismClasses
+    iso_h:=ComputeIsomorphismClasses(AVh); #iso_h;
+    Rh:=ZFVOrder(AVh);
+    Oh:=MaximalOrder(Algebra(Rh));
+    // we check which isomorphism class has maximal endomorphism ring and which one has Rh.
+    EndomorphismRing(iso_h[1]) eq Rh;
+    EndomorphismRing(iso_h[2]) eq Rh;
+    EndomorphismRing(iso_h[3]) eq Rh;
+    EndomorphismRing(iso_h[4]) eq Rh;
+    EndomorphismRing(iso_h[5]) eq Oh;
+    // now we extend the classes of AVh4, AVh2_1 and AVh2_2 to AVh
+    map4:=BaseFieldExtension(AVh4,AVh);
+    map2_1:=BaseFieldExtension(AVh2_1,AVh);
+    map2_2:=BaseFieldExtension(AVh2_2,AVh);
+    IsIsomorphic(BaseFieldExtension(iso_h4[1],AVh,map4),iso_h[5]); 
+    IsIsomorphic(BaseFieldExtension(iso_h2_1[1],AVh,map2_1),iso_h[5]); 
+    IsIsomorphic(BaseFieldExtension(iso_h2_2[1],AVh,map2_2),iso_h[5]); 
+    // on th level of curves:
+    FF16<T>:=FiniteField(16);
+    E16_0:=EllipticCurve([1,0,0,0,T^0]); E16_0;
+    E16_1:=EllipticCurve([1,0,0,0,T^1]); E16_0;
+    E16_2:=EllipticCurve([1,0,0,0,T^2]); E16_0;
+    E16_3:=EllipticCurve([1,0,0,0,T^3]); E16_0;
+    E16_4:=EllipticCurve([1,0,0,0,T^4]); E16_0;
+    //we see that E4, E2_1, E2_2 all extend to E16_0
+    IsIsomorphic(ChangeRing(E4,FF16),E16_0);
+    IsIsomorphic(ChangeRing(E2_1,FF16),E16_0);
+    IsIsomorphic(ChangeRing(E2_2,FF16),E16_0);
+    // we deduce that E16_0 corresponds to the module iso_h[5], the only one with maximal edomorphism ring.
+    // the curves E16_i , for i=1,..,4 , must then have endomorphism ring Rh.
+
