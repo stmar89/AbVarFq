@@ -60,3 +60,35 @@ intrinsic PeriodMatrix(I::AlgAssVOrdIdl,x0::AlgAssElt,phi::SeqEnum) -> AlgMatElt
 	require test_symm and test_pos_def : "Precision issue. Increase the precision of the given cm-type";
 	return bigPM,smallPM;     
 end intrinsic;
+
+
+/*
+// TEST
+
+    AttachSpec("~/packages_github/AbVarFq/packages.spec");
+    _<x>:=PolynomialRing(Integers());
+    h:=x^6-2*x^5-3*x^4+24*x^3-15*x^2-50*x+125;
+    AVh:=IsogenyClass(h);
+    iso:=ComputeIsomorphismClasses(AVh);
+    PHI:=pAdicPosCMType(AVh);
+    for A in iso do
+        A;
+        test,princ_pols:=IsPrincipallyPolarized(A,PHI);
+        for pol in princ_pols do
+            assert IsPolarization(pol,PHI);
+            go:=false;
+            repeat
+                try 
+                    PeriodMatrix(pol,PHI);
+                    go:=true;
+                catch e
+                    prec0:=Precision(PHI);
+                    ChangePrecision(~PHI,2*prec0);
+                    go:=false;
+                end try;
+            until go;
+        end for;
+    end for;
+
+
+*/
