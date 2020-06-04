@@ -8,7 +8,6 @@ Ordersext.m
 IdealClassMonoid.m
 IdealsOfIndex.m
 OverOrders.m
-IdealsNF.m
 PeriodMatrices.m
 IntegralMatrices.m
 Picardext.m

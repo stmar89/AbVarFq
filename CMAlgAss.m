@@ -290,12 +290,22 @@ cm_type_internal:=function(A,prec)
 	fA:=P!DefiningPolynomial(A);
 	q:=Integers() ! ( Coefficients(fA)[1]^(2/Degree(fA)) );
 	_,p:=IsPrimePower(q);
-	M:=NumberField(P!DefiningPolynomial(SplittingField(fA))); //this is the compositum
-	frob_in_M:=[[-Coefficients(h[1])[1] : h in Factorization(PolynomialRing(M)!DefiningPolynomial(L[1])) ] : L in A`NumberFields ]; //conjugates of the Frobenius in M
+    //M,rts_in_M:=SplittingField(fA);
+    //M:=NumberField(P!DefiningPolynomial(M));
+    //frob_in_M:=[ M!Eltseq(r) : r in rts_in_M ];
+    //assert forall{ f : f in frob_in_M | Evaluate(fA,f) eq 0};
+    M,rtsM:=SplittingField(fA);
+    frob_in_M:=[ [ r : r in rtsM | Evaluate(DefiningPolynomial(L[1]),r) eq 0] : L in A`NumberFields ];
+    /*
+	// M:=NumberField(P!DefiningPolynomial(SplittingField(fA))); //this is the compositum
+	// frob_in_M:=[[-Coefficients(h[1])[1] : h in Factorization(PolynomialRing(M)!DefiningPolynomial(L[1])) ] : L in A`NumberFields ]; //conjugates of the Frobenius in M
 	//here we use Montes algorithm. One need to Attach +IdealsNF.m !!!!
 	fac:=Factorization(ideal(M,p)); //the assignement is just to avoid the printing
 	PM:=M`PrimeIdeals[p,1]; // we choose a prime of M above p
 	Cvalues_p_pos:=[ [Conjugates(c : Precision:=prec)[1] : c in fr | PValuation(c,PM) gt 0]  : fr in frob_in_M ]; // note that the function PValuation is also from the +IdealsNF.m package
+    */
+    PM:=Decomposition(M,p : Al:="Montes")[1,1]; // we choose a prime of M above p
+	Cvalues_p_pos:=[ [Conjugates(c : Precision:=prec)[1] : c in fr | Valuation(c,PM) gt 0]  : fr in frob_in_M ];
 	homsA:=HomsToC(A : Precision:=prec);
     all_cm_types:=[[phi : phi in cm] : cm in CartesianProduct(< [homsA[2*k-1],homsA[2*k]] : k in [1..Degree(fA) div 2 ]>)];
 	FA:=PrimitiveElement(A);
@@ -319,7 +329,8 @@ end function;
 
 intrinsic CMType(A::AlgAss : Precision:=30 , TestOrdinary:=true)->SeqEnum[Map]
 {given a product of CM number fields A=Q[x]/(f), where f is q-Weil polynomial, returns a subset of HomsToC consisting of one map A->C per conjugate pair such that the induced p-adic valuation v on \bar(Q_p) in C is such that v(a)>0, where a is a root of f. If f is ordinary then it should return only one output. Otherwise more. The precision of the computations is set by the optional parameter "Precision" (Default Value 30).}
-	f:=DefiningPolynomial(A);
+	printf "This function returns only p-Adic Positive CMTypes. It is old and it should not be used.\n";
+    f:=DefiningPolynomial(A);
 	test_Weil,q:=IsWeil(f);
 	require test_Weil: "the defining polynomial must be a q-Weil polynomial";
 	if TestOrdinary then
@@ -375,6 +386,27 @@ end intrinsic;
     PHI:=pAdicPosCMType(AVf);
     PHI2:=ChangePrecision(PHI,100);
     ChangePrecision(~PHI,200);
+
+
+    //testing the removal of IdealsNF.m
+    
+    AttachSpec("~/packages_github/AbVarFq/packages.spec");
+    P<x>:=PolynomialRing(Integers());
+    polys:=[ eval(c) : c in Split(Read("~/219_CCO/input/prime_field_sqfree_low_pRank.txt")) ];
+    for c in polys do
+        f:=P!c;
+        A:=AssociativeAlgebra(f);
+        t0:=Cputime();
+        _:=CMType(A : TestOrdinary:=false);
+        t1:=Cputime(t0);
+        if t1 gt 20 and t1 lt 60 then f; break; end if;
+    end for;
+
+    AttachSpec("~/packages_github/AbVarFq/packages.spec");
+    P<x>:=PolynomialRing(Integers());
+    f:=x^6 - 2*x^5 + 2*x^4 - 2*x^3 + 4*x^2 - 8*x + 8;
+    A:=AssociativeAlgebra(f);
+    time _:=CMType(A : TestOrdinary:=false);
 
 
 */
