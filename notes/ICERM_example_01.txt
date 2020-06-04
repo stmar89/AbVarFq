@@ -1,0 +1,95 @@
+/*
+by Taylor Dupuy
+   
+THIS CODE COMPUTES THE SLOPE FILTRATION IN AN EXAMPLE. 
+IT IS DONE FOR THE PURPOSES OF COMPUTING THE FROBENIUS BASE CHANGE/VERSHIEBUNG CHANGE OF AN ABELIAN VARIETY.
+
+*/
+
+AttachSpec("packages.spec");
+
+
+P<x>:=PolynomialRing(Integers());
+f:=x^6 - 4*x^5 + 16*x^4 - 53*x^3 + 128*x^2 - 256*x + 512;
+is_weil, q := IsWeil(f);
+q := (Integers() ! q);
+g := Degree(f)/2;
+g := (Integers() ! g);
+A:=AssociativeAlgebra(f);
+F:=PrimitiveElement(A);
+V:=q/F;
+R:=Order([F,V]);
+OK := MaximalOrder(R);
+
+//Comment these out after first run
+ordersR := FindOverOrders(R);
+icmR := ICM(R);
+
+
+I := icmR[5];
+OI := MultiplicatorRing(I);
+
+
+//Compute Hasse-Witt Matrix for I
+beta := ZBasis(I);
+coord:=Coordinates([F*z : z in beta],beta);
+FM := Matrix(coord);
+
+//Given I compute subspsace Iprime where F Iprime = q A Iprime, where A is invertible. 
+//-step 1: compute Matrix of Frobenius in basis
+//-step 2: reduce mod q
+//-step 3: compute rational canonical form of reduction
+//-step 4: lift kernel to ZZ 
+
+
+Fq := FiniteField(q);
+FMq := ChangeRing(FM,Fq); //change from ZZ entries to FFq entries
+
+R0, T, D := RationalForm(FMq);
+//T*FMq*T^-1 eq R0 
+
+NMt := NullspaceMatrix(Transpose(R0)); //
+NM := Transpose(NM); 
+// R0*NM is a bunch of zeros
+
+NM1 := T^-1*NM; 
+// FMq*NM1 is a bunch of zeros
+
+NMlift := ChangeRing(NM1,Integers()); //FM*NMlift gives shit divisble by q
+
+
+/*
+Compute I'', the submodule of I such that F I'' = q I''. 
+We have I = I'' + I' and then I' + (1/p) I'' is the Frobenius twist of I. 
+
+
+*/
+
+coeffs := Transpose(NMlift);
+k:=2*g
+elements := [ &+[coeffs[i][j]*beta[j] : j in [1..k]] : i in [1..g]]; //These generate the submodule Iprime
+
+divided_elements := [(Algebra(I) ! x)/p : x in elements]; //This is for the p-Frobenius
+Iftwist := ideal<Order(I)|Generators(I) cat divided_elements >;
+
+//J:=ideal<Order(I)|Generators(I) cat divided_elements >;
+// will return true I subset J;
+// The quotient of this is the Kernel of Frobenius.
+
+/*
+defn FieldOfDefinitionNumber(I,p,q)
+//Find how many times you need to do the Frobenius twist to get back to yourself, the number of times gives you your field of definition.
+    r := (Integer() ! log(p,q));
+	Itwist := I;
+	i=0;
+	for (i lt r) do
+		i+:=1;
+	    Itwist := FrobeniusTwist(Itwist,p);
+	    if is IsIsomorphic2(I,Itwist) then
+		    return i;
+		end if;
+	end for;
+	
+	return i;
+end if;
+*/
