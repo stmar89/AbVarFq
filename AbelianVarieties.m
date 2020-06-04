@@ -266,7 +266,7 @@ intrinsic AbelianVariety( AVh::IsogenyClassFq , seq::SeqEnum[AlgAssVOrdIdl] )-> 
         I:=seq[i];
         i0:=Degree(g)*(i-1)+1;
         assert (UA.i0^2 eq UA.i0); //it should be an orthogonl idempotent
-        map:=hom<Algebra(R)->UA | [UA.i : i in [i0..i0+Degree(g)] ]>; // embedding of Ag->Ag^s into the ith component
+        map:=hom<Algebra(R)->UA | [UA.i : i in [i0..i0+Degree(g)-1] ]>; // embedding of Ag->Ag^s into the ith component
         Append(~DM,<I,map>);
     end for;    
     AV`DeligneModuleAsDirectSum:=DM;
