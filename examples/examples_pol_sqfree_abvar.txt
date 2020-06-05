@@ -28,7 +28,8 @@
     h:=x^4+2*x^3-7*x^2+22*x+121;
     AVh:=IsogenyClass(h);
     iso:=ComputeIsomorphismClasses(AVh);
-    PHI:=pAdicPosCMType(AVh);                                                                                                            for iA in [1..#iso] do
+    PHI:=pAdicPosCMType(AVh);
+    for iA in [1..#iso] do
         A:=iso[iA];                                                                                                                          N:=0;
         repeat
             printf ".";
