@@ -29,15 +29,18 @@
     AVh:=IsogenyClass(h);
     iso:=ComputeIsomorphismClasses(AVh);
     PHI:=pAdicPosCMType(AVh);
+
     for iA in [1..#iso] do
-        A:=iso[iA];                                                                                                                          N:=0;
+        A:=iso[iA];
+        N:=0;
         repeat
             printf ".";
             N+:=1;
             test,pols_deg_N:=IsPolarized(A,PHI,N);
         until test;
         for pol in pols_deg_N do
-            aut:=#PolarizedAutomorphismGroup(pol);                                                                                           end for;
+            aut:=#PolarizedAutomorphismGroup(pol);
+        end for;
         printf "\nThe %o-th abelian variety of the list has %o polarizations of minimal degree %o, each with %o polarized automorphisms\n",iA,#pols_deg_N,N,aut;
     end for;
 
