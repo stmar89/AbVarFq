@@ -1,0 +1,211 @@
+/* vim: set syntax=magma : */
+
+///////////////////////////////////////////////////////////////////////////////////
+//                                                                               //
+// Stefano Marseglia, Utrecht University, s.marseglia@uu.nl                      //
+// http://www.staff.science.uu.nl/~marse004/                                     //
+//                                                                               //
+// Code to compute the examples in the paper:                                    //
+// "Computing abelian varieties over finite fields isogenous to a power"         //
+// Res. number theory 5 (2019), no. 4, paper no. 35                              //
+// https://doi.org/10.1007/s40993-019-0174-x                                     //
+//                                                                               //
+///////////////////////////////////////////////////////////////////////////////////
+
+//////////////
+// The packages are available at:
+// https://github.com/stmar89/AbVarFq
+//
+// The following examples where computed using the master branch on 04/06/2020
+//////////////
+
+    AttachSpec("~/packages_github/AbVarFq/packages.spec");
+
+//////////////
+// Example 6.1
+//////////////
+
+    _<x>:=PolynomialRing(Integers());
+    g:=x^6-x^5+2*x^4-2*x^3+4*x^2-4*x+8;
+    // We create the isogeny class given by the Weil polynomial g^3
+    AVg3:=IsogenyClass(g^3);
+    Dimension(AVg3);
+    FiniteField(AVg3);
+    ZFV:=ZFVOrder(AVg3);
+    
+    // The order Z[F,V] is Bass
+    IsBass(ZFV);
+
+    // We compute the isomorphism classes
+    iso:=ComputeIsomorphismClasses(AVg3);
+    // There are 6 isomorphism classes
+    #iso;
+
+    // We can write them as direct sum of fractional ideals:
+    A := iso[1];
+    dir_sum:=DeligneModuleAsDirectSum(A);
+    // dir_sum is a sequence [ <I1,m1> , ..., <Ir,mr> ], 
+    // where Ii is a fractional Z[F,V]-ideal and mi is a map such that
+    // such that the Deligne Module of A equals m1(I1)+...+mr(Ir)
+    
+    // One can also represent a deligne module using a ZBasis 
+    DeligneModuleZBasis(A);
+
+    
+    // now we check that the isomorphism classes are exactly the one stated in the paper:
+    P,p:=PicardGroup(ZFV);
+    I:=p(P.1); //a generator of the picard PicardGroup
+    R:=OneIdeal(ZFV);
+    O:=ZFV!OneIdeal(MaximalOrder(Algebra(ZFV)));
+    test:=[
+    AbelianVariety(AVg3,[R,R,R]),
+    AbelianVariety(AVg3,[R,R,I]),
+    AbelianVariety(AVg3,[R,R,I^2]),
+    AbelianVariety(AVg3,[R,R,O]),
+    AbelianVariety(AVg3,[R,O,O]),
+    AbelianVariety(AVg3,[O,O,O])
+    ];
+    for A in test do
+        assert #[B : B in iso | IsIsomorphic(A,B)] eq 1;
+    end for;
+    
+//////////////
+// Example 6.2
+//////////////
+
+    _<x>:=PolynomialRing(Integers());
+    g:=(x^2-3*x+13)*(x^2+6*x+13);
+ 
+    // We compute the number of isomorphism classes of abelian varieties in 
+    // the isogeny classes determined by the Weil polynomial g^r, for r=1,...,10.
+    // (It takes a while.)
+    
+    test:=[];
+    for r in [1..10] do
+        iso:=ComputeIsomorphismClasses(IsogenyClass(g^r));
+        Append(~test,#iso);
+        #iso;
+    end for;
+    
+    // We check that the numbers coincide with the one in the paper
+    test eq [62, 97, 144, 206, 286, 387, 512, 664, 846, 1061];
+    
+//////////////
+// Example 6.3
+//////////////
+
+    _<x>:=PolynomialRing(Integers());
+    g:=x^4-2*x^3-7*x^2-22*x+121;
+    // We consider the isogeny class determined by the Weil polynomial g^2. 
+    AVg2:=IsogenyClass(g^2);
+    FiniteField(AVg2);
+    Dimension(AVg2);
+    
+    // We compute the isormorpshim classes.
+    iso:=ComputeIsomorphismClasses(AVg2);
+    
+    // We check which of the abelian varieties are self-dual, that is, 
+    // isomorphic to their own dual.
+    for A in iso do
+        Av:=DualAbelianVariety(A);
+        IsIsomorphic(A,Av);
+    end for;
+    // It turns out that two of them are not self-dual, so in particular 
+    // they cannot be principally polarized and hence Jacobians of curves of genus 4.
+    
+//////////////
+// Example 6.4
+//////////////
+
+    _<x>:=PolynomialRing(Integers());
+    
+    // We consider all the primes between 2 and 29.
+    pp:=[ p : p in [2..29] | IsPrime(p) ];
+    output:=ZeroMatrix(Integers(),10,10);
+
+    for ip in [1..#pp] do
+        p:=pp[ip];
+
+    // We compute all the isogeny classes of elliptic curves over Fp
+        isogenies:=[];
+        for tr in [-Round(2*Sqrt(p))-1..Round(2*Sqrt(p))+1] do
+            h:=x^2-tr*x+p;
+            if IsWeil(h) then
+                Append(~isogenies,h);
+            end if;
+        end for;
+        "For the prime",p,"we have",#isogenies,"isogeny classes";
+
+    // For each r=1,..,10 we compute the number of isomorphism classes
+    // of abelain varieties with Weil polynomial h^r, where h loops
+    // over all the Weil polynomials of elliptic curves over Fp.
+        for r in [1..10] do
+            Npr:=0;
+            for h in isogenies do
+                Npr+:=#ComputeIsomorphismClasses(IsogenyClass(h^r));
+            end for;
+            output[r,ip]:=Npr;
+        end for;
+    end for;
+   
+    // the output is represented by a matrix whose rows are indexed by r 
+    // and the columns are the primes p between 2 and 29.
+    output;
+
+//////////////
+// Example 6.5
+//////////////
+
+    _<x>:=PolynomialRing(Integers());
+    h:=x^2-x+2;
+    #ComputeIsomorphismClasses(IsogenyClass(h));
+    // The isogeny class determined by the 2-Weil polynomial h is super-isolated,
+    // that is, it contains a unique isomorphism class of elliptic curves,
+    // which is represented by the following curve E.
+
+    E:=EllipticCurve([FiniteField(2)!1,0,1,0,1]); E;
+    #Points(E), Evaluate(h,1);
+
+    // Consider the Klein quartic over F2.
+    P2<x,y,z> := ProjectivePlane(FiniteField(2));
+    K := Curve(P2, (x^2 + x*z)^2+(x^2+x*z)*(y^2+y*z)+(y^2+y*z)^2+z^4 );
+
+    // We now check via point-counts that the Jacobian of K is isogenous to E^3.
+    AVh3:=IsogenyClass(h^3);
+    for r in [1..3] do
+        Kr:=BaseChange(K,FiniteField(2^r));
+        Evaluate(LPolynomial(Kr),1), 
+        NumberOfPoints(BaseFieldExtension(AVh3,r));
+    end for;
+
+    // Note that also AVh3 is super-isolated.
+    #ComputeIsomorphismClasses(AVh3);
+    // So Jac(K) is actually isomorphic to E^3 as an unpolarized abelian varieties.
+
+
+//////////////
+// Example 6.6
+//////////////
+
+    _<x>:=PolynomialRing(Integers());
+    h:=x^2+2*x+3;
+    #ComputeIsomorphismClasses(IsogenyClass(h));
+    // The isogeny class determined by the 3-Weil polynomial h is super-isolated,
+    // that is, it contains a unique isomorphism class of elliptic curves.
+
+    AVh2:=IsogenyClass(h^2);
+    // Note that also AVh2 is super-isolated.
+    #ComputeIsomorphismClasses(AVh2);
+    
+    // Consider the following hyperelliptic curve:
+    H:=HyperellipticCurve([FiniteField(3)!1,0,1,0,1,0,1]); H;
+    // Note that Jac(H) in AVh2, as we check by point-counts. 
+    for r in [1..2] do
+        Hr:=BaseChange(H,FiniteField(3^r));
+        Evaluate(LPolynomial(Hr),1), 
+        NumberOfPoints(BaseFieldExtension(AVh2,r));
+    end for;
+
+
+
+

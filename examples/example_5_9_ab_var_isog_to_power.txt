@@ -1,0 +1,152 @@
+/* vim: set syntax=magma : */
+
+///////////////////////////////////////////////////////////////////////////////////
+//                                                                               //
+// Stefano Marseglia, Utrecht University, s.marseglia@uu.nl                      //
+// http://www.staff.science.uu.nl/~marse004/                                     //
+//                                                                               //
+// Code to compute the examples in the paper:                                    //
+// "Computing abelian varieties over finite fields isogenous to a power"         //
+// Res. number theory 5 (2019), no. 4, paper no. 35                              //
+// https://doi.org/10.1007/s40993-019-0174-x                                     //
+//                                                                               //
+///////////////////////////////////////////////////////////////////////////////////
+
+//////////////
+// The packages are available at:
+// https://github.com/stmar89/AbVarFq
+//
+// The following examples where computed using the master branch on 04/06/2020
+//////////////
+
+    AttachSpec("~/packages_github/AbVarFq/packages.spec");
+
+//////////////
+// Example 5.9
+//////////////
+
+// This code will eventually be made into intrinsics for AbelianVarietyFq
+
+    _<x>:=PolynomialRing(Integers());
+    h:=x^2-x+4;
+    A:=AssociativeAlgebra(h);
+    O:=MaximalOrder(A);
+    icm:=ICM(O);
+    O1:=icm[1];
+    I:=icm[2];
+    IsIsomorphic2(I^2,O1);
+    It:=TraceDualIdeal(I);
+    Ot:=TraceDualIdeal(O);
+    phi:=CMType(A)[1];
+    _,y:=IsPrincPolarized(O1,phi);
+    _,z:=IsPrincPolarized(I,phi);
+    y:=y[1];
+    z:=z[1];
+    c:=CoprimeRepresentative(I,I);
+    c*I+I eq O1;
+    _,d:=IsPrincipal(c*I^2);
+    d;
+    d*O eq c*I*I;
+    e:=CRT(c*I,I,A!1,A!0);
+    e-1 in c*I;
+    e in I;
+    P0:=Matrix(2,2,[1,-c,(1-e)/d,c*e/d]);
+    D:=Matrix(2,2,[y,0,0,y]);
+    D1:=Matrix(2,2,[z,0,0,z]);
+    P0s:=Matrix(2,2,[1,ComplexConjugate(P0[2,1]),ComplexConjugate(P0[1,2]),ComplexConjugate(P0[2,2])]);
+    E:=P0s^-1*D1*D^-1*P0^-1;
+    Determinant(E);
+    ComplexConjugate(E[1,2]) eq E[2,1];
+
+    w:=PrimitiveElement(A);
+    wb:=ComplexConjugate(w);
+    M:=Matrix(2,2,[4,2*ComplexConjugate(w)-1,2*w-1,4]); //M is in GL_2(O).
+
+    //need a matrix A in GL_2(O) such that: \bar{A}^T*M*A eq E
+
+    b:=M[1,2];
+    a:=Integers()! M[1,1];
+    d:=Integers()! M[2,2];
+    w1:=Integers() ! (w+wb);
+    w2:=Integers() ! (w*wb);
+
+    n:=Integers() ! E[1,1];
+    N:=a*n; 
+    pairs_x:=[];
+    for N1 in [0..N] do
+        u_with_norm_N1:=[];
+        sq:=Sqrt(4*N1/(4*w2-w1^2));
+        bd_left:=Integers() ! Round(-1-sq);
+        bd_right:=Integers() ! Round(+1+sq);
+        for u2 in [bd_left..bd_right] do
+            if Abs(u2) lt sq then
+                u1_1:=(-u2*w1+Sqrt(u2^2*w1^2-u2^2*w2*4+4*N1))/2;
+                u1_2:=(-u2*w1-Sqrt(u2^2*w1^2-u2^2*w2*4+4*N1))/2;      
+                if u1_1 in Integers() then Append(~u_with_norm_N1,(Integers()!u1_1)+w*u2); end if;
+                if u1_2 in Integers() then Append(~u_with_norm_N1,(Integers()!u1_2)+w*u2); end if;        
+            end if;
+        end for;
+        L:=N-N1;
+        v_with_norm_L:=[];
+        sq:=Sqrt(4*L/(4*w2-w1^2));
+        bd_left:=Integers() ! Round(-1-sq);
+        bd_right:=Integers() ! Round(+1+sq);
+        for v2 in [bd_left..bd_right] do
+            if Abs(v2) lt sq then
+                v1_1:=(-v2*w1+Sqrt(v2^2*w1^2-v2^2*w2*4+4*L))/2;
+                v1_2:=(-v2*w1-Sqrt(v2^2*w1^2-v2^2*w2*4+4*L))/2;        
+                if v1_1 in Integers() then Append(~v_with_norm_L,(Integers()!v1_1)+w*v2); end if;
+                if v1_2 in Integers() then Append(~v_with_norm_L,(Integers()!v1_2)+w*v2); end if;      
+            end if;
+        end for;
+        for u in u_with_norm_N1, v in v_with_norm_L do
+            if (u-b*v) in a*O then Append(~pairs_x,[(u-b*v)/a,v]); end if;
+        end for;
+    end for;
+    n:=Integers() ! E[2,2];
+    N:=a*n;
+    pairs_y:=[];
+    for N1 in [0..N] do
+        u_with_norm_N1:=[];
+        sq:=Sqrt(4*N1/(4*w2-w1^2));
+        bd_left:=Integers() ! Round(-1-sq);
+        bd_right:=Integers() ! Round(+1+sq);
+        for u2 in [bd_left..bd_right] do
+            if Abs(u2) lt sq then
+                u1_1:=(-u2*w1+Sqrt(u2^2*w1^2-u2^2*w2*4+4*N1))/2;        
+                u1_2:=(-u2*w1-Sqrt(u2^2*w1^2-u2^2*w2*4+4*N1))/2;      
+                if u1_1 in Integers() then Append(~u_with_norm_N1,(Integers()!u1_1)+w*u2); end if;
+                if u1_2 in Integers() then Append(~u_with_norm_N1,(Integers()!u1_2)+w*u2); end if;        
+            end if;
+        end for;
+        L:=N-N1;
+        v_with_norm_L:=[];
+        sq:=Sqrt(4*L/(4*w2-w1^2));
+        bd_left:=Integers() ! Round(-1-sq);
+        bd_right:=Integers() ! Round(+1+sq);
+        for v2 in [bd_left..bd_right] do
+            if Abs(v2) lt sq then
+                v1_1:=(-v2*w1+Sqrt(v2^2*w1^2-v2^2*w2*4+4*L))/2;
+                v1_2:=(-v2*w1-Sqrt(v2^2*w1^2-v2^2*w2*4+4*L))/2;        
+                if v1_1 in Integers() then Append(~v_with_norm_L,(Integers()!v1_1)+w*v2); end if;
+                if v1_2 in Integers() then Append(~v_with_norm_L,(Integers()!v1_2)+w*v2); end if;      
+            end if;
+        end for;
+        for u in u_with_norm_N1, v in v_with_norm_L do
+            if (u-b*v) in a*O then Append(~pairs_y,[(u-b*v)/a,v]); end if;
+        end for;
+    end for;
+       
+    matrices:=[];
+    for x in pairs_x, y in pairs_y do
+        A:=Matrix(2,2,[x[1],y[1],x[2],y[2]]);
+        if Determinant(A) in [-1,1] then 
+            As:=Matrix(2,2,[ComplexConjugate(A[1,1]),ComplexConjugate(A[2,1]),ComplexConjugate(A[1,2]),ComplexConjugate(A[2,2])]);
+            if As*M*A eq E then
+                Append(~matrices,A);
+            end if;
+        end if;
+    end for;
+        
+    #matrices;
+
