@@ -15,7 +15,7 @@
 // The packages are available at:
 // https://github.com/stmar89/AbVarFq
 //
-// The following examples where computed using the master branch on 04/06/2020
+// The following examples where computed using the master branch on 20/07/2020
 //////////////
 
     AttachSpec("~/packages_github/AbVarFq/packages.spec");
@@ -125,7 +125,15 @@
         "The",iA,"-th abelian variety has",#princ_pols,"principal polarizations, with",aut,"polarized automorphisms.";
     end for; 
 
-    
+    "we notice that there are abelian varieties with the same endomorphism ring whose groups of points are not isomorphic";
+    for S in over_orders do if not IsGorenstein(S) then
+        iso_S:=ComputeIsomorphismClassesWithEndomorphismRing(AVh,S);
+        group_of_points:={ ElementaryDivisors(RationalPoints(A)) : A in iso_S };
+        if #group_of_points ne 1 then
+            "here are the elementary divisors of the groups we find";
+            group_of_points;
+        end if;
+    end if; end for;
     
 //////////////////////////////////
 //Example 8.1
