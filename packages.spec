@@ -13,6 +13,6 @@ IntegralMatrices.m
 Picardext.m
 padictocc.m
 PowerBass.m
-rational_points.m
+RationalPoints.m
 over_write.m
 }
