@@ -117,6 +117,11 @@ intrinsic IsPolarized(A::AbelianVarietyFq, PHI::AlgAssCMType , N::RngIntElt)->Bo
 {returns if the abelian variety has a polarization of degree N and if so it returns also all the non isomorphic polarizations}
     
     require IsOrdinary(A) and IsSquarefree(IsogenyClass(A)) : "implemented only for ordinary squarefree isogeny classes";
+ 
+    if not IsSquare(N) then // the degree of a pol is always a square
+        return false,[]; 
+    end if;
+
     UA:=UniverseAlgebra(A);
     S:=EndomorphismRing(A);
     assert UA eq Algebra(S);

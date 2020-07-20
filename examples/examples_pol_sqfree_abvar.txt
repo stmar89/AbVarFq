@@ -53,10 +53,13 @@
     AVh:=IsogenyClass(h);
     "The isogeny class determined by the polynomial ",WeilPolynomial(AVh),"is defined over ",FiniteField(AVh)," and has dimension ",Dimension(AVh);
     S1:=ZFVOrder(AVh);
+    O:=MaximalOrder(Algebra(S1));
     over_orders:=FindOverOrders(S1);
     for S in over_orders do
-        "Is maximal?\t",IsMaximal(S),"\tIs Gorenstein?\t", IsGorenstein(S),
-        "\tIs conjugate stable?\t", S eq ComplexConjugate(S);
+        "Is Gorenstein?", IsGorenstein(S),
+        "\tIs conj. stable?", S eq ComplexConjugate(S),
+        "\tIndex in O:",Index(O,S),
+        "\tTors Units:",#TorsionSubgroup(UnitGroup2(S));
     end for;
     
     iso:=ComputeIsomorphismClasses(AVh);
@@ -95,13 +98,15 @@
     AVh:=IsogenyClass(h);
     "The isogeny class determined by the polynomial ",WeilPolynomial(AVh),"is defined over ",FiniteField(AVh)," and has dimension ",Dimension(AVh);
     S1:=ZFVOrder(AVh);
+    O:=MaximalOrder(Algebra(S1));
     over_orders:=FindOverOrders(S1);
     for S in over_orders do
-        "Is maximal?\t",IsMaximal(S),"\tIs Gorenstein?\t", IsGorenstein(S),
-        "\tIs conjugate stable?\t", S eq ComplexConjugate(S);
+        "Is Gorenstein?", IsGorenstein(S),
+        "\tIs conj. stable?", S eq ComplexConjugate(S),
+        "\tIndex in O:",Index(O,S),
+        "\tTors Units:",#TorsionSubgroup(UnitGroup2(S));
     end for;
     
-    over_orders:=FindOverOrders(ZFVOrder(AVh));
     "We compute the isomorphism classes with endomorphism ring which is conjugate stable";
     iso:=&cat[ ComputeIsomorphismClassesWithEndomorphismRing(AVh,S) : S in over_orders | ComplexConjugate(S) eq S];
     "There are",#iso, "such isomorphism classes.";

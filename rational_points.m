@@ -18,7 +18,7 @@ intrinsic RationalPoints(I::AlgAssVOrdIdl,r::RngIntElt)-> GrpAb , Map
 	Q,q:=quo<Fr|rel>;
 	mIQ:=map< A->Q | x:->q(Fr ! Eltseq(Coordinates([x],zb)[1])),
 			   y:->A ! ((&+[ zb[j]*Eltseq(y)[j] : j in [1..#zb]])@@q)>;
-	assert #Q eq Evaluate(DefiningPolynomial(A),1);
+	// assert #Q eq Evaluate(DefiningPolynomial(A),1);
 	return Q,mIQ;
 end intrinsic;
 
