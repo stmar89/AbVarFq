@@ -6,8 +6,8 @@
 // http://www.staff.science.uu.nl/~marse004/                                     //
 //                                                                               //
 // Code to compute the examples in the paper:                                    //
-// "Computing square-free polarized abelian varieties over finite fields" //
-// http://arxiv.org/abs/2003.09977                                               //
+// "Computing square-free polarized abelian varieties over finite fields"        //
+// accepted by Math. Comp. --- https://arxiv.org/abs/1805.10223                  //
 //                                                                               //
 ///////////////////////////////////////////////////////////////////////////////////
 
