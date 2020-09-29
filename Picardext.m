@@ -423,10 +423,13 @@ intrinsic UnitGroup2(S::AlgAssVOrd : GRH:=false ) -> GrpAb, Map
         coeff:=Eltseq(rep);
         assert #coeff eq #gens_P_in_A;
         elt:=&*[gens_P_in_A[i]^coeff[i] : i in [1..#coeff]];
+        assert2 elt in S and elt^-1 in S;
         return elt;
     end function;
 
     map_S_to_P:=function(y)
+        assert2 y in S and y^-1 in S;
+        assert2 m(y@@uO) eq Zero(B);
         elt := P ! (y@@uO);
         return elt;
     end function;
