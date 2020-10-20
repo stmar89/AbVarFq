@@ -14,5 +14,6 @@ Picardext.m
 padictocc.m
 PowerBass.m
 RationalPoints.m
+TotRealTotPos.m
 over_write.m
 }
