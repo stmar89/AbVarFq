@@ -53,7 +53,7 @@ freeze;
 //////////////////////////
 
     intrinsic TotallyRealUnitGroup(S::AlgAssVOrd) -> Grp
-    { Given an order S in a CM étale algebra A, and the unit group US,uS,
+    { Given an order S in a CM étale algebra A
       returns the groups of totally real units of S, as a subgroup of S^* }
         if not assigned S`TotallyRealUnitGroup then
             K:=Algebra(S);
@@ -109,7 +109,7 @@ freeze;
     end function;
 
     intrinsic TotallyRealPositiveUnitGroup(S::AlgAssVOrd) -> Grp
-    { Given an order S in a CM étale algebra A, and the unit group US,uS,
+    { Given an order S in a CM étale algebra A
       returns the groups of totally positive units of S, as a subgroup of S^* }
         if not assigned S`TotallyRealPositiveUnitGroup then
             K:=Algebra(S);
