@@ -205,7 +205,6 @@ intrinsic FindOverOrders_Minimal(R::AlgAssVOrd) -> SetIndx[AlgAssVOrd]
   A := Algebra(R);
   require IsFiniteEtale(A): "the algebra of definition must be finite and etale over Q";
   singular_primes := PrimesAbove(MaximalOrder(A)!Conductor(R));
-  //singular_primes := [];
   queue := {@ R @};
   done := {@  @};
   output := {@ @};
@@ -217,6 +216,8 @@ intrinsic FindOverOrders_Minimal(R::AlgAssVOrd) -> SetIndx[AlgAssVOrd]
     end for;
     queue := output diff done;
   end while;
+  // remove and add the maximal order to avoid creating it twice.
+  output:={@ T : T in output | Index(MaximalOrder(A),T) ne 1 @} join {@ MaximalOrder(A) @};
   return output;
 end intrinsic;
 
@@ -227,9 +228,6 @@ intrinsic FindOverOrders(E::AlgAssVOrd: alg := "minimal", populateoo_in_oo := fa
   if not assigned E`OverOrders then
     if alg eq "minimal" then
       E`OverOrders := FindOverOrders_Minimal(E);
-      //for S in E`MinimalOverOrders do
-      //  _ := FindOverOrders(S: alg := "minimal");
-      //end for;
     elif alg eq "naive" then
       E`OverOrders := FindOverOrders_Naive(E);
     end if;
