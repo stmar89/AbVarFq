@@ -197,6 +197,41 @@ intrinsic 'eq'(AVh1::IsogenyClassFq , AVh2::IsogenyClassFq ) -> BoolElt
     end if;
 end intrinsic;
 
+
+
+/////////////////////////////////////////////////////
+// pRank and related
+/////////////////////////////////////////////////////
+
+intrinsic IsOrdinary(AVf::IsogenyClassFq) -> BoolElt
+{returns if the isogeny class is ordinary}
+    if assigned AVf`pRank then 
+        return pRank(AVf) eq Dimension(AVf);
+    else
+        f:=WeilPolynomial(AVf);
+        coeff:=Coefficients(f);
+        test:=IsCoprime(coeff[Degree(f) div 2 +1], coeff[1] );
+        if test then
+            AVf`pRank:=Dimension(AVf);
+        end if;
+        return test;
+    end if;
+end intrinsic;
+
+intrinsic IsOrdinary(A::AbelianVarietyFq) -> BoolElt
+{returns if the abelian variety is ordinary}
+	return IsOrdinary(IsogenyClass(A));
+end intrinsic;
+
+intrinsic IsOrdinary(f::RngUPolElt : Precision:=100) -> BoolElt
+{returns if the input polynomial is an Ordinary q-Weil polynomial, where q is a power of a prime number p, that is if the mid coefficient is coprime with p}
+    testWeil,_,p,_:=IsWeil(f : Precision:=Precision);
+	require testWeil:"the input must be a q-Weil polynomial for some prime power q";
+	deg:=Degree(f);
+	coeff:=Coefficients(f);
+	return IsCoprime(coeff[deg div 2 +1],p);
+end intrinsic;
+
 intrinsic pRank(I::IsogenyClassFq)->RngIntElt
 { returns the p-Rank of the isogeny class }
     if not assigned I`pRank then
@@ -208,6 +243,34 @@ intrinsic pRank(I::IsogenyClassFq)->RngIntElt
     return I`pRank;
 end intrinsic;
 
+intrinsic pRank(A::AbelianVarietyFq)->RngIntElt
+{ returns the p-Rank of the isogeny class }
+    return pRank(IsogenyClass(A));
+end intrinsic;
+
+intrinsic IsAlmostOrdinary(I::IsogenyClassFq)->BoolElt
+{ returns whether the isogeny class is almost ordinary }
+    return pRank(I) eq Dimension(I)-1;
+end intrinsic;
+
+intrinsic IsAlmostOrdinary(A::AbelianVarietyFq)->BoolElt
+{ returns whether the abelian variety is almost ordinary }
+    return pRank(A) eq Dimension(A)-1;
+end intrinsic;
+
+function is_CentelegheStix(I : Precision:=30 )
+// returns whether the isogeny class or abelian variety is Centeleghe-Stix, 
+// that is, defined over Fp and the Weil poly has no real roots
+    assert Type(I) in { IsogenyClassFq , AbelianVarietyFq };
+    q:=FiniteField(I);
+    if IsPrime(q) then
+        h:=WeilPolynomial(I);
+        rr:=Roots(h,ComplexField(Precision));
+        return forall{ r : r in rr | not Abs(Im(r[1])) lt 10^-(Precision div 2) }; // no real roots
+    else 
+        return false;
+    end if;
+end function;
 
 /////////////////////////////////////////////////////
 // New Type AbelianVarietyFq
@@ -510,14 +573,21 @@ intrinsic ComputeIsomorphismClasses( AVh::IsogenyClassFq )->SeqEnum[AbelianVarie
     if not assigned AVh`IsomorphismClasses then
         h:=WeilPolynomial(AVh);
         R,map:=ZFVOrder(AVh);
-        if IsSquarefree(AVh) then
-            icm:=ICM(R);
-            AVh`IsomorphismClasses:=[ AbelianVariety(AVh,I) : I in icm ];
-        elif IsPowerOfBass(AVh) then
-            all_bc:=AllBassClasses(R,map);
-            AVh`IsomorphismClasses:=[ AbelianVariety(AVh,bc) : bc in all_bc ];
+        if IsOrdinary(AVh) or is_CentelegheStix(AVh) then
+            if IsSquarefree(AVh) then
+                icm:=ICM(R);
+                AVh`IsomorphismClasses:=[ AbelianVariety(AVh,I) : I in icm ];
+            elif IsPowerOfBass(AVh) then
+                all_bc:=AllBassClasses(R,map);
+                AVh`IsomorphismClasses:=[ AbelianVariety(AVh,bc) : bc in all_bc ];
+            else
+                error "implemented only for squarefree and power-of-Bass isogeny classes"; 
+            end if;
+//        elif IsAlmostOrdinary(AVh) and IsSquarefree(AVh) and IsOdd(FiniteField(AVh)) then
+//            import "AlmOrd.m" : overorders_maximal_at_ss ; //needed for the almost ordinary case
+//            AVh`IsomorphismClasses:=[ ComputeIsomorphismClassesWithEndomorphismRing(S) : S in overorders_maximal_at_ss(AVh)];
         else
-            error "implemented only for squarefree and power-of-Bass isogeny classes"; 
+                error "not implemented for such an isogeny class"; 
         end if;
     end if;
     return AVh`IsomorphismClasses;
@@ -550,39 +620,8 @@ intrinsic WeilPolyToLPoly(w::RngUPolElt) -> RngUPolElt
     return Parent(w)!Reverse(Coefficients(w));
 end intrinsic;
 
-intrinsic IsOrdinary(AVf::IsogenyClassFq) -> BoolElt
-{returns if the isogeny class is ordinary}
-    if assigned AVf`pRank then 
-        return pRank(AVf) eq Dimension(AVf);
-    else
-        f:=WeilPolynomial(AVf);
-        coeff:=Coefficients(f);
-        test:=IsCoprime(coeff[Degree(f) div 2 +1], coeff[1] );
-        if test then
-            AVf`pRank:=Dimension(AVf);
-        end if;
-        return test;
-    end if;
-end intrinsic;
 
-intrinsic IsOrdinary(A::AbelianVarietyFq) -> BoolElt
-{returns if the abelian variety is ordinary}
-	return IsOrdinary(IsogenyClass(A));
-end intrinsic;
 
-intrinsic pRank(A::AbelianVarietyFq)->RngIntElt
-{ returns the p-Rank of the isogeny class }
-    return pRank(IsogenyClass(A));
-end intrinsic;
-
-intrinsic IsOrdinary(f::RngUPolElt : Precision:=100) -> BoolElt
-{returns if the input polynomial is an Ordinary q-Weil polynomial, where q is a power of a prime number p, that is if the mid coefficient is coprime with p}
-    testWeil,_,p,_:=IsWeil(f : Precision:=Precision);
-	require testWeil:"the input must be a q-Weil polynomial for some prime power q";
-	deg:=Degree(f);
-	coeff:=Coefficients(f);
-	return IsCoprime(coeff[deg div 2 +1],p);
-end intrinsic;
 
 intrinsic IsWeil(f::RngUPolElt : Precision:=30) -> BoolElt,RngIntElt,RngIntElt,RngIntElt
 {Returns whether f is a q-WeilPolynomial, q,p and e, where q=p^e is a prime power polynomial. A polynomial is q-Weil if all the roots have complex absolute value q^(1/2). The check is done with precision "Precision" given as optional parameter (default precision is 30)}
