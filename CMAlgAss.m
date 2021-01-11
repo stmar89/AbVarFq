@@ -257,7 +257,7 @@ intrinsic pAdicPosCMType(AVh::IsogenyClassFq : precpAdic := 30, precCC := 30 ) -
             PHI`pAdicData:=[< p, rtspp, rtsCC >];
         else
             assert not exists{ data : data in PHI`pAdicData | data[1] eq p }; //to avoid computing different p-adic data for the same p.
-            Append(PHI`pAdicData,< p, rtspp, rtsCC >);
+            Append(~PHI`pAdicData,< p, rtspp, rtsCC >);
         end if;
         AVh`pAdicPosCMType:=PHI;
     end if;
@@ -265,7 +265,7 @@ intrinsic pAdicPosCMType(AVh::IsogenyClassFq : precpAdic := 30, precCC := 30 ) -
 end intrinsic;
 
 /////////////////////////////////////////////////////
-// AllCMType 
+// AllCMTypes 
 /////////////////////////////////////////////////////
 
 intrinsic AllCMTypes(AVh::IsogenyClassFq : precCC := 30 ) -> SeqEnum[AlgAssCMType]
