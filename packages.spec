@@ -2,6 +2,7 @@
 AbelianVarieties.m
 HomAbelianVarieties.m
 CMAlgAss.m
+Completion.m
 IsogeniesPolarizations.m
 BaseFieldExtension.m
 Ordersext.m

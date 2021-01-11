@@ -15,6 +15,7 @@ declare verbose Ordersext, 1;
 - In the ChineseReminderThm there is a bug: sometimes One(K) is not in the ZBasis of an order.
                     The output is asserted: if it does not rise an error is correct.
 - IsFiniteEtale is wrong!!! it does not recognize the base ring, on the other hand, when I define an AssociativeAlgebra, I set the test to be true, so it is sort of harmless.
+- add attribute IsPrime to AlgAssVOrdIdl
 */
 
 RANF_protected:=RationalsAsNumberField();
@@ -334,7 +335,6 @@ intrinsic Index(S::AlgAssVOrd, T::AlgAssVOrd) -> Any
   end if;
   return elt;
 end intrinsic;
-
 
 intrinsic Index(T::AlgAssVOrdIdl) -> FldRatElt
 {given an ideal T computes its index with respect to the basis of the algebra of T as a free Z-module}
