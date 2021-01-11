@@ -13,7 +13,8 @@ declare verbose Ordersext, 1;
 
 /*TODO:
 - In the ChineseReminderThm there is a bug: sometimes One(K) is not in the ZBasis of an order.
--IsFiniteEtale is wrong!!! it does not recognize the base ring, on the other hand, when I define an AssociativeAlgebra, I set the test to be true, so it is sort of harmless.
+                    The output is asserted: if it does not rise an error is correct.
+- IsFiniteEtale is wrong!!! it does not recognize the base ring, on the other hand, when I define an AssociativeAlgebra, I set the test to be true, so it is sort of harmless.
 */
 
 RANF_protected:=RationalsAsNumberField();
