@@ -68,7 +68,7 @@ end intrinsic;
 
 intrinsic DualAbelianVariety(A::AbelianVarietyFq)->AbelianVarietyFq
 { given an abelian vareity A returns the dual abelian variety }
-    require IsOrdinary(A) : "implemented only for ordinary isogeny classes";
+    // require IsOrdinary(A) : "implemented only for ordinary isogeny classes";
     B:=DeligneModuleZBasis(A);
     n:=#B;
     Q:=MatrixRing(RationalField(), n)![Trace(B[i]*B[j]): i, j in [1..n] ];
@@ -86,7 +86,7 @@ end intrinsic;
 intrinsic IsPolarization(pol::HomAbelianVarietyFq, phi::AlgAssCMType)->BoolElt
 {returns whether the hommorphisms is known to be a polarizations for the CM-type phi }
     A:=Domain(pol);
-    require IsSquarefree(IsogenyClass(A)) and IsOrdinary(A) : "implemented only for square-free ordinary abelian varieties";
+    require IsSquarefree(IsogenyClass(A)) /*and IsOrdinary(A)*/ : "implemented only for square-free ordinary abelian varieties";
     x0:=MapOnUniverseAlgebras(pol)(1); //the element of the UniverseAlgebra representing the map
     //pol is a polarization if x0 is totally imaginary and \Phi-positive
     C := [g(x0): g in Homs(phi)];
@@ -104,7 +104,7 @@ end intrinsic;
 
 intrinsic IsPrincPolarized(A::AbelianVarietyFq, phi::AlgAssCMType)->BoolElt, SeqEnum[HomAbelianVarietyFq]
 {returns if the abelian variety is principally polarized and if so returns also all the non isomorphic polarizations}
-    require IsOrdinary(A) and IsSquarefree(IsogenyClass(A)) : "implemented only for ordinary squarefree isogeny classes";
+    require /*IsOrdinary(A) and*/ IsSquarefree(IsogenyClass(A)) : "implemented only for ordinary squarefree isogeny classes";
 	S:=EndomorphismRing(A);
 	if S eq ComplexConjugate(S) then
 		return IsPolarized(A, phi , 1);
@@ -116,7 +116,7 @@ end intrinsic;
 intrinsic IsPolarized(A::AbelianVarietyFq, PHI::AlgAssCMType , N::RngIntElt)->BoolElt, SeqEnum[HomAbelianVarietyFq]
 {returns if the abelian variety has a polarization of degree N and if so it returns also all the non isomorphic polarizations}
     
-    require IsOrdinary(A) and IsSquarefree(IsogenyClass(A)) : "implemented only for ordinary squarefree isogeny classes";
+    require /*IsOrdinary(A) and*/ IsSquarefree(IsogenyClass(A)) : "implemented only for ordinary squarefree isogeny classes";
  
     if not IsSquare(N) then // the degree of a pol is always a square
         return false,[]; 
@@ -188,7 +188,7 @@ end intrinsic;
 intrinsic PolarizedAutomorphismGroup(mu::HomAbelianVarietyFq) -> GrpAb
 {returns the automorphisms of a polarized abelian variety}
     A:=Domain(mu);
-    require IsOrdinary(A) and IsSquarefree(IsogenyClass(A)) : "implemented only for ordinary squarefree isogeny classes";
+    require /*IsOrdinary(A) and*/ IsSquarefree(IsogenyClass(A)) : "implemented only for ordinary squarefree isogeny classes";
     S:=EndomorphismRing(A);
 	return TorsionSubgroup(UnitGroup2(S));
 end intrinsic;
