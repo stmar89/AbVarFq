@@ -8,8 +8,8 @@ freeze;
 // http://www.staff.science.uu.nl/~marse004/
 /////////////////////////////////////////////////////
 
-intrinsic Completion(P::AlgAssVOrdIdl : Precision:=20) -> FldPad,Map
-{ Given a prime ideal of the maximal order of an etale algebra L it returns the number field corresponding to the completion LP and a homormophism map:L->LP. The vararg Precision is passed to Completion. map has preimage, even if not injective. }
+intrinsic Completion(P::AlgAssVOrdIdl : MinPrecision:=20) -> FldPad,Map
+{ Given a prime ideal of the maximal order of an etale algebra L it returns the number field corresponding to the completion LP and a homormophism map:L->LP. The vararg MinPrecision is passed to Completion. map has preimage, even if not injective. }
     L:=Algebra(P);
     require IsMaximal(Order(P)) and IsPrime(P) : "the ideal must be a prime ideal of the maximal order";
     nfs:=L`NumberFields;
@@ -21,7 +21,7 @@ intrinsic Completion(P::AlgAssVOrdIdl : Precision:=20) -> FldPad,Map
     K:=nfs[ind,1];
     mK:=nfs[ind,2]; // mK:=K->L
     PK:=PKs[ind];
-    LP,mLP:=Completion(K,PK : Precision:=Precision); // mLP:K->LP
+    LP,mLP:=Completion(K,PK : Precision:=MinPrecision); // mLP:K->LP
     //map:=Inverse(mK)*mLP;
     map:=hom< L->LP | x:->mLP(Components(x)[ind]) ,
                       y:->mK(y@@mLP) >;
