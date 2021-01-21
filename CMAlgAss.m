@@ -59,7 +59,7 @@ declare attributes AlgAssCMType : Homs, // homs from Q(Frob) of the isogeny clas
 
 
 /////////////////////////////////////////////////////
-// Creation, print, access and equality testing for CMType for IsogenyClassFq
+// Creation, print, access and equality testing for AlgAssCMType
 /////////////////////////////////////////////////////
 
 intrinsic CreateCMType(seq::SeqEnum[Map]) -> AlgAssCMType
@@ -221,6 +221,22 @@ intrinsic ChangePrecision(~PHI :: AlgAssCMType, prec::RngIntElt )
     end if;
 end intrinsic;
 
+/////////////////////////////////////////////////////
+// AllCMTypes 
+/////////////////////////////////////////////////////
+
+declare attributes IsogenyClassFq : AllCMTypes;
+
+intrinsic AllCMTypes(AVh::IsogenyClassFq : precCC := 30 ) -> SeqEnum[AlgAssCMType]
+{ returns all the AlgAssCMTypes of Q(Frob) }
+    if not assigned AVh`AllCMTypes then
+        A:=Algebra(ZFVOrder(AVh));
+        cc:=CartesianProduct(Partition([ h: h in HomsToC(A : Precision:=precCC )],2));
+        cc:=[ [ci : ci in c] : c in cc ]; //from tuple to seq
+        AVh`AllCMTypes:=[ CreateCMType(c) : c in cc ];
+    end if;
+    return AVh`AllCMTypes;
+end intrinsic;
 
 /////////////////////////////////////////////////////
 // pAdicPosCMType for ordinary IsogenyClassFq
@@ -253,6 +269,12 @@ intrinsic pAdicPosCMType(AVh::IsogenyClassFq : precpAdic := 30, precCC := 30 ) -
         assert #cmtype_homs eq (Degree(h) div 2);
         // creation AlgAssCMType
         PHI:=CreateCMType(cmtype_homs);
+        // if AllCMTypes has already been computed take PHI from there.
+        if assigned AVh`AllCMTypes then
+            PHI_old:=[ cm : cm in AllCMTypes(AVh) | PHI eq cm ]; 
+            assert #PHI_old eq 1; //sanity check
+            PHI:=PHI_old[1];
+        end if;
         if not assigned PHI`pAdicData then
             PHI`pAdicData:=[< p, rtspp, rtsCC >];
         else
@@ -264,17 +286,6 @@ intrinsic pAdicPosCMType(AVh::IsogenyClassFq : precpAdic := 30, precCC := 30 ) -
     return AVh`pAdicPosCMType;
 end intrinsic;
 
-/////////////////////////////////////////////////////
-// AllCMTypes 
-/////////////////////////////////////////////////////
-
-intrinsic AllCMTypes(AVh::IsogenyClassFq : precCC := 30 ) -> SeqEnum[AlgAssCMType]
-{ returns all the AlgAssCMTypes of Q(Frob) }
-    A:=Algebra(ZFVOrder(AVh));
-    cc:=CartesianProduct(Partition([ h: h in HomsToC(A : Precision:=precCC )],2));
-    cc:=[ [ci : ci in c] : c in cc ]; //from tuple to seq
-    return [ CreateCMType(c) : c in cc ];
-end intrinsic;
 
 /////////////////////////////////////////////////////
 // OLD CODE: kept for retro-compatibility.
@@ -368,7 +379,8 @@ end intrinsic;
 
     for f in polys do
         AVf:=IsogenyClass(f);
-        all:=AllCMTypes(AVf);
+        time all:=AllCMTypes(AVf);
+        time _:=AllCMTypes(AVf); // should be instant.
         for PHI in all do
             _:=CMPosElt(PHI);
             _:=Homs(PHI);
@@ -387,6 +399,14 @@ end intrinsic;
     PHI2:=ChangePrecision(PHI,100);
     ChangePrecision(~PHI,200);
 
+    _<x>:=PolynomialRing(Integers());
+    f:=x^4+x^2+529;
+    AVf:=IsogenyClass(f);
+    _:=AllCMTypes(AVf);
+    PHI:=pAdicPosCMType(AVf);
+    assert PHI in AllCMTypes(AVf);
+    PHI2:=ChangePrecision(PHI,100);
+    ChangePrecision(~PHI,200);
 
     //testing the removal of IdealsNF.m
     
