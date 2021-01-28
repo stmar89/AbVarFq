@@ -21,6 +21,7 @@ intrinsic Completion(P::AlgAssVOrdIdl : MinPrecision:=20) -> FldPad,Map
     K:=nfs[ind,1];
     mK:=nfs[ind,2]; // mK:=K->L
     PK:=PKs[ind];
+    // it seems that Magma Ignore the Parameter Precision and returns always a ring with Infinity precition. Go figure...
     LP,mLP:=Completion(K,PK : Precision:=MinPrecision); // mLP:K->LP
     //map:=Inverse(mK)*mLP;
     map:=hom< L->LP | x:->mLP(Components(x)[ind]) ,
