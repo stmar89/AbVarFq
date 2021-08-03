@@ -258,10 +258,8 @@ intrinsic IsAlmostOrdinary(A::AbelianVarietyFq)->BoolElt
     return pRank(A) eq Dimension(A)-1;
 end intrinsic;
 
-function is_CentelegheStix(I : Precision:=30 )
-// returns whether the isogeny class or abelian variety is Centeleghe-Stix, 
-// that is, defined over Fp and the Weil poly has no real roots
-    assert Type(I) in { IsogenyClassFq , AbelianVarietyFq };
+intrinsic IsCentelegheStix(I::IsogenyClassFq : Precision:=30 )->BoolElt 
+{ returns whether the isogeny class is Centeleghe-Stix, that is, defined over Fp and the Weil poly has no real roots }
     q:=FiniteField(I);
     if IsPrime(q) then
         h:=WeilPolynomial(I);
@@ -270,7 +268,12 @@ function is_CentelegheStix(I : Precision:=30 )
     else 
         return false;
     end if;
-end function;
+end intrinsic;
+
+intrinsic IsCentelegheStix(I::AbelianVarietyFq : Precision:=30 )->BoolElt
+{ returns whether the abelian variety is Centeleghe-Stix, that is, defined over Fp and the Weil poly has no real roots }
+    return IsCentelegheStix(IsogenyClass(I));
+end intrinsic;
 
 /////////////////////////////////////////////////////
 // New Type AbelianVarietyFq
@@ -573,7 +576,7 @@ intrinsic ComputeIsomorphismClasses( AVh::IsogenyClassFq )->SeqEnum[AbelianVarie
     if not assigned AVh`IsomorphismClasses then
         h:=WeilPolynomial(AVh);
         R,map:=ZFVOrder(AVh);
-        if IsOrdinary(AVh) or is_CentelegheStix(AVh) then
+        if IsOrdinary(AVh) or IsCentelegheStix(AVh) then
             if IsSquarefree(AVh) then
                 icm:=ICM(R);
                 AVh`IsomorphismClasses:=[ AbelianVariety(AVh,I) : I in icm ];
