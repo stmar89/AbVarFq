@@ -37,7 +37,7 @@ wkicm_bar_CM_dim2:=function(S,St,pp)
                                               //   pp[i]^m \subseteq I_pp[i]
             Append(~pows,P^m);
         end for;
-        pows_hat:=[ &*[ pp[j] : j in [1..#pp] | j ne i ] : i in [1..#pp] ];
+        pows_hat:=[ &*[ pows[j] : j in [1..#pp] | j ne i ] : i in [1..#pp] ];
         Is:=[ seq : seq in CartesianProduct([[OneIdeal(S),I] : i in [1..#pp]]) ];
         out:=[];
         for I in Is do
