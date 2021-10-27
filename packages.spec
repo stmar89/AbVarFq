@@ -11,6 +11,7 @@ IdealsOfIndex.m
 OverOrders.m
 PeriodMatrices.m
 IntegralMatrices.m
+RepsZConjugacy.m
 Picardext.m
 padictocc.m
 PowerBass.m

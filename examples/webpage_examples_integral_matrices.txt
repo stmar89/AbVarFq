@@ -15,9 +15,8 @@ If you find some mistakes or bugs, don't hesitate to contact me.
 // http://staff.math.su.se/stefanom/
 /////////////////////////////////////////////////////
 
-Attach("packages/Ordersext_0.14.m");
-Attach("packages/Picardext_0.4.m");
-Attach("packages/IntegralMatrices0.3.m");
+//move to the folder where the spec file is stored
+AttachSpec("packages.spec");
 
 ////////////////////////////////////////////////////////////////////////////////////////////
 //Example 1: representatives of conjugacy classes of integral matrices with given (square-free) characterstic polynomial
