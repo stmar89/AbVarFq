@@ -127,7 +127,6 @@ intrinsic IdealsOfIndex(I::AlgAssVOrdIdl[RngOrd], N::RngIntElt : Al := "Default"
         result := [];
         vprintf Ordersext : "Naive version!!\n";
         // this is extremely NAIVE!!!
-        S := MultiplicatorRing(I);
         zbasis := ZBasis(I);
         r := #zbasis;
         F := FreeAbelianGroup(r);
@@ -143,7 +142,7 @@ intrinsic IdealsOfIndex(I::AlgAssVOrdIdl[RngOrd], N::RngIntElt : Al := "Default"
             geninF := [f(FP ! x) : x in Generators(H)];
             coeff := [Eltseq(x) : x in geninF];
             // H is a subgroup of J of index N, but as fractional ideal the index might not be N
-            J := ideal<S| [&+[zbasis[i]*x[i] : i in [1..r]] : x in coeff]>;
+            J := ideal<Order(I)| [&+[zbasis[i]*x[i] : i in [1..r]] : x in coeff]>;
             if Index(I, J) eq N then
               assert J subset I;
               Append(~result, J);
