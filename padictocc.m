@@ -61,7 +61,7 @@ intrinsic pAdicToComplexRootsGMod(f::RngUPolElt[FldRat], p::RngIntElt : precpAdi
 end intrinsic;
 
 intrinsic pAdicToComplexRoots(f::RngUPolElt[FldRat], p::RngIntElt : precpAdic := 0, precCC := 0) -> 
-    SeqEnum[RngPadElt], SeqEnum[FldComElt], GrpPerm
+    SeqEnum[RngPadElt], SeqEnum[FldComElt]
   {Returns the ordered set of roots of f p-adically and over the complex numbers
    such that the natural bijection arises from roots in a splitting field over 
    the rationals.  The varargs precpAdic and precCC specify (minimum) output 
