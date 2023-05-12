@@ -131,7 +131,7 @@ intrinsic GensToBasis(S::AlgEtQOrd, gens::SeqEnum) -> SeqEnum
                     // go through all combinations in a fixed order.  By minimality, we need to use all the generators, so no coefficient can be 0.
                     // We reverse tt since we want iteration like <1,1>, <2,1>, <1,2>, <2,2> and Cartesian product changes the last coordinate first
                     for c in CartesianProduct(<[1..orders[t]-1] : t in Reverse(tt)>) do
-                        b := &+[c[#c+1-j] * gens[tt[j]] : t in [1..#tt]];
+                        b := &+[c[#c+1-j] * gens[tt[j]] : j in [1..#tt]];
                         if Order(curquo(b)) eq ord then
                             break;
                         end if;
