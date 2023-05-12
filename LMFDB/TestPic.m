@@ -5,10 +5,10 @@ SetVerbose("User1", 1);
 
 base:="/home/roed/266_wk_icm_rec/labelling/parallel/";
 AttachSpec(base*"AlgEt/spec");
-Attach(base*labeling.m);
-Attach("packages.spec");
+Attach(base*"labeling.m");
+AttachSpec("packages.spec");
 Attach("LMFDB/Picardext.m");
-schema := Read("LMFDB/pic_examples/" * isocls);
+schema := Read(base * "output/" * isocls);
 R:=LoadSchemaWKClasses(schema);
 t0 := Cputime();
 B:=CanonicalPicBasis(R);
