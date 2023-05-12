@@ -123,10 +123,21 @@ intrinsic GensToBasis(S::AlgEtQOrd, gens::SeqEnum) -> SeqEnum
         n := 1; // encode subset using bits
         while true do
             ss := IntegerToSequence(n, 2);
-            ord := Lcm([orders[relevant[c]] : c in [1..#ss] | ss[c] eq 1]);
-            if ord eq looking_for then
-                b := &+[gens[relevant[c]] : c in [1..#ss] | ss[c] eq 1];
-                // b has the right order in the projection, but we need to subtract off some combination of the previous generators to make it the right order in P itself
+            tt := [relevant[c] : c in [1..#ss] | ss[c] eq 1]; // the positions of the generators we'll be using to construct an element of the right order
+            ord := Lcm([orders[t] : t in tt]);
+            if ord eq looking_for then // it's possible to construct an element of right right order using combinations of these generators
+                b := &+[gens[t] : t in tt]; // try the simplest first
+                if Order(curquo(b)) ne ord then
+                    // go through all combinations in a fixed order.  By minimality, we need to use all the generators, so no coefficient can be 0.
+                    // We reverse tt since we want iteration like <1,1>, <2,1>, <1,2>, <2,2> and Cartesian product changes the last coordinate first
+                    for c in CartesianProduct(<[1..orders[t]-1] : t in Reverse(tt)>) do
+                        b := &+[c[#c+1-j] * gens[tt[j]] : t in [1..#tt]];
+                        if Order(curquo(b)) eq ord then
+                            break;
+                        end if;
+                    end for;
+                end if;
+                // b now has the right order in the projection, but we need to subtract off some combination of the previous generators to make it the right order in P itself
                 // (ord * b) in Psub, since it's 0 in the quotient.  Morever, ord*b in ord*Psub, since ord divides the order of each of the generators of Psub.  Need to find this element so that we can subtract.
                 if #basis gt 0 then
                     AbSub := AbelianGroup(invs[#invs-#basis+1..#invs]);
@@ -134,8 +145,8 @@ intrinsic GensToBasis(S::AlgEtQOrd, gens::SeqEnum) -> SeqEnum
                     y := Eltseq((ord*b) @@ iso);
                     assert &and[y[j] mod ord eq 0 : j in [1..#y]];
                     b -:= &+[(y[j] div ord) * basis[#basis+1-j] : j in [1..#basis]];
-                    assert Order(b) eq ord;
                 end if;
+                assert Order(b) eq ord;
                 Append(~basis, b);
                 break;
             end if;

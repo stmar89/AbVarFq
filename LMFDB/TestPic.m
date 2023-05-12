@@ -1,4 +1,4 @@
-// Usage: ls pic_examples | parallel -j32 --timeout 600 "magma -b isocls:={1} TestPic.m > output/{1} &2>1"
+// Usage: ls LMFDB/pic_examples | parallel -j32 --timeout 600 "magma -b isocls:={1} LMFDB/TestPic.m > LMFDB/pic_output/{1} &2>1"
 
 SetColumns(0);
 SetVerbose("User1", 1);
