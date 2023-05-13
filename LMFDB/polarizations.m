@@ -68,7 +68,7 @@ intrinsic pAdicPosCMType(A::AlgEtQ : precpAdic := 30, precCC := 30 ) -> AlgEtQCM
     require IsCoprime(Coefficients(h)[(Degree(h) div 2)+1],p) : "The isogeny class is not ordinary";
     rtspp,rtsCC:=pAdicToComplexRoots(PolynomialRing(Rationals())!h,p : precpAdic := precpAdic, precCC:=precCC ); 
         //from paddictocc.m. works only for ordinary
-    homs:=HomsToC(A : Precision:=precCC );
+    homs:=HomsToC(A : Prec:=precCC );
     FA:=PrimitiveElement(A);
     homs_FA:=[Parent(rtsCC[1])!h(FA) : h in homs ];
     cmtype_homs:=[ ];
@@ -168,33 +168,33 @@ intrinsic PeriodMatrix(I::AlgEtQIdl,x0::AlgEtQElt,phi::AlgEtQCMType) -> AlgMatEl
 	A:=Algebra(I);
 	zb:=ZBasis(I);
 	N:=#zb;
+    n:=N div 2;
+    E := Matrix(Integers(),N,N,[Trace(ComplexConjugate(a*x0)*b) : a in zb, b in zb]); // added sign
+    C, B := FrobeniusFormAlternating(E);
+    // Check documentation of FrobeniusFormAlternating
+    newb:= [ SumOfProducts(Eltseq(r),zb) : r in Rows(B) ];
+    is_symplectic:=function(basis)
+        n := #basis div 2;
+        bil:=func<x,y | Trace(ComplexConjugate(y*x0)*x)>;
+        G:=basis[1..n];
+        B:=basis[n+1..2*n];
+        return forall{i : i,j in [1..n] | bil(G[i],G[j]) eq 0 and bil(B[i],B[j]) eq 0 and bil(G[i],B[j]) eq KroneckerDelta(i,j)};
+    end function;
+    assert is_symplectic(newb);
     prec_factor:=0;
     while true do
         try
             homs:=Homs(phi);
-            prec:=Precision(Codomain(homs[1]));
-            E := Matrix(Integers(),N,N,[Trace(ComplexConjugate(a*x0)*b) : a in zb, b in zb]); // added sign
-            C, B := FrobeniusFormAlternating(E);
-            // Check documentation of FrobeniusFormAlternating
-            newb:= [ SumOfProducts(Eltseq(r),zb) : r in Rows(B) ];
-            is_symplectic:=function(basis)
-                n := #basis div 2;
-                bil:=func<x,y | Trace(ComplexConjugate(y*x0)*x)>;
-                G:=basis[1..n];
-                B:=basis[n+1..2*n];
-                return forall{i : i,j in [1..n] | bil(G[i],G[j]) eq 0 and bil(B[i],B[j]) eq 0 and bil(G[i],B[j]) eq KroneckerDelta(i,j)};
-            end function;
-            assert is_symplectic(newb);
-            N:=N div 2;
-            bigPM := Matrix(Codomain(homs[1]),N,2*N,&cat[[F(b) : b in newb] : F in homs]);
-            smallPM := Submatrix(bigPM,1,N+1,N,N)^-1*Submatrix(bigPM,1,1,N,N);
-            test_symm:=forall{<i,j> : i,j in [1..N] | Abs(smallPM[i,j]-smallPM[j,i]) lt 10^(-(prec div 2)) };
+            prec:=Precision(phi);
+            bigPM := Matrix(Codomain(homs[1]),n,N,&cat[[F(b) : b in newb] : F in homs]);
+            smallPM := Submatrix(bigPM,1,n+1,n,n)^-1*Submatrix(bigPM,1,1,n,n);
+            test_symm:=forall{<i,j> : i,j in [1..n] | Abs(smallPM[i,j]-smallPM[j,i]) lt 10^(-(prec div 2)) };
             im_smallPM:=Matrix([[Im(x) : x in Eltseq(r)] :r in Rows(smallPM)]);
             test_pos_def:=forall{e : e in Eigenvalues(im_smallPM) | e[1] gt 0 };
             require test_symm and test_pos_def : "Precision issue. Increase the precision of the given cm-type";
             return bigPM,smallPM;     
         catch e
-            // "We double the precision of the CMType";
+            "We double the precision of the CMType";
             old_prec:=Precision(phi);
             prec_factor +:=1;
             phi:=ChangePrecision(phi,2^prec_factor*old_prec);
