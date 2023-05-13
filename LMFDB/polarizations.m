@@ -35,7 +35,7 @@ intrinsic PrincipalPolarizations(I::AlgEtQIdl,PHI::AlgEtQCMType)->SeqEnum[AlgEtQ
 
     //TODO Document me 
     Iv:=TraceDualIdeal(ComplexConjugate(I));
-    test,iso:=IsIsomorphic(I,Iv);
+    test,iso:=IsIsomorphic(Iv,I); // iso*I eq Iv
     if not test then
         Ipols:=[];
     else
@@ -166,38 +166,56 @@ end intrinsic;
 intrinsic PeriodMatrix(I::AlgEtQIdl,x0::AlgEtQElt,phi::AlgEtQCMType) -> AlgMatElt,AlgMatElt
 { Given an abelian variety I over a finite field and a principal polarization x0 computed wrt the CM-type phi, it returns the corresponding big and small period matrices. The precision of the approximation is determined by the precision of the cm-type.}
 	A:=Algebra(I);
-	cc:=ComplexConjugate;
 	zb:=ZBasis(I);
 	N:=#zb;
-    phi:=Homs(phi);
-	prec:=Precision(Codomain(phi[1]));
-	//E := Matrix(Integers(),N,N,[Trace(x0*cc(a)*b) : b in zb, a in zb]); // added sign
-	E := Matrix(Integers(),N,N,[-Trace(x0*cc(a)*b) : b in zb, a in zb]); // added sign
-	D, C := FrobeniusFormAlternating(E);
-	// newb := ElementToSequence(Matrix(A,C)*Matrix(A,N,1,zb));
-    newb:= [ SumOfProducts(Eltseq(r),zb) : r in Rows(C) ];
-	N:=N div 2;
-	bigPM := Matrix(Codomain(phi[1]),N,2*N,&cat[[F(b) : b in newb] : F in phi]);
-	smallPM := Submatrix(bigPM,1,N+1,N,N)^-1*Submatrix(bigPM,1,1,N,N);
-	test_symm:=forall{<i,j> : i,j in [1..N] | Abs(smallPM[i,j]-smallPM[j,i]) lt 10^(-(prec div 2)) };
-	im_smallPM:=Matrix([[Im(x) : x in Eltseq(r)] :r in Rows(smallPM)]);
-	test_pos_def:=forall{e : e in Eigenvalues(im_smallPM) | e[1] gt 0 };
-	require test_symm and test_pos_def : "Precision issue. Increase the precision of the given cm-type";
-	return bigPM,smallPM;     
+    prec_factor:=0;
+    while true do
+        try
+            homs:=Homs(phi);
+            prec:=Precision(Codomain(homs[1]));
+            E := Matrix(Integers(),N,N,[Trace(ComplexConjugate(a*x0)*b) : a in zb, b in zb]); // added sign
+            C, B := FrobeniusFormAlternating(E);
+            // Check documentation of FrobeniusFormAlternating
+            newb:= [ SumOfProducts(Eltseq(r),zb) : r in Rows(B) ];
+            is_symplectic:=function(basis)
+                n := #basis div 2;
+                bil:=func<x,y | Trace(ComplexConjugate(y*x0)*x)>;
+                G:=basis[1..n];
+                B:=basis[n+1..2*n];
+                return forall{i : i,j in [1..n] | bil(G[i],G[j]) eq 0 and bil(B[i],B[j]) eq 0 and bil(G[i],B[j]) eq KroneckerDelta(i,j)};
+            end function;
+            assert is_symplectic(newb);
+            N:=N div 2;
+            bigPM := Matrix(Codomain(homs[1]),N,2*N,&cat[[F(b) : b in newb] : F in homs]);
+            smallPM := Submatrix(bigPM,1,N+1,N,N)^-1*Submatrix(bigPM,1,1,N,N);
+            test_symm:=forall{<i,j> : i,j in [1..N] | Abs(smallPM[i,j]-smallPM[j,i]) lt 10^(-(prec div 2)) };
+            im_smallPM:=Matrix([[Im(x) : x in Eltseq(r)] :r in Rows(smallPM)]);
+            test_pos_def:=forall{e : e in Eigenvalues(im_smallPM) | e[1] gt 0 };
+            require test_symm and test_pos_def : "Precision issue. Increase the precision of the given cm-type";
+            return bigPM,smallPM;     
+        catch e
+            // "We double the precision of the CMType";
+            old_prec:=Precision(phi);
+            prec_factor +:=1;
+            phi:=ChangePrecision(phi,2^prec_factor*old_prec);
+            assert Precision(phi) gt old_prec;
+            go:=false;
+        end try;
+    end while;
 end intrinsic;
 
     /*
+    fld_m_files:="~/packages_github/AbVarFq/LMFDB/";
     fld:="~/266_wk_icm_rec/";
     fld_schema_wk:=fld cat "labelling/parallel/output/";
     AttachSpec(fld cat "AlgEt/spec");
     load "~/999_LMFDB_isogeny_label_functions.txt";
     P<x>:=PolynomialRing(Integers());
-    Attach(fld cat "polarizations/padictocc.m");
-    Attach(fld cat "labelling/parallel/labelling.m");
-    Attach(fld cat "polarizations/polarizations.m");
+    Attach(fld_m_files cat "padictocc.m");
+    Attach(fld_m_files cat "polarizations.m");
 
     t0:=Cputime();
-        file:=fld_schema_wk cat "2.128.a_bf_schema.txt";
+        //file:=fld_schema_wk cat "2.128.a_bf_schema.txt";
         //file:=fld_schema_wk cat "3.9.d_j_o_schema.txt";
         time R:=LoadSchemaWKClasses(Read(file));
         time str:=PrintPrincipalPolarizationsIsogenyClass(R);
