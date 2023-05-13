@@ -277,16 +277,17 @@ Note that if you're calling this for many different pos, it's probably better to
 end intrinsic;
 
 intrinsic PicIteration(S::AlgEtQOrd, basis::SeqEnum, filter::UserProgram) -> SeqEnum
-{Iterates over the elements of the Picard group in a consistent order, using a filter function on Pic(S).  basis_info should be an entry in the *first* part of the output of CanonicalPicBases(S), and filter should be take a single element of Pic(S) as input and return a boolean (the ideal is included if the output is true).  The output is a sequence of ideals, in a consistent order.}
+{Iterates over the elements of the Picard group in a consistent order, using a filter function on Pic(S).  basis_info should be an entry in the *first* part of the output of CanonicalPicBases(S), and filter should be take a single element of Pic(S) as input and return a boolean (the ideal is included if the output is true).  The output is a sequence of pairs <i, I>, where I is an ideal and i is the index of that ideal in the overall iteration.}
     P, pmap := PicardGroup(S);
     invs := AbelianInvariants(P);
     iter := [&+basis[i..#basis] : i in [1..#basis]];
     coeffs := [0 : i in invs];
     cur := P.0; // identity
     ans := [];
+    ctr := 1;
     while true do
         if filter(cur) then
-            Append(~ans, pmap(cur));
+            Append(~ans, <pmap(cur), ctr>);
         end if;
         pos := #coeffs;
         while coeffs[pos] eq invs[pos] - 1 do
@@ -298,6 +299,7 @@ intrinsic PicIteration(S::AlgEtQOrd, basis::SeqEnum, filter::UserProgram) -> Seq
         end while;
         // If we weren't filtering, we could multiply by pmap(iter[pos]) rather than adding and eventually applying pmap(cur).  Hopefully the cost of applying pmap is dwarfed by the polarization calculation we have to do.
         cur +:= iter[pos];
+        ctr +:= 1;
     end while;
 end intrinsic;
 
