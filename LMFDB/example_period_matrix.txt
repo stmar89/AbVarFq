@@ -1,0 +1,52 @@
+/* vim: set syntax=magma :*/
+/*
+    To compute period matrices of PPAV's in a given isogeny class.
+*/
+
+
+// clone the AlgEt repo stmar89: link https://github.com/stmar89/AbVarFq
+// modify the following line accodingly.
+    fld_AlgEt:="~/packages_github/AlgEt/";
+
+// clone the AbvarFq repo from the fork on roed314: link https://github.com/roed314/AbVarFq 
+// modify the following line accodingly.
+    fld_AbVarFq:="~/packages_github/AbVarFq/";
+
+// Attach spec and packages
+    AttachSpec(fld_AlgEt cat "spec");
+    Attach(fld_AbVarFq cat "LMFDB/padictocc.m");
+    Attach(fld_AbVarFq cat "LMFDB/labelling_wk_classes.m");
+    Attach(fld_AbVarFq cat "LMFDB/polarizations.m");
+
+// Download the output of the principal polarization computation from David Roe's website.
+// and change the following line accordingly. 
+// The folder should contain files like 2.11.d_d_ppavs.txt
+    fld_PPAVs:="~/266_wk_icm_rec/polarizations/parallel/output/";
+// NB this data is constructed without using representatives which are not canonical. 
+// The purpose is to experiment with PeriodMatrices
+
+
+
+// Let's say that we you want to copute the period matrices of the ppavs in the isogeny class given by
+    label:="2.11.d_d";
+// Load them using
+    S:=LoadPrincipalPolarizationsIsogenyClass(Read(fld_PPAVs cat label cat "_ppavs.txt"));
+    ppavs:=PrincipalPolarizationsIsogenyClass(S);
+// See the documentation of the above intrinsics for more info.
+    PHI:=CMType(ppavs[1,2,1]);
+    for p in ppavs do
+        pps:=p[2];
+        for pp in pps do
+            PM:=PeriodMatrix(p[1],pp,PHI);
+            PM;
+        end for;
+    end for;
+// If you want to increase the precision of the output:
+    ChangePrecision(~PHI,1000);
+    for p in ppavs do
+        pps:=p[2];
+        for pp in pps do
+            PM:=PeriodMatrix(p[1],pp,PHI);
+            PM;
+        end for;
+    end for;
