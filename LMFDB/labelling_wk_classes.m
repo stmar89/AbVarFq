@@ -10,11 +10,10 @@ declare attributes AlgEtQOrd : WKICM_barCanonicalRepresentatives, // a sequence,
 
 intrinsic SortKeyPrime(P::AlgEtQIdl)->SeqEnum[RngIntElt]
 {Given a P of the maximal order of an etale algebra K over Q, returns a sequence of 3 integers [ j , N , i ], in the following way:
-- Write K = K1 x ... x Kn with Ki a number field, and sort them according to the lexicographic order of the coefficients of the defining poly, starting from the constant term.
-- Write P as a direct sum of n ideals, according to the same order.
-- Then j is the unique component which does not contain the unit element, and
-- N.i is the LMFDB label of P.
-If P is a prime of a non-maximal order the output is the smallest sortkey of the finitely many primes of the maximal order above  P, sorted lexicographically.
+- Write K = K1 x ... x Kn where the Ki's are number fields sorted according to the lexicographic order of the coefficients of the defining polynomial, starting from the constant term.
+- Write P as a direct sum of n ideals, according to the same order. Only one, the jth, of these direct summands does not contain the unique element. More precisely, if Pi denotes the i-th direct summand of P then Pi=OKi for all i ne j and Pj is a prime of OKj.
+- Finally, N.i is the LMFDB label of Pj.
+If P is a prime of a non-maximal order, then the output is the smallest sortkey of the finitely many primes of the maximal order OK above P, sorted lexicographically according to the [j,N,i]-scheme defined above. Note that if PP is an ideal of OK above P, then PP meet Order(P) = P. 
 Important: we assume that the number fields forming the etale algebra are different.}
     if not assigned P`SortKey then
         S:=Order(P);
@@ -24,18 +23,23 @@ Important: we assume that the number fields forming the etale algebra are differ
             nfs:=[ Coefficients(DefiningPolynomial(K)) : K in Components(A) ];
             require #nfs eq #Seqset(nfs) : "We need the number fields forming the etale algebra to be different";
             ind:=[1..#nfs];
+            // we sort the number fields
             ParallelSort(~nfs,~ind);
             _,Ps:=IsProductOfIdeals(P);
-            Ps:=< Ps[ind[i]] : i in [1..#ind] >; //sorted
+            // we sort the component of P in the same way
+            Ps:=< Ps[ind[i]] : i in [1..#ind] >;
             j:=[ i : i in [1..#nfs] | not One(Order(Ps[i])) in Ps[i] ][1];
             P_lmfdb:=LMFDBLabel(Ps[j]);
             P_lmfdb:=[ eval(s) : s in Split(P_lmfdb,".") ];
             assert #P_lmfdb eq 2;
+            // we construct the sortkey
             P`SortKey:=[ j ] cat P_lmfdb;
         else
             O:=MaximalOrder(A);
+            // we consider the primes above P
             pp:=PrimesAbove(O!!P);
             require forall{Q : Q in pp | (OneIdeal(S) meet S!!Q) eq P} : "The ideal is not prime";
+            // and pick the on with smallest sort-key
             P`SortKey:=Min([ $$(Q) : Q in pp ]);
         end if;
     end if;
@@ -66,7 +70,7 @@ intrinsic ComparePrimes(P::AlgEtQIdl,Q::AlgEtQIdl) -> RngIntElt
 end intrinsic;
 
 intrinsic SortSingularPrimes(S::AlgEtQOrd) -> SeqEnum[AlgEtIdl]
-{It sorts the singular primes of the order according to the scheme described in ComparePrimes.}
+{It sorts the singular primes of the order S according the lexicographic order of their sort keys.}
     if not assigned S`SingularPrimesSorted then
         if IsMaximal(S) then
             S`SingularPrimesSorted:=[PowerStructure(AlgEtQIdl)|];
@@ -78,6 +82,10 @@ intrinsic SortSingularPrimes(S::AlgEtQOrd) -> SeqEnum[AlgEtIdl]
 end intrinsic;
 
 my_hnf:=function(I,basis)
+// Given a fractional ideal over some order in an etale algebra A of dimension N over Q, and a Q-basis basis of A, 
+// it returns a sequence of integers [ den ] cat T where:
+// - T are the g(g+1)/2 entries of a gxg upper triangular matrix, and
+// - (1/den)*T is the HNF of the matrix representing any ZBasis of I with respect to basis.
     M:=Matrix(AbsoluteCoordinates(ZBasis(I),basis));
     N:=Nrows(M);
     den:=Denominator(M);
@@ -94,7 +102,33 @@ my_hnf:=function(I,basis)
 end function;
 
 intrinsic WKICM_barCanonicalRepresentatives(S::AlgEtQOrd)->SeqEnum[AlgEtQIdl]
-{Let S be an order in an étale algebra K=Q[F]=Q[x]/(h), where h is a squarefree q-Weil polynomial. This intrinsic returns a sequence of canonical representatives of the classes in WKICM_bar(S), indexed in the same way. TODO what is canonical.}
+{Let S be an order in an étale algebra K=Q[F]=Q[x]/(h), where h is a squarefree q-Weil polynomial. This intrinsic returns a sequence of canonical representatives of the classes in WKICM_bar(S), in the same order.
+The canonical represenatative is defined as follows:
+- If S is Gorenstein then there is only one weak class with multiplcator ring S, which will be represented by OneIdeal(S).
+- If S has Cohen Macaulay type 2, then 
+    -- put dSt:=d*St, where St is the TraceDualIdeal(S) and d is the smallest integer such that dSt c S.
+    -- let the P1,...,Pn denote the primes of S at which S is non-Gorenstein, that is, has Cohen Macaulay type exactly 2.
+    -- let m1,...,mn be positive integers such that Pi^mi is contained in dSt locally tt Pi. These mi exists because S is Noetherian.
+  Each ideal I with (I:I)=S satisfies either I_Pi \simeq S_Pi or I_Pi \simeq dSt_Pi. 
+  Explicitely, J = \sum_i ( (I_i + P_i^mi )*\prod_{j ne i}Pj^mj ), where I_i = S if I_Pi\simeq S_Pi and I_i=dSt if I_Pi\simeq dSt_Pi.
+  Note that if we replace mi with a bigger integer, the ideal J does not change.
+  Also, note that J_Pi = (I_i)_Pi for each i, and J_P=S_P for every other primes P of S.
+  For more details, see Theorem 6.2 and Lemma 6.4 in "arXiv:2206.03758".
+- If S has Cohen Macaulay type > 2 then:
+    -- let P1,...,Pn be the singular primes of S.
+    -- put Ti=(Pi:Pi) for each i
+    -- put Gi = (Ti^*/S^*) x ker( Pic(S)->Pic(T) | [L]:->[LT] ).
+    -- let T be Ti such that Gi is smallest, if there is more than one with the same size, pick the i with Pi of smallest SortKey.
+    -- let K be a set of representatives of the classes in the ker, such that LT=T.
+    -- let U be a transversal of (T^*/S^*).
+    -- By recursion, let J1,...,Js be the canonical representatives of WKICM_bar(T).
+  Each class in WKICM_bar admits a representative I0 such that I0*T=Ji for a unique idex i.
+  All ideals I, weakly equivalent to I0, satisfying I*T=J_i are of the form I=u*L*I0 for unique u in U and L in K.
+  We list all of them and define the canonical representative of the weak equivalence class of I0 to be the one 
+  with smallest output of my_hnf(I,basis), sorted lexicographically, where basis = [ V^(g-1),...,V , 1 , F, ... F^g).
+  //TODO add REF to unpublished notes.
+  }
+
     if not assigned S`WKICM_barCanonicalRepresentatives then
         cm:=CohenMacaulayType(S);
         if cm eq 1 then
@@ -211,8 +245,8 @@ end intrinsic;
 
 seq_of_dims:=function(I)
 // Given an ideal I over an order S, not necessarily the multipicator ring, 
-// it returns a sequence the sequence of integers dim_(S/P) (I/PI), where P runs over the singular primes of S, sorted
-// according to the ordering described in ComparePrimes
+// it returns the sequence of integers dim_(S/P) (I/PI), where P runs over the singular primes of S, sorted
+// according to the lexicographic order of their SortKeys
     S:=Order(I);
     if IsMaximal(S) then
         return [PowerStructure(RngIntElt)|];
@@ -222,7 +256,13 @@ seq_of_dims:=function(I)
 end function;
 
 intrinsic SortKeysWKICM_bar(S::AlgEtQOrd) -> SeqEnum[SeqEnum[RngIntElt]]
-{TODO}
+{Given an order S, it returns the sequence of SortKeys of the classes in WKICM_bar(S). The SortKey is a sequence of integers consistsing of two parts, dims cat hnf_can, defined as follows:
+- dims is the output of seq_of_dims(I) for any representative of the class.
+- if S has Cohen Maulay type <=2, then hnf_can is left empty, otherwise is the output of my_hnf(I_can), 
+  where I_can is the canonical representative of the class. See WKICM_barCanonicalRepresentatives for the 
+  definition of canonical representative.
+Note that from the SortKey, and the order S, one can always reconstruct the canonical representative of the class.
+}
     cm:=CohenMacaulayType(S);
     if cm le 2 then
         return [ seq_of_dims(I) : I in WKICM_bar(S) ];
@@ -239,7 +279,11 @@ intrinsic SortKeysWKICM_bar(S::AlgEtQOrd) -> SeqEnum[SeqEnum[RngIntElt]]
 end intrinsic;
 
 intrinsic SortKeysOrders(seq::SeqEnum[AlgEtQOrd]) -> SeqEnum[SeqEnum[RngIntElt]]
-{TODO}
+{Let S be an order in an étale algebra K=Q[F]=Q[x]/(h), where h is a squarefree q-Weil polynomial. 
+The SortKey of S is consists of two integers N.i where:
+- N=Index(O,S) with O the maximal order of the algebra.
+- i is the index that determines, the position of S in the list of orders with the same N, sorted lexicographically 
+  with respect to the output of my_hnf(S,basis) with basis = [ V^(g-1),...,V , 1 , F, ... F^g).}
     A:=Algebra(seq[1]);
     f:=DefiningPolynomial(A);
     g:=Degree(f) div 2;
@@ -261,6 +305,7 @@ function Base26Encode(n)
 end function;
 
 function IsogenyLabel(f)
+// returns the LMFDB label of the isogeny class determined by f.
     g:=Degree(f) div 2;
     q:=Integers() ! (Coefficients(f)[1]^(2/Degree(f)));
     str1:=Reverse(Prune(Coefficients(f)))[1..g];
@@ -284,8 +329,8 @@ end function;
 
 two_generating_set:=function(I,basis)
 // given an invertible ideal I over some order S and a basis of the algebra
-// it returns a pair [ c,elt ] where c is the smallerst integer in I and elt is a 
-// not canonical
+// it returns a pair [ c,elt ] where c is the smallerst integer in I and elt is an element such that I = c*S + elt*S.
+// Note that elt is not chosen canonically.
     S:=Order(I);
     A:=Algebra(S);
     if I eq OneIdeal(S) then
@@ -487,7 +532,6 @@ function LabelToPoly(lab)
     f:=PP ! out;
     return g,q,f;
 end function;
-
 
 intrinsic LoadSchemaWKClasses(str::MonStgElt)->AlgEtQOrd
 {Given the output of the schema for one isogeny class returns the order Z[F,V] with the attributes for overorders and weak equivalence classes populated.}
