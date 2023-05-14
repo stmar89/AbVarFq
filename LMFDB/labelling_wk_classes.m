@@ -110,7 +110,7 @@ The canonical represenatative is defined as follows:
     -- let the P1,...,Pn denote the primes of S at which S is non-Gorenstein, that is, has Cohen Macaulay type exactly 2.
     -- let m1,...,mn be positive integers such that Pi^mi is contained in dSt locally tt Pi. These mi exists because S is Noetherian.
   Each ideal I with (I:I)=S satisfies either I_Pi \simeq S_Pi or I_Pi \simeq dSt_Pi. 
-  Explicitely, J = \sum_i ( (I_i + P_i^mi )*\prod_{j ne i}Pj^mj ), where I_i = S if I_Pi\simeq S_Pi and I_i=dSt if I_Pi\simeq dSt_Pi.
+  Explicitely, J = \sum_i ( (I_i + P_i^mi )*\prod_(j ne i)j^mj ), where I_i = S if I_Pi\simeq S_Pi and I_i=dSt if I_Pi\simeq dSt_Pi.
   Note that if we replace mi with a bigger integer, the ideal J does not change.
   Also, note that J_Pi = (I_i)_Pi for each i, and J_P=S_P for every other primes P of S.
   For more details, see Theorem 6.2 and Lemma 6.4 in "arXiv:2206.03758".
