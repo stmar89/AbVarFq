@@ -5,6 +5,8 @@ declare attributes AlgEtQOrd : PrincipalPolarizationsIsogenyClass,
                                transversal_USplus_USUSb;
 
 transversal_US_USplus:=function(S)
+// Given an order S, it returns a transveral in S of the quotient S^*/S^*_+, where
+// S^*_+ is the subgroups of S^* consisting of totally real totally positive units.
     if not assigned S`transversal_US_USplus then
         US,uS:=UnitGroup(S);
         USplus:=TotallyRealPositiveUnitGroup(S);
@@ -14,7 +16,10 @@ transversal_US_USplus:=function(S)
 end function;
 
 transversal_USplus_USUSb:=function(S)
+// Given an order S=\bar{S}, it returns a transveral in S of the quotient S^*_+/<u\bar(u) : u in S^*> where
+// S^*_+ is the subgroups of S^* consisting of totally real totally positive units.
     if not assigned S`transversal_USplus_USUSb then
+        assert IsConjugateStable(S);
         US,uS:=UnitGroup(S);
         USplus:=TotallyRealPositiveUnitGroup(S);
         USUSb:=sub< USplus | [ USplus!((g*ComplexConjugate(g))@@uS) : g in [uS(g) : g in Generators(US) ]]>;
@@ -24,16 +29,27 @@ transversal_USplus_USUSb:=function(S)
 end function;
 
 intrinsic PrincipalPolarizations(I::AlgEtQIdl,PHI::AlgEtQCMType)->SeqEnum[AlgEtQElt]
-{Given an ideal I and a CM-Type PHI, returns all the principal polarizations with respect to PHI.}
+{Given an ideal I and a CM-Type PHI, returns all the principal polarizations of I with respect to PHI.}
 
     is_polarization:=function(l,PHI)
-    // l an element of K, PHI a CMType
+    // l an element of K, PHI a CMType, it returns wheather l is totally imaginary and PHI-positive, that is, 
+    // Im(phi(l))>0 for every phi in PHI.
         test1:=l eq -ComplexConjugate(l);
         test2:=forall{phi : phi in Homs(PHI) | Im(phi(l)) gt 0 };
         return test1 and test2;
     end function;
 
-    //TODO Document me 
+    // First we test if there exists iso such that iso*I = Iv. If not, then I is not self-dual.
+    // Assume that there exists such an iso. 
+    // Given iso1 with iso1*I=Iv, then iso1 is of the form iso1=v*iso, where v is in S^*.
+    // Given two principal polarizations l and l1, then there eixsts a totally real totally positive unit v of S such that l1=v*l.
+    // Moreover, (I,l) is isomorphic to (I,l1) as PPAV if and only if l1=u*\bar{u} for some u in S^*. 
+    // Combining these facts, we get that to determine whether there is a principal polarization of I, it suffices to check 
+    // elements of the form iso*v where v loops over a transversal of S^*/S^*_+, 
+    // where S^*_+ is the subgroupsof S^* consisting of totally real totally positive units.
+    // If we find a principal polarization, say l, then all non-isomorphic one will be of the form l1=v*l, where v loops over a 
+    // transversal of S^*_+/<u*\bar{u} : u in S^*>.
+    
     Iv:=TraceDualIdeal(ComplexConjugate(I));
     test,iso:=IsIsomorphic(Iv,I); // iso*I eq Iv
     if not test then
@@ -58,11 +74,7 @@ intrinsic PrincipalPolarizations(I::AlgEtQIdl,PHI::AlgEtQCMType)->SeqEnum[AlgEtQ
 end intrinsic;
 
 intrinsic pAdicPosCMType(A::AlgEtQ : precpAdic := 30, precCC := 30 ) -> AlgEtQCMType
-{}
-// Thanks John Voight!
-// given an ordinary isogeny class AVh, it computes a AlgAssCMType of the 
-// Algebra determined by the Frobenius of AVh such that the Frobenius has 
-// positive p-adic valuation according to some embedding of \barQp in C.
+{ Given an etale algebra A = Q[x]/h = Q[F], where h is a squarefree ordinary q-Weil polynomial, it returns an AlgEtCMType PHI of A such that phi(F) has positive p-adic valuation according to some fixed embedding of \barQp in C. It uses the package padictocc.m written by John Voight. }
     h:=ChangeRing(DefiningPolynomial(A),Integers());
     _,p:=IsPrimePower(ConstantCoefficient(h));
     require IsCoprime(Coefficients(h)[(Degree(h) div 2)+1],p) : "The isogeny class is not ordinary";
@@ -85,7 +97,7 @@ intrinsic pAdicPosCMType(A::AlgEtQ : precpAdic := 30, precCC := 30 ) -> AlgEtQCM
 end intrinsic;
 
 intrinsic PrincipalPolarizationsIsogenyClass(R::AlgEtQOrd)->SeqEnum
-{ returns a sequence of tuples < I, [x1,...,xn] > where (I,x1),...,(I,xn) represent the isomorphism classes of PPAVs corresponding with underlying AV given by I. Ideally, R=Z[F,V]. Important: isomorphism classes without a principal polarization are not returned (seomtimes not even computed).}
+{Returns a sequence of tuples < I, [x1,...,xn] > where (I,x1),...,(I,xn) represent the isomorphism classes of PPAVs corresponding with underlying AV given by I. Ideally, R=Z[F,V]. Important: isomorphism classes without a principal polarization are not returned (sometimes not even computed).}
     if not assigned R`PrincipalPolarizationsIsogenyClass then
         A:=Algebra(R);
         PHI:=pAdicPosCMType(A);
@@ -96,7 +108,7 @@ intrinsic PrincipalPolarizationsIsogenyClass(R::AlgEtQOrd)->SeqEnum
             test_S:=IsConjugateStable(S) and not exists{ P : P in NonGorensteinPrimes(S) | IsConjugateStable(P) and CohenMacaulayTypeAtPrime(S,P) eq 2 };
             // if test eq false then there is no PPAV with End = S.
             if test_S then
-                // if S is Gorenstein the next part can be improved! See the notes TODO
+                // if S is Gorenstein the next part can be improved!
                 icmS:=ICM_bar(S);
                 for I in icmS do
                     pp:=PrincipalPolarizations(I,PHI);
@@ -117,7 +129,7 @@ RemoveBlanks:=function(str)
 end function;
 
 intrinsic PrintPrincipalPolarizationsIsogenyClass(R::AlgEtQOrd)->MonStgElt
-{}
+{Given the order R=Z[F,V] of an ordinary squarefree isogeny class, it computes the principal polarizatons and return a string that can printed to file. This string can be loaded back in magma using LoadPrincipalPolarizationsIsogenyClass.}
     A:=Algebra(R);
     nf:=Components(A);
     nf_poly:=[ Coefficients((DefiningPolynomial(K))) : K in nf ];
@@ -145,7 +157,7 @@ intrinsic PrintPrincipalPolarizationsIsogenyClass(R::AlgEtQOrd)->MonStgElt
 end intrinsic;
 
 intrinsic LoadPrincipalPolarizationsIsogenyClass(str::MonStgElt)->AlgEtQOrd
-{}
+{Given a string produced with PrintPrincipalPolarizationsIsogenyClass, it returns the orders Z[F,V] after populating the attribute PrincipalPolarizationIsogenyClass, which contains the output of PrincipalPolarizationIsogneyClass.}
     data:=eval(str);
     PP:=PolynomialRing(Rationals());
     ff:=[ PP!f : f in data[1]];
