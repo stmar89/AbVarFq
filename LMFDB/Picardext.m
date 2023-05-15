@@ -13,9 +13,7 @@ import "sorting/code/sorting.m": SplitPrime;
 -Discrete Log in ResidueRingUnits (is it necessary?)
 */
 
-declare attributes AlgAssVOrd:PicardGroup;
-declare attributes AlgAssVOrd:PicardGroup_LMFDB;
-declare attributes AlgAssVOrd:UnitGroup;
+declare attributes AlgEtQOrd:CanonicalPicBasis,BasisBar,TraceDualPic;
 
 function CanonicalPrimeIdealsOverPrime(OL, p, FL, Find)
     L := NumberField(OL);
@@ -276,20 +274,27 @@ Note that if you're calling this for many different pos, it's probably better to
     return IdealFromPosition(pos, basis, invs);
 end intrinsic;
 
-intrinsic PicIteration(S::AlgEtQOrd, basis::SeqEnum, filter::UserProgram) -> SeqEnum
+intrinsic PicIteration(S::AlgEtQOrd, basis::SeqEnum : filter:=0) -> SeqEnum
 {Iterates over the elements of the Picard group in a consistent order, using a filter function on Pic(S).  basis_info should be an entry in the *first* part of the output of CanonicalPicBases(S), and filter should be take a single element of Pic(S) as input and return a boolean (the ideal is included if the output is true).  The output is a sequence of pairs <i, I>, where I is an ideal and i is the index of that ideal in the overall iteration.}
     P, pmap := PicardGroup(S);
     invs := AbelianInvariants(P);
-    iter := [&+basis[i..#basis] : i in [1..#basis]];
     coeffs := [0 : i in invs];
-    cur := P.0; // identity
     ans := [];
     ctr := 1;
+    if filter cmpeq 0 then
+        iter := [pmap(&+basis[i..#basis] : i in [1..#basis])];
+        cur := OneIdeal(S);
+    else
+        iter := [&+basis[i..#basis] : i in [1..#basis]];
+        cur := P.0; // identity
+    end if;
     while true do
-        if filter(cur) then
+        pos := #coeffs;
+        if filter cmpeq 0 then
+            Append(~ans, <cur, ctr>);
+        else
             Append(~ans, <pmap(cur), ctr>);
         end if;
-        pos := #coeffs;
         while coeffs[pos] eq invs[pos] - 1 do
             coeffs[pos] := 0;
             pos -:= 1;
@@ -297,10 +302,57 @@ intrinsic PicIteration(S::AlgEtQOrd, basis::SeqEnum, filter::UserProgram) -> Seq
                 return ans;
             end if;
         end while;
-        // If we weren't filtering, we could multiply by pmap(iter[pos]) rather than adding and eventually applying pmap(cur).  Hopefully the cost of applying pmap is dwarfed by the polarization calculation we have to do.
-        cur +:= iter[pos];
+        // If we aren't filtering, we can multiply by pmap(iter[pos]) rather than adding and eventually applying pmap(cur).  Hopefully the cost of applying pmap is dwarfed by the polarization calculation we have to do.
+        if filter cmpeq 0 then
+            cur *:= iter[pos];
+        else
+            cur +:= iter[pos];
+        end if;
         ctr +:= 1;
     end while;
+end intrinsic;
+
+intrinsic BasisBar(S::AlgEtQOrd) -> SeqEnum
+{Returns the conjugates of the non-canonical basis elements}
+    if assigned S`BasisBar then
+        return S`BasisBar;
+    end if;
+    assert IsConjugateStable(S);
+    P, pmap := PicardGroup(S);
+    bars := [ComplexConjugate(pmap(P.i)) @@ pmap : i in [1..Ngens(P)]];
+    S`BasisBar := bars;
+    return bars;
+end intrinsic;
+
+intrinsic TraceDualPic(S::AlgEtQOrd) -> SeqEnum
+{}
+    if assigned S`TraceDualPic then
+        return S`TraceDualPic;
+    end if;
+    assert IsGorenstein(S);
+    P, pmap := PicardGroup(S);
+    tdp := TraceDualIdeal(S) @@ pmap;
+    S`TraceDualPic := tdp;
+    return tdp;
+end intrinsic;
+
+intrinsic PPolIteration(S::AlgEtQOrd, basis::SeqEnum) -> SeqEnum
+{}
+    if IsGorenstein(S) and IsConjugateStable(S) then
+        basisbar := BasisBar(S);
+        tdp := TraceDualPic(S);
+        function bar(x)
+            coeffs := Eltseq(x);
+            assert #coeffs eq #basisbar;
+            return &+[coeffs[i] * basisbar[i] : i in [1..#coeffs]];
+        end function;
+        function filter(x)
+            return x + bar(x) eq tdp;
+        end function;
+        return PicIteration(S, basis : filter:=filter);
+    else
+        return PicIteration(S, basis);
+    end if;
 end intrinsic;
 
 intrinsic Random(G::GrpAuto : word_len:=40) -> GrpAutoElt
