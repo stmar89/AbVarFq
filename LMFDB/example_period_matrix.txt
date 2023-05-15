@@ -15,8 +15,9 @@
 // Attach spec and packages
     AttachSpec(fld_AlgEt cat "spec");
     Attach(fld_AbVarFq cat "LMFDB/padictocc.m");
-    Attach(fld_AbVarFq cat "LMFDB/labelling_wk_classes.m");
     Attach(fld_AbVarFq cat "LMFDB/polarizations.m");
+//    Attach(fld_AbVarFq cat "LMFDB/labelling_wk_classes.m"); //not needed here
+//    Attach(fld_AbVarFq cat "LMFDB/lmfdb.m"); //not needed here, overwrites the bugged SplitPrimes
 
 // Download the output of the principal polarization computation from David Roe's website.
 // The folder should contain files like 2.11.d_d_ppavs.txt
