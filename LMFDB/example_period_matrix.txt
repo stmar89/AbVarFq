@@ -19,10 +19,10 @@
     Attach(fld_AbVarFq cat "LMFDB/polarizations.m");
 
 // Download the output of the principal polarization computation from David Roe's website.
-// and change the following line accordingly. 
 // The folder should contain files like 2.11.d_d_ppavs.txt
+// Change the following line accordingly. 
     fld_PPAVs:="~/266_wk_icm_rec/polarizations/parallel/output/";
-// NB this data is constructed without using representatives which are not canonical. 
+// NB this data is constructed using representatives which are not canonical. 
 // The purpose is to experiment with PeriodMatrices
 
 
