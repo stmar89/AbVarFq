@@ -3,7 +3,8 @@
 
 */
     
-declare attributes AlgEtQIdl : SortKey; //See SortKeyPrime for a description.
+declare attributes AlgEtQIdl : SortKey, //See SortKeyPrime for a description.
+                               WELabel; // stores the label N.i.j of the weak eq class see FillSchema
 declare attributes AlgEtQOrd : WKICM_barCanonicalRepresentatives, // a sequence, indexed as WKICM_bar, containing the 
                                                                 // canonical representative of each weak class
                               SingularPrimesSorted;  // singular primes of the order, according to the their SortKey.
@@ -452,9 +453,12 @@ intrinsic FillSchema(R::AlgEtQOrd)->MonStgElt
         pic_size:=#PicardGroup(S);
         multiplicator_ring:=labels_oo[iS];
         labelS:=Sprintf("%o.%o",isog_label,multiplicator_ring);
-        for j->I in wkS do
+        for j in [1..#wkS] do
+            I:=wkS[j];
             sort_key:=wkS_sort_keys[j];
             label:=labelS cat Sprintf(".%o",j);
+            I`WELabel:=label; // populate the attribute
+
             we_number:=j;
             hnf:=my_hnf(I,basis);
             ideal_basis_numerators:="{" cat Prune(&cat[Sprintf("%o,",hnf[i]):i in [2..#hnf]]) cat "}";
@@ -501,12 +505,18 @@ intrinsic FillSchema(R::AlgEtQOrd)->MonStgElt
     return output;
 end intrinsic;
 
+intrinsic WELabel(I)->MonStgElt
+{Returns the WELabel of the weak equivalence class of I, which of the form N.i.j where N.i determines the multiplicator ring of I and j is determined by the SortKey. This }
+    return I`WELabel;
+end intrinsic;
+
 function Base26Decode(s)
         alphabetbase := StringToCode("a");
         n := 0;
         for c in Eltseq(s) do n := 26*n + StringToCode(c) - alphabetbase; end for;
         return n;
 end function;
+
 function LabelToPoly(lab)
     PP:=PolynomialRing(Integers());
     lab:=Split(lab,".");
@@ -595,8 +605,14 @@ intrinsic LoadSchemaWKClasses(str::MonStgElt)->AlgEtQOrd
     for iS in [1..#oo] do
         S:=oo[iS];
         labelS:=oo_labels[iS];
-        wkS:=[ Ideal(S,zb_in_A(braces_to_seq_of_seqs(l[6]),eval(l[7]))) : l in lines | l[4] eq labelS ];
-        assert2 forall{ I : I in wkS | MultiplicatorRing(I) eq S };
+        linesS:=[ l : l in lines | l[4] eq labelS ]; 
+        wkS:=[];
+        for l in linesS do
+            I:=Ideal(S,zb_in_A(braces_to_seq_of_seqs(l[6]),eval(l[7])));
+            I`MultiplicatorRing:=S;
+            I`WELabel:=&cat(Split(l[1],".")[4..6]); //N.i.j
+            Append(~wkS,I);
+        end for;
         assert2 forall{ i : i,j in [1..#wkS] | (i eq j) eq (IsWeakEquivalent(wkS[i],wkS[j])) }; //TIME consuming
         ffS:=S!!oo_cond[iS];
         assert ffS eq Conductor(S);
