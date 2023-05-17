@@ -4,7 +4,7 @@
 */
 
 
-// clone the AlgEt repo stmar89: link https://github.com/stmar89/AbVarFq
+// clone the AlgEt repo stmar89: link https://github.com/stmar89/AlgEt
 // modify the following line accodingly.
     fld_AlgEt:="~/packages_github/AlgEt/";
 
