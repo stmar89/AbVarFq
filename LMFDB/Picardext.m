@@ -15,23 +15,6 @@ import "sorting/code/sorting.m": SplitPrime;
 
 declare attributes AlgEtQOrd:CanonicalPicBasis,BasisBar,TraceDualPic;
 
-function CanonicalPrimeIdealsOverPrime(OL, p, FL, Find)
-    L := NumberField(OL);
-    Lp := PrimeIdealsOverPrime(L, p);
-    if Find mod p eq 0 then
-        // Remove primes dividing the conductor
-        Lp := [I : I in Lp | One(OL) in I+FL];
-    // in the other case, we keep the last element, even though its lift is automatically in the span of the others, since it might have a better order
-    end if;
-    if #Lp gt 1 then
-        // Sort using the LMFDB label
-        keys := [<StringToInteger(c) : c in Split(LMFDBLabel(Lp[z]), ".")> cat <z> : z in [1..#Lp]];
-        Sort(~keys);
-        Lp := [Lp[key[#key]] : key in keys];
-    end if;
-    return Lp;
-end function;
-
 function asProdData(S)
     A := Algebra(S);
     O := MaximalOrder(A);
@@ -61,6 +44,36 @@ function MakeSPrime(S, P, O_asProd, i)
     return MakeSPrime(S, MakeOPrime(P, O_asProd, i));
 end function;
 
+function CanonicalPrimeIdealsOverPrime(i, p, S, O_asProd, F_asProd, F_indexes)
+    OL := O_asProd[i];
+    FL := F_asProd[i];
+    Find := F_indexes[i];
+    L := NumberField(OL);
+    Lp := PrimeIdealsOverPrime(L, p);
+    if Find mod p eq 0 then
+        // Remove primes dividing the conductor
+        Lp := [I : I in Lp | One(OL) in I+FL];
+    // in the other case, we keep the last element, even though its lift is automatically in the span of the others, since it might have a better order
+    end if;
+    OLp := [Lp[1]];
+    SLp := [MakeSPrime(S, Lp[1], O_asProd, i)];
+    seen := {SLp[1]}; // we only care about the intersection with Z[F,V], and there will be collisions between primes of the maximal order
+    for j in [2..#Lp] do
+        Sprime := MakeSPrime(S, Lp[j], O_asProd, i);
+        if Sprime not in seen then
+            Append(~SLp, Sprime);
+            Append(~OLp, Lp[j]);
+        end if;
+    end for;
+    if #SLp gt 1 then
+        // Sort using the LMFDB label
+        keys := [<StringToInteger(c) : c in Split(LMFDBLabel(OLp[z]), ".")> cat <z> : z in [1..#OLp]];
+        Sort(~keys);
+        SLp := [SLp[key[#key]] : key in keys];
+    end if;
+    return SLp;
+end function;
+
 intrinsic CanonicalPicGenerators(S::AlgEtQOrd) -> SeqEnum, SeqEnum
 {}
     O_asProd, F_asProd, F_indexes := asProdData(S);
@@ -84,15 +97,14 @@ intrinsic CanonicalPicGenerators(S::AlgEtQOrd) -> SeqEnum, SeqEnum
         // this is used to create a list of primes of norm q for all powers of p.
         if k eq 1 then
             for i in [1..#O_asProd] do
-                primes_above_p[<i, p>] := CanonicalPrimeIdealsOverPrime(O_asProd[i], p, F_asProd[i], F_indexes[i]);
+                primes_above_p[<i, p>] := CanonicalPrimeIdealsOverPrime(i, p, S, O_asProd, F_asProd, F_indexes);
             end for;
         end if;
         for i in [1..#O_asProd] do
-            for pcnt->prime in primes_above_p[<i,p>] do
+            for pcnt->Sprime in primes_above_p[<i,p>] do
                 // create a Oprime = \prod_j prime if i eq j else 1
                 // where Norm(Oprime) = q = p^k
-                if InertiaDegree(prime) eq k then
-                    Sprime := MakeSPrime(S, P, O_asProd, i);
+                if #Index(S, Sprime) eq q then
                     plift := Sprime@@pmap;
                     if #sub<P|Pgens cat [plift]> gt #Psub then
                         Append(~Pgens, plift);
@@ -202,8 +214,11 @@ intrinsic GensToBasis(S::AlgEtQOrd, gens::SeqEnum) -> SeqEnum, SeqEnum
     return basis, <invs, construction>;
 end intrinsic;
 
-intrinsic CanonicalPicBases(ZFV::AlgEtQOrd) -> List
+intrinsic CanonicalPicBases(ZFV::AlgEtQOrd) -> List, List
 {Find an abelian basis for the Picard group of each overorder of ZFV using a deterministic method}
+    if assigned ZFV`CanonicalPicBases then
+        return Explode(ZFV`CanonicalPicBases);
+    end if;
     vprint User1: "Starting OverOrders"; t0 := Cputime();
     oo := OverOrders(ZFV);
     vprint User1: "OverOrders finished", Cputime() - t0;
@@ -224,6 +239,7 @@ intrinsic CanonicalPicBases(ZFV::AlgEtQOrd) -> List
             vprint User1: "Starting PicardGroup", i; t0:=Cputime();
             P, pmap := PicardGroup(S);
             vprint User1: "PicardGroup finished", Cputime() - t0; t0:=Cputime();
+            // S!!igens[i] isn't prime, but that's fine: these still generate.
             P0Pmap := hom<P0 -> P | [<P0.i, (S!!igens[i]) @@ pmap> : i in [1..Ngens(P0)]]>;
             Sgens := [P0Pmap(g) : g in ZFVgens];
             vprint User1: "Sgens finished", Cputime() - t0; t0:=Cputime();
@@ -232,7 +248,19 @@ intrinsic CanonicalPicBases(ZFV::AlgEtQOrd) -> List
         Append(~bases, basis);
         Append(~basis_constructions, bcon);
     end for;
+    ZFV`CanonicalPicBases := <bases, basis_constructions>;
+    for i->S in oo do
+        S`CanonicalPicBasis := <bases[i], basis_constructions[i]>;
+    end for;
     return bases, basis_constructions;
+end intrinsic;
+
+intrinsic CanonicalPicBasis(S::AlgEtQOrd) -> SeqEnum, SeqEnum
+{}
+    if not assigned S`CanonicalPicBasis then
+        error "You must first call CanonicalPicBases(ZFV) on the Frobenius order ZFV";
+    end if;
+    return Explode(S`CanonicalPicBasis);
 end intrinsic;
 
 intrinsic CanonicalPicBasis(S::AlgEtQOrd, gens::SeqEnum, basis_info::Tup) -> SeqEnum
@@ -336,8 +364,9 @@ intrinsic TraceDualPic(S::AlgEtQOrd) -> SeqEnum
     return tdp;
 end intrinsic;
 
-intrinsic PPolIteration(S::AlgEtQOrd, basis::SeqEnum) -> SeqEnum
-{}
+intrinsic PPolPossIteration(S::AlgEtQOrd) -> SeqEnum
+{Called internally from PPolIteration}
+    basis := CanonicalPicBasis(S);
     if IsGorenstein(S) and IsConjugateStable(S) then
         basisbar := BasisBar(S);
         tdp := TraceDualPic(S);
@@ -353,6 +382,26 @@ intrinsic PPolIteration(S::AlgEtQOrd, basis::SeqEnum) -> SeqEnum
     else
         return PicIteration(S, basis);
     end if;
+end intrinsic;
+
+intrinsic PPolIteration(ZFV::AlgEtQOrd) -> List, List
+{Given the Frobenius order, returns a list of quadruples <we, pic_ctr, I, pol>, where I is an ideal in the weak equivalence class we with picard group counter pic_ctr, and pol is the reduced principal polarization for I}
+    A := Algebra(ZFV);
+    bases, constructions := CanonicalPicBases(ZFV); // sets CanonicalPicBasis for overorders
+    ans := [* *];
+    for S in OverOrders(ZFV) do
+        for WE in WKICM_bar(S) do
+            we := WELabel(WE);
+            for tup in PPolPossIterations(S) do
+                I, pic_ctr := Explode(tup);
+                pp := PrincipalPolarizations(WE * I, PHI);
+                for pol in pp do
+                    Append(~ans, <we, pic_ctr, I, pol>);
+                end for;
+            end for;
+        end for;
+    end for;
+    return ans, constructions;
 end intrinsic;
 
 intrinsic Random(G::GrpAuto : word_len:=40) -> GrpAutoElt
