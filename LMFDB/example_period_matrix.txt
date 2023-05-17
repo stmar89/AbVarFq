@@ -20,6 +20,7 @@
 //    Attach(fld_AbVarFq cat "LMFDB/lmfdb.m"); //not needed here, overwrites the bugged SplitPrimes
 
 // Download the output of the principal polarization computation from David Roe's website.
+// link: https://math.mit.edu/~roed/ppol_output_2023_05_15.tar
 // The folder should contain files like 2.11.d_d_ppavs.txt
 // Change the following line accordingly. 
     fld_PPAVs:="~/266_wk_icm_rec/polarizations/parallel/output/";
@@ -29,7 +30,8 @@
 
 
 // Let's say that we you want to copute the period matrices of the ppavs in the isogeny class given by
-    label:="2.11.d_d";
+    label:="2.5.ac_g";
+//    label:="3.3.a_e_ab";
 // Load them using
     S:=LoadPrincipalPolarizationsIsogenyClass(Read(fld_PPAVs cat label cat "_ppavs.txt"));
     ppavs:=PrincipalPolarizationsIsogenyClass(S);
@@ -54,4 +56,18 @@
 
 // Another example
 // In 2.5.ac_j there is only PPAV and there is a Jacobian in the class.
+    _<x>:=PolynomialRing(Integers());
+    f:=x^4-2*x^3+9*x^2-10*x+25;
+    A:=EtaleAlgebra(f);
+    F:=PrimitiveElement(A);
+    g:=Degree(f) div 2;
+    q:=Truncate(ConstantCoefficient(f)^(1/g));
+    V:=q/F;
+    ZFV:=Order([F,V]);
+    unpol_isom_classes:=ICM(ZFV);
+    PHI:=pAdicPosCMType(A);
+    for I in unpol_isom_classes do
+        PrincipalPolarizations(I,PHI);
+    end for;
+
 
