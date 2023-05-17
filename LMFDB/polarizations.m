@@ -216,6 +216,55 @@ intrinsic PeriodMatrix(I::AlgEtQIdl,x0::AlgEtQElt,phi::AlgEtQCMType) -> AlgMatEl
     end while;
 end intrinsic;
 
+// TOTEST
+intrinsic CanonicalRepresentativePolarization(I::AlgEtQIdl,x0::AlgEtQElt) -> AlgEtQElt,SeqEnum[FldRatElt]
+{Given an ideal I and an element x0 representing a polarization for I, we want to look at the set x0*u*\bar(u) where u runs over the units of (I:I)=S. We compute the image of this set via the Log map. We use ShortestVectors on this lattice, pullback the output in the algebra, computhe the action of the torsion units of S on these elements, represent them with respect to [V^(g-1),...,V,1,F,...,F^g], sort them with respec to the lexigographic order of their coefficients and take the smalles.}
+
+    S:=MultiplicatorRing(I);
+    require IsConjugateStable(S) : "implemented only for conjugate stable orders, at the moment";
+    A:=Algebra(x0);
+    g:=Dimension(A) div 2;
+    F:=PrimitiveElement(A);
+    q:=Truncate(ConstantCoefficient(DefiningPolynomial(A))^(1/g));
+    V:=q/F;
+    basis:=[ V^i : i in [g-1..0 by -1]] cat [F^i : i in [1..g]];
+
+    if g eq #Components(A) then // then sub below would be the trivial group and the code would not modify x0. Early exit
+        return x0,AbsoluteCoordinates([x0],basis);
+    end if;
+
+    homs:=HomsToC(A); 
+    prec:=Precision(Codomain(homs[1]));
+    // are the homs sorted in conjugate pairs?
+    assert forall{ k : k in [1..g] | Abs(homs[2*k-1](F) - ComplexConjugate(homs[2*k](F))) lt 10^-(prec div 2)};
+
+    homs:=[homs[2*k-1] : k in [1..g]]; //one per conjugate pair to define the Log map
+    US,uS:=UnitGroup(S);
+    gens_US:=[ uS(g) : g in Generators(US) ]; // the torsion unit probably does do nothing
+    
+    sub:=sub< US | [(g*ComplexConjugate(g))@@uS : g in gens_US ] >;     // sub = < u * \bar u : u in S^* >
+    gens_sub_inS:=[ uS(g) : g in Generators(sub) ];
+    rnk_sub:=#gens_sub_inS;
+    assert rnk_sub eq g-#Components(A);
+    img_gens_sub:=Matrix([[ Log(Abs(h(g))) : h in homs ] : g in gens_sub_inS ]); // apply Log map
+    L:=Lattice(img_gens_sub);
+    //TODO Does L have the correct metric?
+    img_x0:=Vector([ Log(Abs(h(x0))) : h in homs ]);
+    closest_vects:=ClosestVectors(L,-img_x0); //note the minus sign!
+    all_coords:=[ Coordinates(cv) : cv in closest_vects];
+    candidates:=[ x0*&*[ gens_sub_inS[i]^coord[i] : i in [1..rnk_sub] ] : coord in all_coords ]; 
+    // A priori, I believe that I should act on candidates with the torsion units of the totally real totally positive units in S
+    // But there is only 1 (which also the torsion subgroup of sub = < u*\bar u>
+
+    // Now, I sort the candidats with respect to lexicographic order of the coefficients wrt to [V^(g-1),...,V,1,F,...,F^g],
+    // and take the smallest.
+
+    sort_keys_candidates:=[ AbsoluteCoordinates([c],basis)[1] : c in candidates ];
+    ParallelSort(~sort_keys_candidates,~candidates);
+
+    return candidates[1],sort_keys_candidates[1];
+end intrinsic;
+
     /*
     fld_m_files:="~/packages_github/AbVarFq/LMFDB/";
     fld:="~/266_wk_icm_rec/";
