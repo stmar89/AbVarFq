@@ -13,7 +13,7 @@ import "sorting/code/sorting.m": SplitPrime;
 -Discrete Log in ResidueRingUnits (is it necessary?)
 */
 
-declare attributes AlgEtQOrd:CanonicalPicBasis,BasisBar,TraceDualPic;
+declare attributes AlgEtQOrd:CanonicalPicBasis,CanonicalPicBases,BasisBar,TraceDualPic;
 
 function asProdData(S)
     A := Algebra(S);
@@ -31,17 +31,18 @@ function asProdData(S)
     return O_asProd, F_asProd, F_indexes;
 end function;
 
-function MakeOPrime(P, O_asProd, i)
+function MakeOPrime(O, P, O_asProd, i)
     return Ideal(O, <(i eq j) select P else 1*O_asProd[j] : j in [1..#O_asProd]>);
 end function;
 
-function MakeSPrime(S, P)
+function MakeSPrime2(S, P)
     return S!!P meet S;
 end function;
 
 function MakeSPrime(S, P, O_asProd, i)
     // Construct a prime of S given a prime P in position i of the product decomposition O_asProd of the maximal order
-    return MakeSPrime(S, MakeOPrime(P, O_asProd, i));
+    O := MaximalOrder(Algebra(S));
+    return MakeSPrime2(S, MakeOPrime(O, P, O_asProd, i));
 end function;
 
 function CanonicalPrimeIdealsOverPrime(i, p, S, O_asProd, F_asProd, F_indexes)
@@ -55,12 +56,15 @@ function CanonicalPrimeIdealsOverPrime(i, p, S, O_asProd, F_asProd, F_indexes)
         Lp := [I : I in Lp | One(OL) in I+FL];
     // in the other case, we keep the last element, even though its lift is automatically in the span of the others, since it might have a better order
     end if;
+    if #Lp eq 0 then
+        return [];
+    end if;
     OLp := [Lp[1]];
     SLp := [MakeSPrime(S, Lp[1], O_asProd, i)];
     seen := {SLp[1]}; // we only care about the intersection with Z[F,V], and there will be collisions between primes of the maximal order
     for j in [2..#Lp] do
         Sprime := MakeSPrime(S, Lp[j], O_asProd, i);
-        if Sprime not in seen then
+        if not Sprime in seen then
             Append(~SLp, Sprime);
             Append(~OLp, Lp[j]);
         end if;
@@ -76,6 +80,7 @@ end function;
 
 intrinsic CanonicalPicGenerators(S::AlgEtQOrd) -> SeqEnum, SeqEnum
 {}
+    P, pmap := PicardGroup(S);
     O_asProd, F_asProd, F_indexes := asProdData(S);
     primes_above_p := AssociativeArray();
     primes_by_norm := [];
@@ -104,7 +109,7 @@ intrinsic CanonicalPicGenerators(S::AlgEtQOrd) -> SeqEnum, SeqEnum
             for pcnt->Sprime in primes_above_p[<i,p>] do
                 // create a Oprime = \prod_j prime if i eq j else 1
                 // where Norm(Oprime) = q = p^k
-                if #Index(S, Sprime) eq q then
+                if Index(S, Sprime) eq q then
                     plift := Sprime@@pmap;
                     if #sub<P|Pgens cat [plift]> gt #Psub then
                         Append(~Pgens, plift);
@@ -124,6 +129,7 @@ intrinsic CanonicalPicGenerators(S::AlgEtQOrd, construction::SeqEnum) -> SeqEnum
 {A version that produces the canonical generators using the saved construction, and returned as prime ideals in the maximal order of S together with their orders in Pic(S) (so that the computation of Pic(S) isn't required).
 Note that the returned generators are not independent; see CanonicalPicBasis}
     O_asProd, F_asProd, F_indexes := asProdData(S);
+    O := MaximalOrder(Algebra(S));
     gens := [];
     primes_above_p := AssociativeArray();
     for quad in construction do
@@ -132,7 +138,7 @@ Note that the returned generators are not independent; see CanonicalPicBasis}
             primes_above_p[<i,p>] := CanonicalPrimeIdealsOverPrime(O_asProd[i], p, F_asProd[i], F_indexes[i]);
         end if;
         Lp := primes_above_p[<i,p>];
-        Append(~gens, MakeOPrime(Lp[pcnt], O_asProd, i));
+        Append(~gens, MakeOPrime(O, Lp[pcnt], O_asProd, i));
     end for;
 end intrinsic;
 
@@ -182,7 +188,7 @@ intrinsic GensToBasis(S::AlgEtQOrd, gens::SeqEnum) -> SeqEnum, SeqEnum
                     for c in CartesianProduct(<[1..orders[t]-1] : t in Reverse(tt)>) do
                         b := &+[c[#c+1-j] * gens[tt[j]] : j in [1..#tt]];
                         if Order(curquo(b)) eq ord then
-                            cons := &+[c[#c+1-j] * Cons.(tt[j]) : j in [1..#tt]];
+                            cons := &+[c[#c+1-j] * Con.(tt[j]) : j in [1..#tt]];
                             break;
                         end if;
                     end for;
@@ -249,7 +255,8 @@ intrinsic CanonicalPicBases(ZFV::AlgEtQOrd) -> List, List
         Append(~basis_constructions, bcon);
     end for;
     ZFV`CanonicalPicBases := <bases, basis_constructions>;
-    for i->S in oo do
+    for i in [1..#oo] do
+        S := oo[i];
         S`CanonicalPicBasis := <bases[i], basis_constructions[i]>;
     end for;
     return bases, basis_constructions;
@@ -268,7 +275,7 @@ intrinsic CanonicalPicBasis(S::AlgEtQOrd, gens::SeqEnum, basis_info::Tup) -> Seq
     invs, construction := Explode(basis_info);
     assert &and[#cons eq #gens : cons in construction];
     basis := [&*[gens[j]^construction[i][j] : j in [1..#gens]] : i in [1..#construction]];
-    return [MakeSPrime(b) : b in basis];
+    return [MakeSPrime2(S, b) : b in basis];
 end intrinsic;
 
 function IntToInvVec(pos, invs)
@@ -306,28 +313,32 @@ intrinsic PicIteration(S::AlgEtQOrd, basis::SeqEnum : filter:=0) -> SeqEnum
 {Iterates over the elements of the Picard group in a consistent order, using a filter function on Pic(S).  basis_info should be an entry in the *first* part of the output of CanonicalPicBases(S), and filter should be take a single element of Pic(S) as input and return a boolean (the ideal is included if the output is true).  The output is a sequence of pairs <i, I>, where I is an ideal and i is the index of that ideal in the overall iteration.}
     P, pmap := PicardGroup(S);
     invs := AbelianInvariants(P);
+    vprint User1: "Iterating over Pic(S) with invariants", invs;
     coeffs := [0 : i in invs];
     ans := [];
     ctr := 1;
     if filter cmpeq 0 then
-        iter := [pmap(&+basis[i..#basis] : i in [1..#basis])];
+        iter := [pmap(&+basis[i..#basis]) : i in [1..#basis]];
         cur := OneIdeal(S);
     else
         iter := [&+basis[i..#basis] : i in [1..#basis]];
         cur := P.0; // identity
     end if;
     while true do
-        pos := #coeffs;
         if filter cmpeq 0 then
             Append(~ans, <cur, ctr>);
         else
             Append(~ans, <pmap(cur), ctr>);
         end if;
-        while coeffs[pos] eq invs[pos] - 1 do
+        pos := #coeffs;
+        while true do
             coeffs[pos] := 0;
             pos -:= 1;
             if pos eq 0 then
                 return ans;
+            elif coeffs[pos] ne invs[pos] -1 then
+                coeffs[pos] +:= 1;
+                break;
             end if;
         end while;
         // If we aren't filtering, we can multiply by pmap(iter[pos]) rather than adding and eventually applying pmap(cur).  Hopefully the cost of applying pmap is dwarfed by the polarization calculation we have to do.
@@ -366,6 +377,7 @@ end intrinsic;
 
 intrinsic PPolPossIteration(S::AlgEtQOrd) -> SeqEnum
 {Called internally from PPolIteration}
+    vprint User1: "Looking up canonical Pic basis";
     basis := CanonicalPicBasis(S);
     if IsGorenstein(S) and IsConjugateStable(S) then
         basisbar := BasisBar(S);
@@ -378,8 +390,10 @@ intrinsic PPolPossIteration(S::AlgEtQOrd) -> SeqEnum
         function filter(x)
             return x + bar(x) eq tdp;
         end function;
+        vprint User1: "Iterating with trick";
         return PicIteration(S, basis : filter:=filter);
     else
+        vprint User1: "Iterating without trick";
         return PicIteration(S, basis);
     end if;
 end intrinsic;
@@ -387,16 +401,35 @@ end intrinsic;
 intrinsic PPolIteration(ZFV::AlgEtQOrd) -> List, List
 {Given the Frobenius order, returns a list of quadruples <we, pic_ctr, I, pol>, where I is an ideal in the weak equivalence class we with picard group counter pic_ctr, and pol is the reduced principal polarization for I}
     A := Algebra(ZFV);
+    vprint User1: "Computing CM type..."; t0 := Cputime();
+    PHI:=pAdicPosCMType(A);
+    vprint User1: Sprintf("Done with CM type in %o; computing canonical bases...", Cputime(t0)); t0 := Cputime();
     bases, constructions := CanonicalPicBases(ZFV); // sets CanonicalPicBasis for overorders
+    vprint User1: Sprintf("Done computing canonical Pic bases in %o; starting through over orders", Cputime(t0)); t0 := Cputime();
     ans := [* *];
-    for S in OverOrders(ZFV) do
-        for WE in WKICM_bar(S) do
+    for Sctr->S in OverOrders(ZFV) do
+        know_no_PP := not IsConjugateStable(S) or exists{ P : P in NonGorensteinPrimes(S) | IsConjugateStable(P) and CohenMacaulayTypeAtPrime(S,P) eq 2 };
+        if know_no_PP then
+            vprint User1: "Skipping over order #", Sctr;
+            continue;
+        end if; // if true, there can't be any PPAV with this endomorphism ring
+        vprint User1: "Computing WKICM_bar for over order #", Sctr;
+        wkimS := WKICM_bar(S);
+        vprint User1: Sprintf("Done computing WKICM_bar at %o; computing possible picard iteration", Cputime(t0));
+        ppol_poss := PPolPossIteration(S);
+        vprint User1: Sprintf("Done computing picard iteration at %o; iterating", Cputime(t0));
+        for WE in wkimS do
             we := WELabel(WE);
-            for tup in PPolPossIterations(S) do
+            for tup in ppol_poss do
                 I, pic_ctr := Explode(tup);
-                pp := PrincipalPolarizations(WE * I, PHI);
+                WEI := WE * I;
+                vprint User1: Sprintf("Computing principal polarizations at %o", Cputime(t0));
+                pp := PrincipalPolarizations(WEI, PHI);
+                vprint User1: Sprintf("Done computing principal polarizations at %o; iterating", Cputime(t0));
                 for pol in pp do
-                    Append(~ans, <we, pic_ctr, I, pol>);
+                    rep := CanonicalRepresentativePolarization(WEI, pol);
+                    vprint User1: Sprintf("Done computing canonical representative at %o", Cputime(t0));
+                    Append(~ans, <we, pic_ctr, I, rep>);
                 end for;
             end for;
         end for;
