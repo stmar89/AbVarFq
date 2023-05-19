@@ -5,7 +5,7 @@ To compute:
 * av_fq_isog: pic_prime_gens
 
 */
-
+SetDebugOnError(true);
 issue_file := Sprintf("%oavdata/issues/%o", fld, label);
 av_fq_pol_output := Sprintf("%oavdata/av_fq_pol_output/%o", fld, label);
 av_fq_pol_columns := ["label", "isog_label", "endomorphism_ring", "isom_label", "degree", "kernel", "aut_group", "geom_aut_group", "is_jacobian"];
@@ -23,7 +23,7 @@ function print_ivec(v : json:=false)
     end if;
     return Sprint(v);
 end function;
-try
+//try
     g, q, poly := Explode(Split(label, "."));
     commlines := Split(Read(Sprintf("%oavdata/commutative_geom_endalg/%o.%o", fld, g, q)), "\n");
     geom_endalg_is_comm := 0;
@@ -91,8 +91,8 @@ try
         fprintf av_fq_we_output, "%o\n", Join([we_line[col] : col in av_fq_we_columns], ":");
     end for;
     fprintf av_fq_isog_output, "%o\n", Join([av_fq_isog[col] : col in av_fq_isog_columns], ":");
-catch e;
-    fprintf issue_file, "*********************************************\n%o\n", label;
-    fprintf issue_file, "%o\n", e;
-end try;
-quit;
+//catch e;
+//    fprintf issue_file, "*********************************************\n%o\n", label;
+//    fprintf issue_file, "%o\n", e;
+//end try;
+//quit;
