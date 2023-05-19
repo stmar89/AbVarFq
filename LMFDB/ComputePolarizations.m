@@ -52,7 +52,7 @@ end function;
         Sdata["is_product"] := product select "t" else "f";
         Sdata["product_partition"] := print_ivec(partition: json:=true);
         Sdata["is_conjugate_stable"] := IsConjugateStable(S) select "t" else "f";
-        dens, nums := SmallestMonogenicGeneratorOverZFV(S);
+        dens, nums := SmallestMonogenicGeneratorOverZFV(S, ZFV);
         if #dens eq 0 then
             Sdata["generator_over_ZFV"] := "\\N";
         else
