@@ -46,9 +46,10 @@ try
     av_fq_isog["pic_prime_gens"] := print_ivec(cangens);
     for S in OverOrders(ZFV) do
         Pbasis, construction := CanonicalPicBasis(S);
+        invs, construction := Explode(construction);
         Sdata := AssociativeArray();
         Sdata["label"] := WELabel(S);
-        Sdata["pic_invs"] := print_ivec(AbelianInvariants(PicardGroup(S)));
+        Sdata["pic_invs"] := print_ivec(invs);
         Sdata["pic_basis"] := print_ivec(construction);
         product, _, partition := IsProduct(S);
         allproduct := allproduct and product;
