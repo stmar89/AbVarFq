@@ -82,7 +82,7 @@ end function;
             poldata["geom_aut_group"] := "\\N";
         end if;
         poldata["is_jacobian"] := IsProduct(S) select "f" else "\\N";
-        poldate["representative"] := Sprintf("[%o,%o]", den, print_ivec(nums: json:=true));
+        poldata["representative"] := Sprintf("[%o,%o]", den, print_ivec(nums: json:=true));
         Append(~av_fq_pol, poldata);
     end for;
     for pol_line in av_fq_pol do
