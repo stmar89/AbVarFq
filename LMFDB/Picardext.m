@@ -13,7 +13,7 @@ import "sorting/code/sorting.m": SplitPrime;
 -Discrete Log in ResidueRingUnits (is it necessary?)
 */
 
-declare attributes AlgEtQOrd:CanonicalPicBasis,CanonicalPicBases,BasisBar,TraceDualPic;
+declare attributes AlgEtQOrd:CanonicalPicGenerators,CanonicalPicBasis,CanonicalPicBases,BasisBar,TraceDualPic;
 
 function asProdData(S)
     A := Algebra(S);
@@ -80,6 +80,9 @@ end function;
 
 intrinsic CanonicalPicGenerators(S::AlgEtQOrd) -> SeqEnum, SeqEnum
 {}
+    if assigned S`CanonicalPicGenerators then
+        return Explode(S`CanonicalPicGenerators);
+    end if;
     P, pmap := PicardGroup(S);
     O_asProd, F_asProd, F_indexes := asProdData(S);
     primes_above_p := AssociativeArray();
@@ -116,6 +119,7 @@ intrinsic CanonicalPicGenerators(S::AlgEtQOrd) -> SeqEnum, SeqEnum
                         Append(~construction, <i, p, pcnt, Order(plift)>);
                         Psub := sub<P|Pgens>;
                         if #Psub eq #P then
+                            S`CanonicalPicGenerators := <Pgens, construction>;
                             return Pgens, construction;
                         end if;
                     end if;
@@ -398,13 +402,13 @@ intrinsic PPolPossIteration(S::AlgEtQOrd) -> SeqEnum
     end if;
 end intrinsic;
 
-intrinsic PPolIteration(ZFV::AlgEtQOrd) -> List, List
+intrinsic PPolIteration(ZFV::AlgEtQOrd) -> List
 {Given the Frobenius order, returns a list of quadruples <we, pic_ctr, I, pol>, where I is an ideal in the weak equivalence class we with picard group counter pic_ctr, and pol is the reduced principal polarization for I}
     A := Algebra(ZFV);
     vprint User1: "Computing CM type..."; t0 := Cputime();
     PHI:=pAdicPosCMType(A);
     vprint User1: Sprintf("Done with CM type in %o; computing canonical bases...", Cputime(t0)); t0 := Cputime();
-    bases, constructions := CanonicalPicBases(ZFV); // sets CanonicalPicBasis for overorders
+    bases := CanonicalPicBases(ZFV); // sets CanonicalPicBasis for overorders
     vprint User1: Sprintf("Done computing canonical Pic bases in %o; starting through over orders", Cputime(t0)); t0 := Cputime();
     ans := [* *];
     for Sctr->S in OverOrders(ZFV) do
@@ -434,7 +438,7 @@ intrinsic PPolIteration(ZFV::AlgEtQOrd) -> List, List
             end for;
         end for;
     end for;
-    return ans, constructions;
+    return ans;
 end intrinsic;
 
 intrinsic Random(G::GrpAuto : word_len:=40) -> GrpAutoElt
