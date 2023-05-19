@@ -31,7 +31,7 @@ intrinsic SmallestMonogenicGeneratorOverZFV(S::AlgEtQOrd,ZFV::AlgEtQOrd: limit:=
     basis:=[ V^i : i in [g-1..0 by -1] ] cat [F^i : i in [1..g]];
     seq:=MonogenicGeneratorsOverOrder(S,ZFV : limit:=limit);
     if #seq eq 0 then
-        return [PowerStructure(AlgEtQElt)|],[PowerStructure(MonStgElt)|];
+        return [PowerStructure(AlgEtQElt)|],[PowerStructure(RngIntElt)|],[PowerStructure(SeqEnum)|];
     end if;
 
     all_str:=[];
@@ -49,7 +49,11 @@ intrinsic SmallestMonogenicGeneratorOverZFV(S::AlgEtQOrd,ZFV::AlgEtQOrd: limit:=
         Append(~all_len,#str_x);
     end for;
     min:=Min(all_len);
-    return [ seq[i] : i in [1..#seq] | all_len[i] eq min],[ all_str[i] : i in [1..#seq] | all_len[i] eq min];
+    elts:=[ seq[i] : i in [1..#seq] | all_len[i] eq min];
+    coeffs:=[ all_coeff[i] : i in [1..#seq] | all_len[i] eq min ];
+    dens:=[ LCM([ Denominator(c) : c in coeffs[i]]) : i in [1..#elts] ];
+    nums:=[ [ dens[i]*c : c in coeffs[i] ] : i in [1..#elts]];
+    return elts,dens,nums;
 end intrinsic;
 
 /*
@@ -82,11 +86,19 @@ end intrinsic;
     for ifile->file in files do
         schema:=Read(fld_out cat file);
         ZFV:=LoadSchemaWKClasses(schema);
-        oo:=OverOrders(ZFV);
-        for S in oo do
-            #MonogenicGeneratorsOverOrder(S,ZFV);
-            SmallestMonogenicGeneratorOverZFV(S,ZFV);
-        end for;
+        f:=DefiningPolynomial(Algebra(ZFV));
+        //if IsIrreducible(f) then
+            printf ".";
+            oo:=OverOrders(ZFV);
+            if #oo gt 1 then
+                for S in oo do
+                    #MonogenicGeneratorsOverOrder(S,ZFV);
+                    SmallestMonogenicGeneratorOverZFV(S,ZFV);
+                end for;
+            else
+                printf "!";
+            end if;
+        //end if;
     end for;
 
 */
