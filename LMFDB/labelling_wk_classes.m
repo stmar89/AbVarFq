@@ -7,7 +7,8 @@ declare attributes AlgEtQIdl : SortKey, //See SortKeyPrime for a description.
                                WELabel; // stores the label N.i.j of the weak eq class see FillSchema
 declare attributes AlgEtQOrd : WKICM_barCanonicalRepresentatives, // a sequence, indexed as WKICM_bar, containing the 
                                                                 // canonical representative of each weak class
-                              SingularPrimesSorted;  // singular primes of the order, according to the their SortKey.
+                               WELabel, // stores the label N.i.1 of the order as a weak eq class see FillSchema
+                               SingularPrimesSorted;  // singular primes of the order, according to the their SortKey.
 
 intrinsic SortKeyPrime(P::AlgEtQIdl)->SeqEnum[RngIntElt]
 {Given a P of the maximal order of an etale algebra K over Q, returns a sequence of 3 integers [ j , N , i ], in the following way:
@@ -505,8 +506,13 @@ intrinsic FillSchema(R::AlgEtQOrd)->MonStgElt
     return output;
 end intrinsic;
 
-intrinsic WELabel(I)->MonStgElt
-{Returns the WELabel of the weak equivalence class of I, which of the form N.i.j where N.i determines the multiplicator ring of I and j is determined by the SortKey. This }
+intrinsic WELabel(I::AlgEtQIdl)->MonStgElt
+{Returns the WELabel of the weak equivalence class of I, which of the form N.i.j where N.i determines the multiplicator ring of I and j is determined by the SortKey.}
+    return I`WELabel;
+end intrinsic;
+
+intrinsic WELabel(I::AlgEtQOrd)->MonStgElt
+{Returns the WELabel of the weak equivalence class of the order, which of the form N.i.1}
     return I`WELabel;
 end intrinsic;
 
@@ -607,6 +613,7 @@ intrinsic LoadSchemaWKClasses(str::MonStgElt)->AlgEtQOrd
         labelS:=oo_labels[iS];
         linesS:=[ l : l in lines | l[4] eq labelS ]; 
         wkS:=[];
+        S`WELabel := labelS * ".1";
         for l in linesS do
             I:=Ideal(S,zb_in_A(braces_to_seq_of_seqs(l[6]),eval(l[7])));
             I`MultiplicatorRing:=S;
