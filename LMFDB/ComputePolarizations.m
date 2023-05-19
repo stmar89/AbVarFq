@@ -45,7 +45,7 @@ end function;
     for S in OverOrders(ZFV) do
         Pbasis, construction := CanonicalPicBasis(S);
         Sdata := AssociativeArray();
-        Sdata["label"] := WELabel(OneIdeal(S));
+        Sdata["label"] := WELabel(S);
         Sdata["pic_invs"] := print_ivec(AbelianInvariants(PicardGroup(S)));
         Sdata["pic_basis"] := print_ivec(construction);
         product, _, partition := IsProduct(S);
