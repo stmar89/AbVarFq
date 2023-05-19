@@ -40,6 +40,7 @@ try
     av_fq_we := [];
     av_fq_isog := AssociativeArray();
     _, cangens := CanonicalPicGenerators(ZFV);
+    _ := CanonicalPicBases(ZFV); // sets CanonicalPicBasis for each S
     av_fq_isog["pic_prime_gens"] := print_ivec(cangens);
     for S in OverOrders(ZFV) do
         Pbasis, construction := CanonicalPicBasis(S);
