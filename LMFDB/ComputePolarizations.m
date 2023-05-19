@@ -28,7 +28,7 @@ try
     commlines := Split(Read(Sprintf("%oavdata/commutative_geom_endalg/%o.%o", fld, g, q)), "\n");
     geom_endalg_is_comm := 0;
     for line in commlines do
-        llabel, iscomm := Explode(Split(line));
+        llabel, iscomm := Explode(Split(line), " ");
         if label eq llabel then
             geom_endalg_is_comm := (iscomm[1] eq "t");
             break;
