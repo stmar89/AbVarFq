@@ -80,7 +80,7 @@ intrinsic pAdicPosCMType(A::AlgEtQ : precpAdic := 30, precCC := 30 ) -> AlgEtQCM
     require IsCoprime(Coefficients(h)[(Degree(h) div 2)+1],p) : "The isogeny class is not ordinary";
     rtspp,rtsCC:=pAdicToComplexRoots(PolynomialRing(Rationals())!h,p : precpAdic := precpAdic, precCC:=precCC ); 
         //from paddictocc.m. works only for ordinary
-    homs:=HomsToC(A : Precision:=precCC );
+    homs:=HomsToC(A : Prec:=precCC );
     FA:=PrimitiveElement(A);
     homs_FA:=[Parent(rtsCC[1])!h(FA) : h in homs ];
     cmtype_homs:=[ ];
