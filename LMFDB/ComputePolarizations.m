@@ -6,13 +6,14 @@ To compute:
 
 */
 SetDebugOnError(true);
-issue_file := Sprintf("%oavdata/issues/%o", fld, label);
+issue_file := Sprintf("%oavdata/issues", fld);
 av_fq_pol_output := Sprintf("%oavdata/av_fq_pol_output/%o", fld, label);
 av_fq_pol_columns := ["label", "isog_label", "endomorphism_ring", "isom_label", "degree", "kernel", "aut_group", "geom_aut_group", "is_jacobian", "representative"];
 av_fq_we_output := Sprintf("%oavdata/av_fq_we_output/%o", fld, label);
 av_fq_we_columns := ["label", "pic_invs", "pic_basis", "is_product", "product_partition", "is_conjugate_stable", "generator_over_ZFV", "is_Zconductor_sum", "is_ZFVconductor_sum"];
 av_fq_isog_output := Sprintf("%oavdata/av_fq_isog_output/%o", fld, label);
 av_fq_isog_columns := ["pic_prime_gens"];
+allproduct_output := Sprintf("%oavdata/allproduct_output/%o", fld, label);
 AttachSpec(fld * "AlgEt/spec");
 AttachSpec(fld * "AbVarFq/LMFDB/spec");
 SetClassGroupBounds("GRH");
@@ -23,7 +24,8 @@ function print_ivec(v : json:=false)
     end if;
     return Sprint(v);
 end function;
-//try
+try
+    allproduct := true;
     g, q, poly := Explode(Split(label, "."));
     commlines := Split(Read(Sprintf("%oavdata/commutative_geom_endalg/%o.%o", fld, g, q)), "\n");
     geom_endalg_is_comm := 0;
@@ -49,6 +51,7 @@ end function;
         Sdata["pic_invs"] := print_ivec(AbelianInvariants(PicardGroup(S)));
         Sdata["pic_basis"] := print_ivec(construction);
         product, _, partition := IsProduct(S);
+        allproduct := allproduct and product;
         Sdata["is_product"] := product select "t" else "f";
         Sdata["product_partition"] := print_ivec(partition: json:=true);
         Sdata["is_conjugate_stable"] := IsConjugateStable(S) select "t" else "f";
@@ -92,8 +95,11 @@ end function;
         fprintf av_fq_we_output, "%o\n", Join([we_line[col] : col in av_fq_we_columns], ":");
     end for;
     fprintf av_fq_isog_output, "%o\n", Join([av_fq_isog[col] : col in av_fq_isog_columns], ":");
-//catch e;
-//    fprintf issue_file, "*********************************************\n%o\n", label;
-//    fprintf issue_file, "%o\n", e;
-//end try;
-//quit;
+    if allproduct then
+        fprintf allproduct_output, "%o\n", #av_fq_pol;
+    end if;
+catch e;
+    fprintf issue_file, "*********************************************\n%o\n", label;
+    fprintf issue_file, "%o\n", e;
+end try;
+quit;
