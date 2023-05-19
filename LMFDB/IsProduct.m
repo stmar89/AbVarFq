@@ -2,7 +2,7 @@
 
 //declare attributes AlgEtQOrd : ; // should I cache it?
 
-intrinsic IsProduct(S::AlgEtQOrd)->BoolElt,SeqEnum[AlgEtQElt]
+intrinsic IsProduct(S::AlgEtQOrd)->BoolElt,SeqEnum[AlgEtQElt],SeqEnum
 {Returns whether S is a product of orders S1 x .. x Sn for orders Si in some factor algebra of Algebra(S), together with the idempotents ei of Algebra of S such that Si=ei*S, and the product_partition as a list of lists of integers, giving which components of the etale algebra are clustered together. If no splitting will be [[1,2,...,m]], while if completely split will be [[1],[2],...,[m]]. Here m is the number of components of the etale algebra, and the components are ordered by sorting their defining polynomials.}
     A:=Algebra(S);
     idem:=[ i : i in Idempotents(A) | i in S]; // idempotents in S
@@ -16,7 +16,6 @@ intrinsic IsProduct(S::AlgEtQOrd)->BoolElt,SeqEnum[AlgEtQElt]
     F2:=GF(2);
     V:=VectorSpace(F2,#Components(A));
     idem_inV:=[ V![ c eq 1 select F2!1 else F2!0 : c in Components(i) ] : i in idem ];
-    sub:=sub<V| idem_inV >;
     arr:=AssociativeArray();
     for j in [1..#idem] do
         i:=idem[j];
@@ -30,7 +29,7 @@ intrinsic IsProduct(S::AlgEtQOrd)->BoolElt,SeqEnum[AlgEtQElt]
     max:=Max(Keys(arr));
     W:=sub<V|>;
     n:=1;
-    while Dimension(W) lt D and n lt max do
+    while Dimension(W) lt D do
         if IsDefined(arr,n) then
             for j in arr[n] do
                 v:=idem_inV[j];
@@ -42,11 +41,10 @@ intrinsic IsProduct(S::AlgEtQOrd)->BoolElt,SeqEnum[AlgEtQElt]
                     end if;
                 end if;
             end for;
-            printf ".";
         end if;
         n+:=1;
     end while;
-    assert #output gt 1;
+    assert #output eq D;
     assert OneIdeal(S) eq Ideal(S , [ z*g : z in ZBasis(S) , g in output ]);
 
     // LMFDB
