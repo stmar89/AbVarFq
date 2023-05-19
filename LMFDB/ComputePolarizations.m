@@ -18,7 +18,7 @@ AttachSpec(fld * "AbVarFq/LMFDB/spec");
 SetClassGroupBounds("GRH");
 function print_ivec(v : json:=false)
     base := json select "[%o]" else "{%o}";
-    if Type(v) eq SeqEnum then
+    if Type(v) eq SeqEnum or Type(v) eq Tup then
         return Sprintf(base, Join([$$(c : json:=json) : c in v], ","));
     end if;
     return Sprint(v);
