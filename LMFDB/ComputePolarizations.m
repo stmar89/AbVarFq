@@ -92,6 +92,6 @@ try
     fprintf av_fq_isog_output, "%o\n", Join([av_fq_isog[col] : col in av_fq_isog_columns], ":");
 catch e;
     fprintf issue_file, "*********************************************\n%o\n", label;
-    fprintf issue_file, "%o\n", e`Object;
+    fprintf issue_file, "%o\n", e;
 end try;
 quit;
