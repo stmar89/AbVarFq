@@ -431,9 +431,9 @@ intrinsic PPolIteration(ZFV::AlgEtQOrd) -> List
                 pp := PrincipalPolarizations(WEI, PHI);
                 vprint User1: Sprintf("Done computing principal polarizations at %o; iterating", Cputime(t0));
                 for pol in pp do
-                    rep := CanonicalRepresentativePolarization(WEI, pol);
+                    _, den, nums := CanonicalRepresentativePolarization(WEI, pol);
                     vprint User1: Sprintf("Done computing canonical representative at %o", Cputime(t0));
-                    Append(~ans, <we, pic_ctr, I, rep>);
+                    Append(~ans, <we, pic_ctr, I, den, nums>);
                 end for;
             end for;
         end for;

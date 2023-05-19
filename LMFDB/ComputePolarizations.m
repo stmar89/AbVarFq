@@ -8,7 +8,7 @@ To compute:
 SetDebugOnError(true);
 issue_file := Sprintf("%oavdata/issues/%o", fld, label);
 av_fq_pol_output := Sprintf("%oavdata/av_fq_pol_output/%o", fld, label);
-av_fq_pol_columns := ["label", "isog_label", "endomorphism_ring", "isom_label", "degree", "kernel", "aut_group", "geom_aut_group", "is_jacobian"];
+av_fq_pol_columns := ["label", "isog_label", "endomorphism_ring", "isom_label", "degree", "kernel", "aut_group", "geom_aut_group", "is_jacobian", "representative"];
 av_fq_we_output := Sprintf("%oavdata/av_fq_we_output/%o", fld, label);
 av_fq_we_columns := ["label", "pic_invs", "pic_basis", "is_product", "product_partition", "is_conjugate_stable", "generator_over_ZFV", "is_Zconductor_sum", "is_ZFVconductor_sum"];
 av_fq_isog_output := Sprintf("%oavdata/av_fq_isog_output/%o", fld, label);
@@ -64,7 +64,7 @@ end function;
     end for;
     for ppol in PPolIteration(ZFV) do
         poldata := AssociativeArray();
-        we, pic_ctr, I, rep := Explode(ppol);
+        we, pic_ctr, I, den, nums := Explode(ppol);
         S := MultiplicatorRing(I);
         pieces := Split(we, ".");
         poldata["label"] := Sprintf("%o.%o.%o", label, we, pic_ctr);
@@ -82,6 +82,7 @@ end function;
             poldata["geom_aut_group"] := "\\N";
         end if;
         poldata["is_jacobian"] := IsProduct(S) select "f" else "\\N";
+        poldate["representative"] := Sprintf("[%o,%o]", den, print_ivec(partition: json:=true));
         Append(~av_fq_pol, poldata);
     end for;
     for pol_line in av_fq_pol do

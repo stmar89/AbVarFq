@@ -261,8 +261,10 @@ intrinsic CanonicalRepresentativePolarization(I::AlgEtQIdl,x0::AlgEtQElt) -> Alg
 
     sort_keys_candidates:=[ AbsoluteCoordinates([c],basis)[1] : c in candidates ];
     ParallelSort(~sort_keys_candidates,~candidates);
+    den := LCM([Denominator(c) : c in sort_keys_candidates[1]]);
+    nums := [den*c : c in sort_keys_candidates[1]];
 
-    return candidates[1],sort_keys_candidates[1];
+    return candidates[1], den, nums;
 end intrinsic;
 
     /*
