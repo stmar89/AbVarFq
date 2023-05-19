@@ -49,7 +49,7 @@ try
         Sdata["pic_basis"] := print_ivec(construction);
         product, _, partition := IsProduct(S);
         Sdata["is_product"] := product select "t" else "f";
-        Sdata["product_partition"] := print_ivec(partition, json:=true);
+        Sdata["product_partition"] := print_ivec(partition: json:=true);
         Sdata["is_conjugate_stable"] := IsConjugateStable(S) select "t" else "f";
         dens, nums := SmallestMonogenicGeneratorOverZFV(S);
         if #dens eq 0 then
