@@ -24,7 +24,7 @@ function print_ivec(v : json:=false)
     return Sprint(v);
 end function;
 try
-    g, q, poly := Split(label, ".");
+    g, q, poly := Explode(Split(label, "."));
     commlines := Split(Read(Sprintf("%oavdata/commutative_geom_endalg/%o.%o", fld, g, q)), "\n");
     geom_endalg_is_comm := 0;
     for line in commlines do
