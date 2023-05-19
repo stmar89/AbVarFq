@@ -1,7 +1,7 @@
 /*
 To compute:
 * av_fq_pol: label, isog_label, endomorphism_ring, isom_label, degree, kernel, aut_group, geom_aut_group (can say that it is equal to aut_group when End^0(Fqbar) is commutative; can check this from av_fq_endalg_data->divalg_dim for each factor in av_fq_endalg_factors), is_jacobian (say false if a product at all, none otherwise)
-* av_fq_weak_equivalences: label (for matching), pic_invs, pic_basis, is_product, product_partition, is_conjugate_stable, generator_over_ZFV, is_conductor_sum
+* av_fq_weak_equivalences: label (for matching), pic_invs, pic_basis, is_product, product_partition, is_conjugate_stable, generator_over_ZFV, is_Zconductor_sum
 * av_fq_isog: pic_prime_gens
 
 */
@@ -10,7 +10,7 @@ issue_file := Sprintf("%oavdata/issues/%o", fld, label);
 av_fq_pol_output := Sprintf("%oavdata/av_fq_pol_output/%o", fld, label);
 av_fq_pol_columns := ["label", "isog_label", "endomorphism_ring", "isom_label", "degree", "kernel", "aut_group", "geom_aut_group", "is_jacobian"];
 av_fq_we_output := Sprintf("%oavdata/av_fq_we_output/%o", fld, label);
-av_fq_we_columns := ["label", "pic_invs", "pic_basis", "is_product", "product_partition", "is_conjugate_stable", "generator_over_ZFV", "is_conductor_sum"];
+av_fq_we_columns := ["label", "pic_invs", "pic_basis", "is_product", "product_partition", "is_conjugate_stable", "generator_over_ZFV", "is_Zconductor_sum", "is_ZFVconductor_sum"];
 av_fq_isog_output := Sprintf("%oavdata/av_fq_isog_output/%o", fld, label);
 av_fq_isog_columns := ["pic_prime_gens"];
 AttachSpec(fld * "AlgEt/spec");
@@ -35,7 +35,7 @@ try
         end if;
     end for;
     assert geom_endalg_is_comm cmpne 0;
-    ZFV := LoadSchemaWKClasses(Read(Sprintf("%oavdata/wk_classes/%o_schema.txt", fld, label));
+    ZFV := LoadSchemaWKClasses(Read(Sprintf("%oavdata/wk_classes/%o_schema.txt", fld, label)));
     av_fq_pol := [];
     av_fq_we := [];
     av_fq_isog := AssociativeArray();
@@ -57,7 +57,8 @@ try
         else
             Sdata["generator_over_ZFV"] := Sprintf("[%o,%o]", dens[1], print_ivec(nums[1] : json:=true));
         end if;
-        Sdata["is_conductor_sum"] := (S eq Order(Zbasis(Conductor(S)))) select "t" else "f";
+        Sdata["is_Zconductor_sum"] := (S eq Order(ZBasis(Conductor(S)))) select "t" else "f";
+        Sdata["is_ZFVconductor_sum"] := (S eq Order(ZBasis(Conductor(S)) cat ZBasis(ZFV))) select "t" else "f";
         Append(~av_fq_we, Sdata);
     end for;
     for ppol in PPolIteration(ZFV) do
