@@ -1,0 +1,9 @@
+{
+  lmfdb.m
+  labelling_wk_classes.m
+  polarizations.m
+  padictocc.m
+  Picardext.m
+  IsProduct.m
+  MonGenOrd.m
+}
