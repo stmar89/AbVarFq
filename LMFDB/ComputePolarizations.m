@@ -81,7 +81,6 @@ try
         end if;
         poldata["is_jacobian"] := IsProduct(S) select "f" else "\\N";
     end for;
-    end for;
     for pol_line in av_fq_pol do
         fprintf av_fq_pol_output, "%o\n", Join([pol_line[col] : col in av_fq_pol_columns], ":");
     end for;
