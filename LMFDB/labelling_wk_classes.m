@@ -617,7 +617,7 @@ intrinsic LoadSchemaWKClasses(str::MonStgElt)->AlgEtQOrd
         for l in linesS do
             I:=Ideal(S,zb_in_A(braces_to_seq_of_seqs(l[6]),eval(l[7])));
             I`MultiplicatorRing:=S;
-            I`WELabel:=&cat(Split(l[1],".")[4..6]); //N.i.j
+            I`WELabel:=Join(Split(l[1],".")[4..6], "."); //N.i.j
             Append(~wkS,I);
         end for;
         assert2 forall{ i : i,j in [1..#wkS] | (i eq j) eq (IsWeakEquivalent(wkS[i],wkS[j])) }; //TIME consuming

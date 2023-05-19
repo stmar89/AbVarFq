@@ -424,7 +424,6 @@ intrinsic PPolIteration(ZFV::AlgEtQOrd) -> List
         vprint User1: Sprintf("Done computing picard iteration at %o; iterating", Cputime(t0));
         for WE in wkimS do
             we := WELabel(WE);
-            print "we", we;
             for tup in ppol_poss do
                 I, pic_ctr := Explode(tup);
                 WEI := WE * I;
