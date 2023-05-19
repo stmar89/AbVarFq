@@ -62,6 +62,7 @@ try
         Append(~av_fq_we, Sdata);
     end for;
     for ppol in PPolIteration(ZFV) do
+        poldata := AssociativeArray();
         we, pic_ctr, I, rep := Explode(ppol);
         S := MultiplicatorRing(I);
         pieces := Split(we, ".");
@@ -80,6 +81,7 @@ try
             poldata["geom_aut_group"] := "\\N";
         end if;
         poldata["is_jacobian"] := IsProduct(S) select "f" else "\\N";
+        Append(~av_fq_pol, poldata);
     end for;
     for pol_line in av_fq_pol do
         fprintf av_fq_pol_output, "%o\n", Join([pol_line[col] : col in av_fq_pol_columns], ":");
