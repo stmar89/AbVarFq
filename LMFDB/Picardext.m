@@ -316,6 +316,15 @@ end intrinsic;
 intrinsic PicIteration(S::AlgEtQOrd, basis::SeqEnum : filter:=0) -> SeqEnum
 {Iterates over the elements of the Picard group in a consistent order, using a filter function on Pic(S).  basis_info should be an entry in the *first* part of the output of CanonicalPicBases(S), and filter should be take a single element of Pic(S) as input and return a boolean (the ideal is included if the output is true).  The output is a sequence of pairs <i, I>, where I is an ideal and i is the index of that ideal in the overall iteration.}
     P, pmap := PicardGroup(S);
+    if #P eq 1 then
+        if filter cmpeq 0 then
+            return [<OneIdeal(S), 1>];
+        elif filter(P.0) then
+            return [<OneIdeal(S), 1>];
+        else
+            return [];
+        end if;
+    end if;
     invs := AbelianInvariants(P);
     vprint User1: "Iterating over Pic(S) with invariants", invs;
     coeffs := [0 : i in invs];
@@ -331,7 +340,7 @@ intrinsic PicIteration(S::AlgEtQOrd, basis::SeqEnum : filter:=0) -> SeqEnum
     while true do
         if filter cmpeq 0 then
             Append(~ans, <cur, ctr>);
-        else
+        elif filter(cur) then
             Append(~ans, <pmap(cur), ctr>);
         end if;
         pos := #coeffs;
