@@ -392,7 +392,7 @@ intrinsic PPolPossIteration(S::AlgEtQOrd) -> SeqEnum
 {Called internally from PPolIteration}
     vprint User1: "Looking up canonical Pic basis";
     basis := CanonicalPicBasis(S);
-    if IsGorenstein(S) and IsConjugateStable(S) then
+    if IsGorenstein(S) and IsConjugateStable(S) and #PicardGroup(S) gt 1 then
         basisbar := BasisBar(S);
         tdp := TraceDualPic(S);
         function bar(x)
