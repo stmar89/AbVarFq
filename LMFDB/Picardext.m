@@ -84,11 +84,14 @@ intrinsic CanonicalPicGenerators(S::AlgEtQOrd) -> SeqEnum, SeqEnum
         return Explode(S`CanonicalPicGenerators);
     end if;
     P, pmap := PicardGroup(S);
+    Pgens := [];
+    construction := [];
+    if #P eq 1 then
+        S`CanonicalPicGenerators := <Pgens, construction>;
+    end if;
     O_asProd, F_asProd, F_indexes := asProdData(S);
     primes_above_p := AssociativeArray();
     primes_by_norm := [];
-    Pgens := [];
-    construction := [];
     Psub := sub<P|>;
     q := 1;
     while true do
