@@ -68,6 +68,7 @@ try
         Append(~av_fq_we, Sdata);
     end for;
     h := ChangeRing(DefiningPolynomial(Algebra(ZFV)), Integers());
+    _,p:=IsPrimePower(ConstantCoefficient(h));
     if IsCoprime(Coefficients(h)[(Degree(h) div 2)+1], p) then
         for ppol in PPolIteration(ZFV) do
             poldata := AssociativeArray();
