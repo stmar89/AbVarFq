@@ -88,6 +88,7 @@ intrinsic CanonicalPicGenerators(S::AlgEtQOrd) -> SeqEnum, SeqEnum
     construction := [];
     if #P eq 1 then
         S`CanonicalPicGenerators := <Pgens, construction>;
+        return Pgens, construction;
     end if;
     O_asProd, F_asProd, F_indexes := asProdData(S);
     primes_above_p := AssociativeArray();
