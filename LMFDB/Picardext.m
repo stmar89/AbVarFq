@@ -398,6 +398,7 @@ intrinsic PPolPossIteration(S::AlgEtQOrd) -> SeqEnum
         function bar(x)
             coeffs := Eltseq(x);
             assert #coeffs eq #basisbar;
+            if #coeffs eq 0 then return PicardGroup(S).0; end if;
             return &+[coeffs[i] * basisbar[i] : i in [1..#coeffs]];
         end function;
         function filter(x)
