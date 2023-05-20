@@ -5,7 +5,8 @@ To compute:
 * av_fq_isog: pic_prime_gens
 
 */
-SetDebugOnError(true);
+SetColumns(0);
+//SetDebugOnError(true);
 issue_file := Sprintf("%oavdata/issues", fld);
 av_fq_pol_output := Sprintf("%oavdata/av_fq_pol_output/%o", fld, label);
 av_fq_pol_columns := ["label", "isog_label", "endomorphism_ring", "isom_label", "degree", "kernel", "aut_group", "geom_aut_group", "is_jacobian", "representative"];
@@ -66,29 +67,32 @@ try
         Sdata["is_ZFVconductor_sum"] := (S eq Order(ZBasis(Conductor(S)) cat ZBasis(ZFV))) select "t" else "f";
         Append(~av_fq_we, Sdata);
     end for;
-    for ppol in PPolIteration(ZFV) do
-        poldata := AssociativeArray();
-        we, pic_ctr, I, den, nums := Explode(ppol);
-        S := MultiplicatorRing(I);
-        pieces := Split(we, ".");
-        poldata["label"] := Sprintf("%o.%o.%o", label, we, pic_ctr);
-        poldata["isog_label"] := label;
-        poldata["endomorphism_ring"] := Join(pieces[1..2], ".");
-        poldata["isom_label"] := Sprintf("%o.%o", pieces[3], pic_ctr);
-        poldata["degree"] := "1";
-        poldata["kernel"] := "{}";
-        aut_grp := IdentifyGroup(TorsionSubgroup(UnitGroup(S)));
-        aut_grp := Sprintf("%o.%o", aut_grp[1], aut_grp[2]);
-        poldata["aut_group"] := aut_grp;
-        if geom_endalg_is_comm then
-            poldata["geom_aut_group"] := aut_grp;
-        else
-            poldata["geom_aut_group"] := "\\N";
-        end if;
-        poldata["is_jacobian"] := IsProduct(S) select "f" else "\\N";
-        poldata["representative"] := Sprintf("[%o,%o]", den, print_ivec(nums: json:=true));
-        Append(~av_fq_pol, poldata);
-    end for;
+    h := ChangeRing(DefiningPolynomial(Algebra(ZFV)), Integers());
+    if IsCoprime(Coefficients(h)[(Degree(h) div 2)+1], p) then
+        for ppol in PPolIteration(ZFV) do
+            poldata := AssociativeArray();
+            we, pic_ctr, I, den, nums := Explode(ppol);
+            S := MultiplicatorRing(I);
+            pieces := Split(we, ".");
+            poldata["label"] := Sprintf("%o.%o.%o", label, we, pic_ctr);
+            poldata["isog_label"] := label;
+            poldata["endomorphism_ring"] := Join(pieces[1..2], ".");
+            poldata["isom_label"] := Sprintf("%o.%o", pieces[3], pic_ctr);
+            poldata["degree"] := "1";
+            poldata["kernel"] := "{}";
+            aut_grp := IdentifyGroup(TorsionSubgroup(UnitGroup(S)));
+            aut_grp := Sprintf("%o.%o", aut_grp[1], aut_grp[2]);
+            poldata["aut_group"] := aut_grp;
+            if geom_endalg_is_comm then
+                poldata["geom_aut_group"] := aut_grp;
+            else
+                poldata["geom_aut_group"] := "\\N";
+            end if;
+            poldata["is_jacobian"] := IsProduct(S) select "f" else "\\N";
+            poldata["representative"] := Sprintf("[%o,%o]", den, print_ivec(nums: json:=true));
+            Append(~av_fq_pol, poldata);
+        end for;
+    end if;
     for pol_line in av_fq_pol do
         fprintf av_fq_pol_output, "%o\n", Join([pol_line[col] : col in av_fq_pol_columns], ":");
     end for;
