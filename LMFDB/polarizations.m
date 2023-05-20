@@ -231,7 +231,7 @@ intrinsic CanonicalRepresentativePolarization(I::AlgEtQIdl,x0::AlgEtQElt) -> Alg
 
     if g eq #Components(A) then // then sub below would be the trivial group and the code would not modify x0. Early exit
         y0 := AbsoluteCoordinates([x0],basis);
-        den := LCM([Denominator(c) : c in y0]);
+        den := LCM([Denominator(c) : c in y0[1]]);
         nums := [den * c : c in y0];
         return x0, den, nums;
     end if;
