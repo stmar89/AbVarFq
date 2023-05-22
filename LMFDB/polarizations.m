@@ -224,7 +224,6 @@ intrinsic PeriodMatrix(I::AlgEtQIdl,x0::AlgEtQElt,phi::AlgEtQCMType) -> AlgMatEl
     end while;
 end intrinsic;
 
-// TOTEST
 intrinsic CanonicalRepresentativePolarization(I::AlgEtQIdl,x0::AlgEtQElt) -> AlgEtQElt,SeqEnum[FldRatElt]
 {Given an ideal I and an element x0 representing a polarization for I, we want to look at the set x0*u*\bar(u) where u runs over the units of (I:I)=S. We compute the image of this set via the Log map. We use ShortestVectors on this lattice, pullback the output in the algebra, computhe the action of the torsion units of S on these elements, represent them with respect to [V^(g-1),...,V,1,F,...,F^g], sort them with respec to the lexigographic order of their coefficients and take the smalles.}
 
@@ -259,7 +258,6 @@ intrinsic CanonicalRepresentativePolarization(I::AlgEtQIdl,x0::AlgEtQElt) -> Alg
     assert rnk_sub eq g-#Components(A);
     img_gens_sub:=Matrix([[ Log(Abs(h(g))) : h in homs ] : g in gens_sub_inS ]); // apply Log map
     L:=Lattice(img_gens_sub);
-    //TODO Does L have the correct metric?
     img_x0:=Vector([ Log(Abs(h(x0))) : h in homs ]);
     closest_vects:=ClosestVectors(L,-img_x0); //note the minus sign!
     all_coords:=[ Coordinates(cv) : cv in closest_vects];
@@ -269,7 +267,6 @@ intrinsic CanonicalRepresentativePolarization(I::AlgEtQIdl,x0::AlgEtQElt) -> Alg
 
     // Now, I sort the candidats with respect to lexicographic order of the coefficients wrt to [V^(g-1),...,V,1,F,...,F^g],
     // and take the smallest.
-
     sort_keys_candidates:=[ AbsoluteCoordinates([c],basis)[1] : c in candidates ];
     ParallelSort(~sort_keys_candidates,~candidates);
     den := LCM([Denominator(c) : c in sort_keys_candidates[1]]);
