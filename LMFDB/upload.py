@@ -24,7 +24,7 @@ def create_upload_files(basefolders, exclude_gq=[]):
                         den, num = rep[1:-2].split(",[")
                         if len(den) > 131072 or any(len(n) > 131072 for n in num):
                             num = ",".join(f'"{n}"' for n in num)
-                            pieces[-1] = f'["{den}",[{num}]]'
+                            pieces[-1] = f'["{den}",[{num}]]\n'
                             line = ":".join(pieces)
                     poldata.append(line)
         for label in os.listdir(opj(base, "av_fq_we_output")):
