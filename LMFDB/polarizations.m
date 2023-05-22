@@ -100,7 +100,15 @@ intrinsic PrincipalPolarizationsIsogenyClass(R::AlgEtQOrd)->SeqEnum
 {Returns a sequence of tuples < I, [x1,...,xn] > where (I,x1),...,(I,xn) represent the isomorphism classes of PPAVs corresponding with underlying AV given by I. Ideally, R=Z[F,V]. Important: isomorphism classes without a principal polarization are not returned (sometimes not even computed).}
     if not assigned R`PrincipalPolarizationsIsogenyClass then
         A:=Algebra(R);
-        PHI:=pAdicPosCMType(A);
+        prec := 30;
+        while true do
+            try
+                PHI:=pAdicPosCMType(A : precpAdic:=prec, precCC:=prec);
+                break;
+            catch e // precision error can happen
+                prec *:= 2;
+            end try;
+        end while;
         oo:=OverOrders(R);
         output:=[];
         for iS in [1..#oo] do

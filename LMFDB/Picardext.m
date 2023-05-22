@@ -59,14 +59,14 @@ function CanonicalPrimeIdealsOverPrime(i, p, S, O_asProd, F_asProd, F_indexes)
     if #Lp eq 0 then
         return [];
     end if;
-    OLp := [Lp[1]];
+    OLp := [OL!!(Lp[1])];
     SLp := [MakeSPrime(S, Lp[1], O_asProd, i)];
     seen := {SLp[1]}; // we only care about the intersection with Z[F,V], and there will be collisions between primes of the maximal order
     for j in [2..#Lp] do
         Sprime := MakeSPrime(S, Lp[j], O_asProd, i);
         if not Sprime in seen then
             Append(~SLp, Sprime);
-            Append(~OLp, Lp[j]);
+            Append(~OLp, OL!!(Lp[j]));
         end if;
     end for;
     if #SLp gt 1 then
@@ -420,7 +420,15 @@ intrinsic PPolIteration(ZFV::AlgEtQOrd) -> List
 {Given the Frobenius order, returns a list of quadruples <we, pic_ctr, I, pol>, where I is an ideal in the weak equivalence class we with picard group counter pic_ctr, and pol is the reduced principal polarization for I}
     A := Algebra(ZFV);
     vprint User1: "Computing CM type..."; t0 := Cputime();
-    PHI:=pAdicPosCMType(A);
+    prec := 30;
+    while true do
+        try
+            PHI:=pAdicPosCMType(A);
+            break;
+        catch e // precision error can happen
+            prec *:= 2;
+        end try;
+    end while;
     vprint User1: Sprintf("Done with CM type in %o; computing canonical bases...", Cputime(t0)); t0 := Cputime();
     bases := CanonicalPicBases(ZFV); // sets CanonicalPicBasis for overorders
     vprint User1: Sprintf("Done computing canonical Pic bases in %o; starting through over orders", Cputime(t0)); t0 := Cputime();
