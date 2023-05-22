@@ -87,17 +87,21 @@ end intrinsic;
         schema:=Read(fld_out cat file);
         ZFV:=LoadSchemaWKClasses(schema);
         f:=DefiningPolynomial(Algebra(ZFV));
+        if not IsIrreducible(f) and #OverOrders(ZFV) eq 1 then
+            assert IsMaximal(ZFV);
+            printf "!";
+        end if;
         //if IsIrreducible(f) then
-            printf ".";
-            oo:=OverOrders(ZFV);
-            if #oo gt 1 then
-                for S in oo do
-                    #MonogenicGeneratorsOverOrder(S,ZFV);
-                    SmallestMonogenicGeneratorOverZFV(S,ZFV);
-                end for;
-            else
-                printf "!";
-            end if;
+        //    printf ".";
+        //    oo:=OverOrders(ZFV);
+        //    if #oo gt 1 then
+        //        for S in oo do
+        //            #MonogenicGeneratorsOverOrder(S,ZFV);
+        //            SmallestMonogenicGeneratorOverZFV(S,ZFV);
+        //        end for;
+        //    else
+        //        printf "!";
+        //    end if;
         //end if;
     end for;
 
