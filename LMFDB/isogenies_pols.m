@@ -35,6 +35,9 @@
         // J is over R
         Ls:=MaximalIntemediateIdeals(J,N*J);
         MinimalIsogeniesToJ:=AssociativeArray();
+        for I in isom_cl do
+            MinimalIsogeniesToJ[I] := [];
+        end for;
         for L in Ls do
             deg:=Index(J,L);
             S:=MultiplicatorRing(L);
@@ -49,10 +52,10 @@
                     // TODO produce label of (W,g)
                     test,x:=IsIsomorphic(cLW,pS(g)); // x*pS(g) = cLW
                     assert test;
-                    if not IsDefined(MinimalIsogeniesToJ,<W,g>) then
-                        MinimalIsogeniesToJ[<W,g>]:=[];
-                    end if;
-                    Append(~MinimalIsogeniesToJ[<W,g>],<L,S,deg,x>); 
+                    //if not IsDefined(MinimalIsogeniesToJ,<W,g>) then
+                    //    MinimalIsogeniesToJ[<W,g>]:=[];
+                    //end if;
+                    Append(~MinimalIsogeniesToJ[<W,g>],<deg,x>); // TODO: Change <W,g> index to I; might want to store L and S
                                                                  // W*cLW = L c J, x*W*pS(g) = W*cLW = L c J, 
                                                                  // so x is a minimal isogeny from I:=W*pS(g) to J of degree deg=J/L 
                                                                  // we might want to replace W,g in the tuble with the label of 
@@ -69,10 +72,27 @@
     for Jv in isom_cl do
         J:=TraceDualIdeal(ComplexConjugate(Jv));
         // I am looking for pol such that pol*J c Jv
-        cc:=
-        for d in [1..depth] do
-                
+        cc := [<JJ,1,[J_to_JJ]>]; // JJ is the canonical representative for J
+        for d in [1..depth-1] do
+            newcc := [];
+            for pair in cc do
+                I, d, flist := Explode(pair);
+                for II in isom_cl do
+                    for g in AllMinimalIsogenies[II][I] do
+                        Append(~newcc, <II, d*g[1], flist cat [g[2]]>);
+                    end for;
+                end for;
+            end for;
+            cc := newcc;
         end for;
+        newcc := [];
+        for pair in cc do
+            I, flist := Explode(pair);
+            for g in AllMinimalIsogenies[Jv][I] do
+                Append(~newcc, <Jv, d*g[1], flist cat [g]>);
+            end for;
+        end for;
+        
     end for;
 
 
