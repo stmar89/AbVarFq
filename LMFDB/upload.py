@@ -17,6 +17,15 @@ def create_upload_files(basefolders, exclude_gq=[]):
             with open(opj(base, "av_fq_pol_output", label)) as F:
                 for line in F:
                     polcnts[label] += 1
+                    # Some representatives surpass the limit of 131072 digits for a numeric type.  So we make them strings instead, since we're using jsonb.
+                    if len(line) > 131072:
+                        pieces = line.split(":")
+                        rep = pieces[-1]
+                        den, num = rep[1:-2].split(",[")
+                        if len(den) > 131072 or any(len(n) > 131072 for n in num):
+                            num = ",".join(f'"{n}"' for n in num)
+                            pieces[-1] = f'["{den}",[{num}]]'
+                            line = ":".join(pieces)
                     poldata.append(line)
         for label in os.listdir(opj(base, "av_fq_we_output")):
             if exclude_gq:
