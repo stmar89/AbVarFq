@@ -28,16 +28,16 @@ transversal_USplus_USUSb:=function(S)
     return S`transversal_USplus_USUSb;
 end function;
 
+is_polarization:=function(l,PHI)
+// l an element of K, PHI a CMType, it returns wheather l is totally imaginary and PHI-positive, that is, 
+// Im(phi(l))>0 for every phi in PHI.
+    test1:=l eq -ComplexConjugate(l);
+    test2:=forall{phi : phi in Homs(PHI) | Im(phi(l)) gt 0 };
+    return test1 and test2;
+end function;
+
 intrinsic PrincipalPolarizations(I::AlgEtQIdl,PHI::AlgEtQCMType)->SeqEnum[AlgEtQElt]
 {Given an ideal I and a CM-Type PHI, returns all the principal polarizations of I with respect to PHI.}
-
-    is_polarization:=function(l,PHI)
-    // l an element of K, PHI a CMType, it returns wheather l is totally imaginary and PHI-positive, that is, 
-    // Im(phi(l))>0 for every phi in PHI.
-        test1:=l eq -ComplexConjugate(l);
-        test2:=forall{phi : phi in Homs(PHI) | Im(phi(l)) gt 0 };
-        return test1 and test2;
-    end function;
 
     // First we test if there exists iso such that iso*I = Iv. If not, then I is not self-dual.
     // Assume that there exists such an iso. 
