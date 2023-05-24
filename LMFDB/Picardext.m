@@ -334,14 +334,14 @@ intrinsic PicIteration(S::AlgEtQOrd, basis::SeqEnum : filter:=0, include_pic_elt
         end if;
         pos := #coeffs;
         while true do
-            coeffs[pos] := 0;
-            pos -:= 1;
             if pos eq 0 then
                 return ans;
             elif coeffs[pos] ne invs[pos] -1 then
                 coeffs[pos] +:= 1;
                 break;
             end if;
+            coeffs[pos] := 0;
+            pos -:= 1;
         end while;
         Pelt +:= Piter[pos];
         ctr +:= 1;
