@@ -41,7 +41,7 @@ intrinsic ICM_CanonicalRepresentatives(ZFV::AlgEtQOrd) -> SeqEnum[AlgEtQIdl], As
     _ := CanonicalPicBases(ZFV); // sets bases
     for S in OverOrders(ZFV) do
         icm_lookup[S] := AssociativeArray();
-        pic_iter := PicIteration(S, CanonicalPicBasis(ZFV) : include_pic_elt:=true);
+        pic_iter := PicIteration(S, CanonicalPicBasis(S) : include_pic_elt:=true);
         pic_iter := [<ZFV!!x[1], x[2], x[3]> : x in pic_iter];
         for WE in WKICM_barCanonicalRepresentatives(S) do
             ZFVWE := ZFV!!WE;
