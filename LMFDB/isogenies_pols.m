@@ -31,28 +31,24 @@ is_weak_eq_same_mult_ring:=function(I,J)
     return test,cIJ,cJI;
 end function;
 
-intrinsic ICM_CanonicalRepresentatives(ZFV::AlgEtQOrd) -> SeqEnum[AlgEtQIdl], Assoc, Assoc
+intrinsic ICM_CanonicalRepresentatives(ZFV::AlgEtQOrd) -> SeqEnum[AlgEtQIdl], Assoc
 {}
     if assigned ZFV`ICM_CanonicalRepresentatives then
         return Explode(ZFV`ICM_CanonicalRepresentatives);
     end if;
     ans := [];
-    maps := [* *];
     pic_lookup := AssociativeArray();
     _ := CanonicalPicBases(ZFV); // sets bases
     for S in OverOrders(ZFV) do
+        pic_lookup[S] := AssociativeArray();
         pic_iter := PicIteration(S, CanonicalPicBasis(ZFV) : include_pic_elt:=true);
         pic_iter := [<ZFV!!x[1], x[2], x[3]> : x in pic_iter];
-        pic_lookup[S] := AssociativeArray();
-        for x in pic_iter do
-            pic_lookup[S][x[3]] := x[1];
-        end for;
         for WE in WKICM_barCanonicalRepresentatives(S) do
             ZFVWE := ZFV!!WE;
-            for pair in pic_iter do
-                I, ctr, Pelt := Explode(pair);
+            for trip in pic_iter do
+                I, ctr, Pelt := Explode(trip);
                 WI := ZFVWE * I;
-                pic_lookup[<W, Pelt>] := WI;
+                pic_lookup[S][<W, Pelt>] := WI;
                 Append(~ans, WI);
             end for;
         end for;
@@ -62,7 +58,7 @@ intrinsic ICM_CanonicalRepresentatives(ZFV::AlgEtQOrd) -> SeqEnum[AlgEtQIdl], As
 end intrinsic;
 
 intrinsic ICM_Identify(L::AlgEtQIdl, pic_lookup::Assoc) -> AlgEtQIdl, AlgEtQElt
-{Given an ideal L, together with the lookup table output by ICM_CanonicalRepresentatives, }
+{Given an ideal L, together with the lookup table output by ICM_CanonicalRepresentatives, returns the canonical representative I in the same class of the ICM as L, together with an element of the etale algebra x so that L = x*I}
     S := MultiplicatorRing(L);
     PS, pS := PicardGroup(S);
     wkS := WKICM_barCanonicalRepresentatives(S);
@@ -71,7 +67,7 @@ intrinsic ICM_Identify(L::AlgEtQIdl, pic_lookup::Assoc) -> AlgEtQIdl, AlgEtQElt
         if test_wk then
             // cLW=(L:W) is invertible, W*cLW = L
             g := cLW@@pS; // in Pic(S)
-            I := pic_lookup[<W, g>];
+            I := pic_lookup[S][<W, g>];
             test, x := IsIsomorphic(L, I); // x*I = L
             assert test;
             return I, x;
