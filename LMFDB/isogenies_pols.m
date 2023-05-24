@@ -25,7 +25,7 @@ is_weak_eq_same_mult_ring:=function(I,J)
 // I and J have the same mult ring, and are defined over it
 // Similar to the intrinsic IsWeakEquivalent but returns also the colon ideals
     cIJ:=ColonIdeal(I,J);
-    cIJ:=ColonIdeal(J,I);
+    cJI:=ColonIdeal(J,I);
     id:=cIJ*cJI;
     test:=One(Algebra(I)) in id;
     return test,cIJ,cJI;
@@ -48,7 +48,7 @@ intrinsic ICM_CanonicalRepresentatives(ZFV::AlgEtQOrd) -> SeqEnum[AlgEtQIdl], As
             for trip in pic_iter do
                 I, ctr, Pelt := Explode(trip);
                 WI := ZFVWE * I;
-                icm_lookup[S][<W, Pelt>] := WI;
+                icm_lookup[S][<WE, Pelt>] := WI;
                 Append(~ans, WI);
             end for;
         end for;
@@ -89,7 +89,7 @@ intrinsic AllMinimalIsogenies(ZFV::AlgEtQOrd, N::RngIntElt : degrees:=0)->Assoc
     end for;
     for J in isom_cl do
         // J is over ZFV
-        Ls := MaximalIntemediateIdeals(J,N*J);
+        Ls := MaximalIntermediateIdeals(J,N*J);
         for L in Ls do
             deg := Index(J, L);
             if degrees cmpne 0 and not (deg in degrees) then
@@ -186,21 +186,25 @@ intrinsic AllPolarizations(ZFV::AlgEtQOrd, PHI::AlgEtQCMType, degree_bounds::Seq
 //TODO
 .}
 
+    isom_cl, icm_lookup := ICM_CanonicalRepresentatives(ZFV);
+    can_reps_of_duals:=AssociativeArray();
     all_pols:=AssociativeArray(); // the output
-    all_isog:=IsogeniesByDegree(ZFV,degree_bounds : important_pairs:=[ < J , can_reps_of_duals[J][2] > : J in isom_cl ]);
-    for J in all_isog do
+    for J in isom_cl do
         Jpols:=AssociativeArray(); // will contain all pols find, indexed by degree.
         S:=MultiplicatorRing(J);
         US_over_USplus:=transversal_US_USplus(S);
         Jv:=TraceDualIdeal(ComplexConjugate(J));
         // I am looking for pol such that pol*J c Jv
-        // JJ:=canonical rep of Jv
-        test,JJ_to_Jv := IsIsomorphic(Jv,JJ); // JJ*JJ_to_Jv eq Jv
-        assert test;
+        JJ,JJ_to_Jv:=ICM_Identify(Jv,icm_lookup);
+        can_reps_of_duals[J]:=<JJ,JJ_to_Jv>;
+    end for;
+    all_isog:=IsogeniesByDegree(ZFV,degree_bounds : important_pairs:=[ < J , can_reps_of_duals[J][2] > : J in isom_cl ]);
+    for J in isom_cl do
+        JJ,JJ_to_Jv:=Explode(can_reps_of_duals[J]);
         for d ->isog_J_JJ_d in all_isog[J][JJ] do
             pols_deg_d:=[];
             for f in isog_J_JJ_d do
-                isog:=f*JJ_to_JV;
+                isog:=f*JJ_to_Jv;
                 got_one:=false;
                 for v in US_over_USplus do
                     pp:=isog*v;
