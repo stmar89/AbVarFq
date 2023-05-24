@@ -161,10 +161,11 @@ intrinsic IsogeniesByDegree(ZFV::AlgEtQOrd, degree_bounds::SeqEnum : important_p
                                         added_something := true;
                                     else
                                         hsh := myHash(L);
-                                        hashes := {myHash(M) : M in isog[I][J][dm]};
+                                        hashes := {myHash(M[2]) : M in isog[I][J][dm]};
                                         if not hsh in hashes then
                                             // myHash is collision free
                                             Append(~isog[I][J][dm], <x*y, L>);
+                                            assert Index(J,x*y*I) eq dm;
                                             added_something := true;
                                         end if;
                                     end if;
@@ -197,15 +198,17 @@ intrinsic AllPolarizations(ZFV::AlgEtQOrd, PHI::AlgEtQCMType, degree_bounds::Seq
         Jv:=TraceDualIdeal(ComplexConjugate(J));
         // I am looking for pol such that pol*J c Jv
         JJ,JJ_to_Jv:=ICM_Identify(Jv,icm_lookup);
-        can_reps_of_duals[J]:=<JJ,JJ_to_Jv>;
+        can_reps_of_duals[J]:=<JJ,JJ_to_Jv,Jv>;
     end for;
-    all_isog:=IsogeniesByDegree(ZFV,degree_bounds : important_pairs:=[ < J , can_reps_of_duals[J][2] > : J in isom_cl ]);
+    all_isog:=IsogeniesByDegree(ZFV,degree_bounds : important_pairs:=[ < J , can_reps_of_duals[J][1] > : J in isom_cl ]);
     for J in isom_cl do
-        JJ,JJ_to_Jv:=Explode(can_reps_of_duals[J]);
+        JJ,JJ_to_Jv,Jv:=Explode(can_reps_of_duals[J]);
         for d ->isog_J_JJ_d in all_isog[J][JJ] do
             pols_deg_d:=[];
             for f in isog_J_JJ_d do
-                isog:=f*JJ_to_Jv;
+                isog:=f[1]*JJ_to_Jv;
+                assert Index(JJ,f[1]*J) eq d;
+                assert Index(Jv,isog*J) eq d;
                 got_one:=false;
                 for v in US_over_USplus do
                     pp:=isog*v;
