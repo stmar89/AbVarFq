@@ -214,10 +214,13 @@ intrinsic AllPolarizations(ZFV::AlgEtQOrd, PHI::AlgEtQCMType, degree_bounds::Seq
                     pols_deg_d cat:= [ pp*t : t in transversal_USplus_USUSb_general(S) ]; // this might contains isomorphic copies
                 end if;
             end for;
-            pols_deg_d_up_to_iso:=Setseq(Seqset([ CanonicalRepresentativePolarizationGeneral(J,x0) : x0 in pols_deg_d ])); 
-                // remove isomorphic pols by computing the canonical rep for each one and removing duplicates
-            assert forall{ pol : pol in pols_deg_d_up_to_iso | d eq Index(Jv,pol*J) }; // sanity check
-            Jpols[d]:=[ <pol , DecompositionKernelOfIsogeny(J,Jv,pol) > : pol in pols_deg_d_up_to_iso ];
+            pols_deg_d_up_to_iso:={};
+            for x0 in pols_deg_d do
+                pol,seq:=CanonicalRepresentativePolarizationGeneral(J,x0);
+                Include(~pols_deg_d_up_to_iso, <pol,seq>); //isomorphic pols will have the same canonical rep
+            end for;
+            assert forall{ pol : pol in pols_deg_d_up_to_iso | d eq Index(Jv,pol[1]*J) }; // sanity check
+            Jpols[d]:=[ < pol[1] , pol[2] , DecompositionKernelOfIsogeny(J,Jv,pol[1]) > : pol in pols_deg_d_up_to_iso ];
         end for;
         all_pols[J]:=Jpols;
     end for;
