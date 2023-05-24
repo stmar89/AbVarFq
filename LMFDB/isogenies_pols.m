@@ -267,9 +267,14 @@ intrinsic AllPolarizations(ZFV::AlgEtQOrd, PHI::AlgEtQCMType, degree_bounds::Seq
 end intrinsic;
 
 intrinsic CanonicalRepresentativePolarizationGeneral(I::AlgEtQIdl,x0::AlgEtQElt) -> AlgEtQElt,SeqEnum[FldRatElt]
-{Given an ideal I and an element x0 representing a polarization for I, we want to look at the set x0*u*\bar(u) where u runs over the units of (I:I)=S. We compute the image of this set via the Log map. We use ShortestVectors on this lattice, pullback the output in the algebra, computhe the action of the torsion units of S on these elements, represent them with respect to [V^(g-1),...,V,1,F,...,F^g], sort them with respec to the lexigographic order of their coefficients and take the smalles.}
+{Given an ideal I and an element x0 representing a polarization for I, we want to look at the set x0*u*\bar(u) where u runs over the units of (I:I)=S. We compute the image of this set via the Log map. We use ShortestVectors on this lattice, pullback the output in the algebra, computhe the action of the torsion units of S on these elements, represent them with respect to [V^(g-1),...,V,1,F,...,F^g], sort them with respec to the lexigographic order of their coefficients and take the smallest.}
 // this is very similar to the code of CanonicalRepresentativePolarization
     S:=MultiplicatorRing(I);
+    test,Sb:=IsConjugateStable(S);
+    if test then 
+        return CanonicalRepresentativePolarization(I,x0);
+    end if;
+
     A:=Algebra(x0);
     g:=Dimension(A) div 2;
     F:=PrimitiveElement(A);
@@ -292,21 +297,23 @@ intrinsic CanonicalRepresentativePolarizationGeneral(I::AlgEtQIdl,x0::AlgEtQElt)
     homs:=[homs[2*k-1] : k in [1..g]]; //one per conjugate pair to define the Log map
 
     // this bit is different from CanonicalRepresentativePolarization
+    SSb:=S*Sb; // the smallest order containing both S and Sb
+    U,u:=UnitGroup(SSb);
     US,uS:=UnitGroup(S);
-    gens_US:=[ uS(g) : g in Generators(US) ]; // the torsion unit probably does do nothing
-    sub:=sub< US | [(g*ComplexConjugate(g))@@uS : g in gens_US ] >;     // sub = < u * \bar u : u in S^* >
-    gens_sub_inS:=[ uS(g) : g in Generators(sub) ];
-    // end of differences
+    gens_US:=[ uS(g) : g in Generators(US) ];
+    sub:=sub< U | [(g*ComplexConjugate(g))@@u : g in gens_US ] >;     // sub = < u * \bar u : u in S^* >
+    gens_sub:=[ u(g) : g in Generators(sub) ];
+    // end of differences, except gens_sub_inS has been renamed to gens_sub (since they are in SSb, not necessarily in S).
 
 
-    rnk_sub:=#gens_sub_inS;
+    rnk_sub:=#gens_sub;
     assert rnk_sub eq g-#Components(A);
-    img_gens_sub:=Matrix([[ Log(Abs(h(g))) : h in homs ] : g in gens_sub_inS ]); // apply Log map
+    img_gens_sub:=Matrix([[ Log(Abs(h(g))) : h in homs ] : g in gens_sub ]); // apply Log map
     L:=Lattice(img_gens_sub);
     img_x0:=Vector([ Log(Abs(h(x0))) : h in homs ]);
     closest_vects:=ClosestVectors(L,-img_x0); //note the minus sign!
     all_coords:=[ Coordinates(cv) : cv in closest_vects];
-    candidates:=[ x0*&*[ gens_sub_inS[i]^coord[i] : i in [1..rnk_sub] ] : coord in all_coords ]; 
+    candidates:=[ x0*&*[ gens_sub[i]^coord[i] : i in [1..rnk_sub] ] : coord in all_coords ]; 
     // A priori, I believe that I should act on candidates with the torsion units of the totally real totally positive units in S
     // But there is only 1 (which also the torsion subgroup of sub = < u*\bar u>
 
