@@ -229,7 +229,7 @@ intrinsic CanonicalPicBases(ZFV::AlgEtQOrd) -> List, List
     vprint User1: "PicardGroup finished", Cputime() - t0; t0 := Cputime();
     ZFVgens, gens_construction := CanonicalPicGenerators(ZFV);
     vprint User1: "CanonicalPicGenerators finished", Cputime() - t0; t0:=Cputime();
-    igens := [pmap0(P0.i) : i in [1..Ngens(P0)]];
+    igens := [pmap0(P0.k) : k in [1..Ngens(P0)]];
     vprint User1: "igens finished", Cputime() - t0;
     bases := [* *];
     basis_constructions := [* *];
@@ -254,6 +254,8 @@ intrinsic CanonicalPicBases(ZFV::AlgEtQOrd) -> List, List
     ZFV`CanonicalPicBases := <bases, basis_constructions>;
     for i in [1..#oo] do
         S := oo[i];
+        P := PicardGroup(S);
+        assert &and[Parent(b) eq P : b in bases[i]];
         S`CanonicalPicBasis := <bases[i], basis_constructions[i]>;
     end for;
     return bases, basis_constructions;
