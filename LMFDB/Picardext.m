@@ -249,6 +249,7 @@ intrinsic CanonicalPicBases(ZFV::AlgEtQOrd) -> List, List
     for i->S in oo do
         if i eq j then
             Sgens := ZFVgens;
+            P := P0;
         else
             vprint User1: "Starting PicardGroup", i; t0:=Cputime();
             P, pmap := PicardGroup(S);
@@ -259,6 +260,7 @@ intrinsic CanonicalPicBases(ZFV::AlgEtQOrd) -> List, List
             vprint User1: "Sgens finished", Cputime() - t0; t0:=Cputime();
         end if;
         basis, bcon := GensToBasis(oo[i], Sgens);
+        assert &and[Parent(b) eq P : b in basis];
         Append(~bases, basis);
         Append(~basis_constructions, bcon);
     end for;
