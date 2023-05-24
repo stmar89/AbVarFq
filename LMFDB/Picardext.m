@@ -317,11 +317,13 @@ Note that if you're calling this for many different pos, it's probably better to
     return IdealFromPosition(pos, basis, invs);
 end intrinsic;
 
-intrinsic PicIteration(S::AlgEtQOrd, basis::SeqEnum : filter:=0) -> SeqEnum
+intrinsic PicIteration(S::AlgEtQOrd, basis::SeqEnum : filter:=0, include_pic_elt:=false) -> SeqEnum
 {Iterates over the elements of the Picard group in a consistent order, using a filter function on Pic(S).  basis_info should be an entry in the *first* part of the output of CanonicalPicBases(S), and filter should be take a single element of Pic(S) as input and return a boolean (the ideal is included if the output is true).  The output is a sequence of pairs <i, I>, where I is an ideal and i is the index of that ideal in the overall iteration.}
     P, pmap := PicardGroup(S);
     if #P eq 1 then
         if filter cmpeq 0 then
+            if include_pic_elt then
+                return [<OneIdeal(S), 1, P.0>];
             return [<OneIdeal(S), 1>];
         elif filter(P.0) then
             return [<OneIdeal(S), 1>];
@@ -334,18 +336,15 @@ intrinsic PicIteration(S::AlgEtQOrd, basis::SeqEnum : filter:=0) -> SeqEnum
     coeffs := [0 : i in invs];
     ans := [];
     ctr := 1;
-    if filter cmpeq 0 then
-        iter := [pmap(&+basis[i..#basis]) : i in [1..#basis]];
-        cur := OneIdeal(S);
-    else
-        iter := [&+basis[i..#basis] : i in [1..#basis]];
-        cur := P.0; // identity
-    end if;
+    Pelt := P.0; // identity
+    Piter := [&+basis[i..#basis] : i in [1..#basis]];
     while true do
-        if filter cmpeq 0 then
-            Append(~ans, <cur, ctr>);
-        elif filter(cur) then
-            Append(~ans, <pmap(cur), ctr>);
+        if filter cmpeq 0 or filter(Pelt) then
+            if include_pic_elt then
+                Append(~ans, <pmap(Pelt), ctr, Pelt>);
+            else
+                Append(~ans, <pmap(Pelt), ctr>);
+            end if;
         end if;
         pos := #coeffs;
         while true do
@@ -358,12 +357,7 @@ intrinsic PicIteration(S::AlgEtQOrd, basis::SeqEnum : filter:=0) -> SeqEnum
                 break;
             end if;
         end while;
-        // If we aren't filtering, we can multiply by pmap(iter[pos]) rather than adding and eventually applying pmap(cur).  Hopefully the cost of applying pmap is dwarfed by the polarization calculation we have to do.
-        if filter cmpeq 0 then
-            cur *:= iter[pos];
-        else
-            cur +:= iter[pos];
-        end if;
+        Pelt +:= Piter[pos];
         ctr +:= 1;
     end while;
 end intrinsic;
