@@ -242,7 +242,7 @@ intrinsic CanonicalPicBases(ZFV::AlgEtQOrd) -> List, List
             P, pmap := PicardGroup(S);
             vprint User1: "PicardGroup finished", Cputime() - t0; t0:=Cputime();
             // S!!igens[i] isn't prime, but that's fine: these still generate.
-            P0Pmap := hom<P0 -> P | [<P0.i, (S!!igens[k]) @@ pmap> : k in [1..Ngens(P0)]]>;
+            P0Pmap := hom<P0 -> P | [<P0.k, (S!!igens[k]) @@ pmap> : k in [1..Ngens(P0)]]>;
             Sgens := [P0Pmap(g) : g in ZFVgens];
             vprint User1: "Sgens finished", Cputime() - t0; t0:=Cputime();
         end if;
