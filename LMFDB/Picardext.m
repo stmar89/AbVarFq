@@ -311,6 +311,7 @@ end intrinsic;
 intrinsic PicIteration(S::AlgEtQOrd, basis::SeqEnum : filter:=0, include_pic_elt:=false) -> SeqEnum
 {Iterates over the elements of the Picard group in a consistent order, using a filter function on Pic(S).  basis_info should be an entry in the *first* part of the output of CanonicalPicBases(S), and filter should be take a single element of Pic(S) as input and return a boolean (the ideal is included if the output is true).  The output is a sequence of pairs <i, I>, where I is an ideal and i is the index of that ideal in the overall iteration.}
     P, pmap := PicardGroup(S);
+    assert assigned S`PicardGroup;
     if #P eq 1 then
         if filter cmpeq 0 or filter(P.0) then
             if include_pic_elt then

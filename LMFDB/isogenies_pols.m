@@ -60,6 +60,7 @@ end intrinsic;
 intrinsic ICM_Identify(L::AlgEtQIdl, icm_lookup::Assoc) -> AlgEtQIdl, AlgEtQElt
 {Given an ideal L, together with the lookup table output by ICM_CanonicalRepresentatives, returns the canonical representative I in the same class of the ICM as L, together with an element of the etale algebra x so that L = x*I}
     S := MultiplicatorRing(L);
+    assert assigned S`PicardGroup;
     PS, pS := PicardGroup(S);
     wkS := WKICM_barCanonicalRepresentatives(S);
     for i->W in wkS do
