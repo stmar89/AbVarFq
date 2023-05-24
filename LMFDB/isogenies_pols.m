@@ -3,6 +3,7 @@
 // TODO Merge with polarizations.m ????
 
 // declare attributes AlgEtQOrd : ???
+declare attributes AlgEtQOrd: ICM_CanonicalRepresentatives;
 
 import "polarizations.m" : transversal_US_USplus,transversal_USplus_USUSb, is_polarization;
 
@@ -30,37 +31,60 @@ is_weak_eq_same_mult_ring:=function(I,J)
     return test,cIJ,cJI;
 end function;
 
-intrinsic AllMinimalIsogeniesTo(ZFV::AlgEtQOrd , N :: RngIntElt)->Assoc
+intrinsic ICM_CanonicalRepresentatives(ZFV::AlgEtQOrd) -> SeqEnum[AlgEtQIdl], List
+{}
+    if assigned ZFV`ICM_CanonicalRepresentatives then
+        return ZFV`ICM_CanonicalRepresentatives;
+    end if;
+    ans := [];
+    maps := [* *];
+    _ := CanonicalPicBases(ZFV); // sets bases
+    for S in OverOrders(ZFV) do
+        pic_iter := [ZFV!!I : I in PicIteration(S, CanonicalPicBasis(ZFV))];
+        for WE in WKICM_barCanonicalRepresentatives(S) do
+            ZFVWE := ZFV!!WE;
+            for I in pic_iter do
+                Append(~ans, ZFVWE * I);
+            end for;
+        end for;
+    end for;
+    ZFV`ICM_CanonicalRepresentatives := ans;
+    return ans;
+end intrinsic;
+
+intrinsic AllMinimalIsogenies(ZFV::AlgEtQOrd, N::RngIntElt : degrees:=0)->Assoc
 {Given the ZFV order of a squarefree isogeny class, it returns an associative array, indexed by the canonical representatives J of isomorphism classes, in which each entry contains an associative array with data describing isogenies to J. This data consists of a tuple ... 
 //TODO finish descr
 }
-    isom_cl:=ICM(ZFV); // TODO use canonical reps
-    all_min_isog_to:=AssociativeArray();
-    for J in isom_cl do
-        // J is over R
-        Ls:=MaximalIntemediateIdeals(J,N*J);
-        MinimalIsogeniesToJ:=AssociativeArray();
-        for I in isom_cl do
-            MinimalIsogeniesToJ[I] := [];
+    isom_cl := ICM_CanonicalRepresentatives(ZFV);
+    min_isog:=AssociativeArray();
+    for I in isom_cl do
+        min_isog[I] := AssociativeArray();
+        for J in isom_cl do
+            min_isog[I][J] := [];
         end for;
+    end for;
+    for J in isom_cl do
+        // J is over ZFV
+        Ls := MaximalIntemediateIdeals(J,N*J);
         for L in Ls do
-            deg:=Index(J,L);
-            S:=MultiplicatorRing(L);
-            PS,pS:=PicardGroup(S); // TODO this should be with canonical generators of Pic (with DLP)
-            wkS:=WKICM_bar(S);
+            deg := Index(J,L);
+            if degrees cmpne 0 and not (deg in degrees) then
+                continue;
+            end if;
+            S := MultiplicatorRing(L);
+            PS,pS := PicardGroup(S); // TODO this should be with canonical generators of Pic (with DLP)
+            wkS := WKICM_barCanonicalRepresentatives(S);
             for i in [1..#wkS] do
-                W:=wkS[i]; // we assume here that W is a canonical representative of its weak equivalence class
-                test_wk,cLW,_:=is_weak_eq_same_mult_ring(S!!L,W) 
+                W := wkS[i]; // we assume here that W is a canonical representative of its weak equivalence class
+                test_wk,cLW,_ := is_weak_eq_same_mult_ring(S!!L,W);
                 if test_wk then
                     // cLW=(L:W) is invertible, W*cLW = L
-                    g:=cLW@@pS; // in Pic(S)
+                    g := cLW@@pS; // in Pic(S)
                     // TODO produce label of (W,g)
                     test,x:=IsIsomorphic(cLW,pS(g)); // x*pS(g) = cLW
                     assert test;
-                    //if not IsDefined(MinimalIsogeniesToJ,<W,g>) then
-                    //    MinimalIsogeniesToJ[<W,g>]:=[];
-                    //end if;
-                    Append(~MinimalIsogeniesToJ[<W,g>],<deg,x>); // TODO: Change <W,g> index to I; might want to store L and S
+                    Append(~min_isog[I][J], <deg,x>); // TODO: Change <W,g> index to I; might want to store L and S
                                                                  // W*cLW = L c J, x*W*pS(g) = W*cLW = L c J, 
                                                                  // so x is a minimal isogeny from I:=W*pS(g) to J of degree deg=J/L 
                                                                  // we might want to replace W,g in the tuble with the label of 
@@ -70,12 +94,91 @@ intrinsic AllMinimalIsogeniesTo(ZFV::AlgEtQOrd , N :: RngIntElt)->Assoc
                 end if;
             end for;
         end for;
-        all_min_isog_to[J]:=MinimalIsogeniesToJ;
     end for;
+    return min_isog;
 end intrinsic;
 
-intrinsic AllPolarizations( ZFV :: AlgEtQOrd , PHI :: AlgEtQCMTYpe , N::RngIntElt : max_depth:=2 )->Assoc
-{Given the Z[F,V] order of an isogeny squarefree class, a p-Adic posirive CMType PHI it returns an associative array whose keys are the canonical representatives of all isomorphism classes. The entry indexed by J will contain all polarizations that are composition of at most "max_depth" minimal isogenies, where "max_depth" is passed as a var arg (default value 2), the isogenies have degree bounded by the integer N, minimal means that it cannot be factor into a composition of two isogenies of degree gt than 1.}
+intrinsic IsogeniesByDegree(ZFV::AlgEtQOrd, degree_bounds::SeqEnum : important_pairs:=0) -> Assoc
+{Given the ZFV order of a squarefree isogeny class, together with a sequence of integers, return an associative array A so that A[I][J][d] consists of all isogenies of degree d from I to J for all integers d dividing any element of degree_bounds.  Each isogeny is stored as a pair <x,L> where x is an element mapping I into J and L = x*I (which is a submodule of J of an appropriate index).}
+    // imporant pairs, if given, should be a list of tuples <I,J> of canonical representatives (see note below for how they're used)
+    N := LCM(degree_bounds);
+    degrees := {};
+    proper_degrees := {};
+    for B in degree_bounds do
+        for d in Divisors(B) do
+            if d eq 1 then continue; end if;
+            Include(~degrees, d);
+            // When looking for isogenies from I to Iv, we only care about isogenies between other ideals in that they help build these.  Since we'll always be composing with an extra minimal isogeny, we can drop the degree bounds for isogenies from I to J when J ne Iv (see keep_degree function below)
+            if d eq B then continue; end if;
+            Include(~proper_degrees, d);
+        end for;
+    end for;
+    function keep_degree(I,J,d)
+        if important_pairs cmpeq 0 or <I,J> in important_pairs then
+            return d in degrees;
+        else
+            return d in proper_degrees;
+        end if;
+    end function;
+    min_isog := AllMinimalIsogenies(ZFV, N : degrees:=degrees);
+    isog := AssociativeArray();
+    isom_cl:=ICM_CanonicalRepresentatives(ZFV);
+    for I in isom_cl do
+        isog[I] := AssociativeArray();
+        for J in isom_cl do
+            isog[I][J] := AssociativeArray();
+            for dx in min_isog[J][I] do
+                d, x := Explode(dx);
+                if keep_degree(I, J, d) then
+                    if not IsDefined(isog[I][J], d) then
+                        isog[I][J][d] := [];
+                    end if;
+                    Append(~isog[I][J][d], <x, x*I>);
+                end if;
+            end for;
+        end for;
+    end for;
+    while true do
+        added_something := false;
+        for J in isom_cl do
+            for I in isom_cl do
+                for K in isom_cl do
+                    for m -> known in isog[I][K] do
+                        for yL0 in known do
+                            y, L0 := Explode(yL0);
+                            for dx in min_isog[K][J] do
+                                d, x := Explode(dx);
+                                dm := d*m;
+                                if keep_degree(I, J, dm) then
+                                    L := x * L0;
+                                    if not IsDefined(isog[I][J], dm) then
+                                        isog[I][J][dm] := [<x*y, L>];
+                                        added_something := true;
+                                    else
+                                        hsh := myHash(L);
+                                        hashes := {myHash(M) : M in isog[I][J][dm]};
+                                        if not hsh in hashes then
+                                            // myHash is collision free
+                                            Append(~isog[I][J][dm], <x*y, L>);
+                                            added_something := true;
+                                        end if;
+                                    end if;
+                                end if;
+                            end for;
+                        end for;
+                    end for;
+                end for;
+            end for;
+        end for;
+        if not added_something then
+            break;
+        end if;
+    end while;
+    return isog;
+end intrinsic;
+
+intrinsic AllPolarizations(ZFV::AlgEtQOrd, PHI::AlgEtQCMType, degree_bounds::SeqEnum[RngIntElt])->Assoc
+{Given the Z[F,V] order of an isogeny squarefree class, a p-Adic positive CMType PHI it returns an associative array whose keys are the canonical representatives of all isomorphism classes. The entry indexed by J will contain all polarizations that are composition of at most "max_depth" minimal isogenies, where "max_depth" is passed as a var arg (default value 2), the isogenies have degree bounded by the integer N, minimal means that it cannot be factor into a composition of two isogenies of degree gt than 1.}
 
     A:=Algebra(ZFV);
     all_min_isog_to:=AllMinimalIsogeniesTo(ZFV, N);
@@ -97,7 +200,7 @@ intrinsic AllPolarizations( ZFV :: AlgEtQOrd , PHI :: AlgEtQCMTYpe , N::RngIntEl
                                             // since we have already run this code we don't test if we get polarizations.
         assert test;
         S:=MultiplicatorRing(J);
-        can_reps_of_duals[Jv] := < J,JJ,S,J_to_JJ >;  
+        can_reps_of_duals[Jv] := < J,JJ,S,J_to_JJ >;
     end for;
 
     for current_depth in [1..max_depth] do
