@@ -31,32 +31,59 @@ is_weak_eq_same_mult_ring:=function(I,J)
     return test,cIJ,cJI;
 end function;
 
-intrinsic ICM_CanonicalRepresentatives(ZFV::AlgEtQOrd) -> SeqEnum[AlgEtQIdl], List
+intrinsic ICM_CanonicalRepresentatives(ZFV::AlgEtQOrd) -> SeqEnum[AlgEtQIdl], Assoc, Assoc
 {}
     if assigned ZFV`ICM_CanonicalRepresentatives then
-        return ZFV`ICM_CanonicalRepresentatives;
+        return Explode(ZFV`ICM_CanonicalRepresentatives);
     end if;
     ans := [];
     maps := [* *];
+    pic_lookup := AssociativeArray();
     _ := CanonicalPicBases(ZFV); // sets bases
     for S in OverOrders(ZFV) do
-        pic_iter := [ZFV!!I : I in PicIteration(S, CanonicalPicBasis(ZFV))];
+        pic_iter := PicIteration(S, CanonicalPicBasis(ZFV) : include_pic_elt:=true);
+        pic_iter := [<ZFV!!x[1], x[2], x[3]> : x in pic_iter];
+        pic_lookup[S] := AssociativeArray();
+        for x in pic_iter do
+            pic_lookup[S][x[3]] := x[1];
+        end for;
         for WE in WKICM_barCanonicalRepresentatives(S) do
             ZFVWE := ZFV!!WE;
-            for I in pic_iter do
-                Append(~ans, ZFVWE * I);
+            for pair in pic_iter do
+                I, ctr, Pelt := Explode(pair);
+                WI := ZFVWE * I;
+                pic_lookup[<W, Pelt>] := WI;
+                Append(~ans, WI);
             end for;
         end for;
     end for;
-    ZFV`ICM_CanonicalRepresentatives := ans;
-    return ans;
+    ZFV`ICM_CanonicalRepresentatives := <ans, pic_lookup>;
+    return ans, pic_lookup;
+end intrinsic;
+
+intrinsic ICM_Identify(L::AlgEtQIdl, pic_lookup::Assoc) -> AlgEtQIdl, AlgEtQElt
+{Given an ideal L, together with the lookup table output by ICM_CanonicalRepresentatives, }
+    S := MultiplicatorRing(L);
+    PS, pS := PicardGroup(S);
+    wkS := WKICM_barCanonicalRepresentatives(S);
+    for i->W in wkS do
+        test_wk, cLW, _ := is_weak_eq_same_mult_ring(S!!L,W);
+        if test_wk then
+            // cLW=(L:W) is invertible, W*cLW = L
+            g := cLW@@pS; // in Pic(S)
+            I := pic_lookup[<W, g>];
+            test, x := IsIsomorphic(L, I); // x*I = L
+            assert test;
+            return I, x;
+        end if;
+    end for;
 end intrinsic;
 
 intrinsic AllMinimalIsogenies(ZFV::AlgEtQOrd, N::RngIntElt : degrees:=0)->Assoc
 {Given the ZFV order of a squarefree isogeny class, it returns an associative array, indexed by the canonical representatives J of isomorphism classes, in which each entry contains an associative array with data describing isogenies to J. This data consists of a tuple ... 
 //TODO finish descr
 }
-    isom_cl := ICM_CanonicalRepresentatives(ZFV);
+    isom_cl, pic_lookup := ICM_CanonicalRepresentatives(ZFV);
     min_isog:=AssociativeArray();
     for I in isom_cl do
         min_isog[I] := AssociativeArray();
@@ -68,31 +95,13 @@ intrinsic AllMinimalIsogenies(ZFV::AlgEtQOrd, N::RngIntElt : degrees:=0)->Assoc
         // J is over ZFV
         Ls := MaximalIntemediateIdeals(J,N*J);
         for L in Ls do
-            deg := Index(J,L);
+            deg := Index(J, L);
             if degrees cmpne 0 and not (deg in degrees) then
                 continue;
             end if;
-            S := MultiplicatorRing(L);
-            PS,pS := PicardGroup(S); // TODO this should be with canonical generators of Pic (with DLP)
-            wkS := WKICM_barCanonicalRepresentatives(S);
-            for i in [1..#wkS] do
-                W := wkS[i]; // we assume here that W is a canonical representative of its weak equivalence class
-                test_wk,cLW,_ := is_weak_eq_same_mult_ring(S!!L,W);
-                if test_wk then
-                    // cLW=(L:W) is invertible, W*cLW = L
-                    g := cLW@@pS; // in Pic(S)
-                    // TODO produce label of (W,g)
-                    test,x:=IsIsomorphic(cLW,pS(g)); // x*pS(g) = cLW
-                    assert test;
-                    Append(~min_isog[I][J], <deg,x>); // TODO: Change <W,g> index to I; might want to store L and S
-                                                                 // W*cLW = L c J, x*W*pS(g) = W*cLW = L c J, 
-                                                                 // so x is a minimal isogeny from I:=W*pS(g) to J of degree deg=J/L 
-                                                                 // we might want to replace W,g in the tuble with the label of 
-                                                                 // W*pS(g)=:I which is the canonical representative of 
-                                                                 // the corresponding isomorphism class
-                    break i;
-                end if;
-            end for;
+            I, x := ICM_Identify(L, pic_lookup);
+            Append(~min_isog[I][J], <deg, x, L>); // TODO: might want to store S
+                                              // x is a minimal isogeny from I to J of degree deg=#(J/L)
         end for;
     end for;
     return min_isog;
@@ -127,13 +136,13 @@ intrinsic IsogeniesByDegree(ZFV::AlgEtQOrd, degree_bounds::SeqEnum : important_p
         isog[I] := AssociativeArray();
         for J in isom_cl do
             isog[I][J] := AssociativeArray();
-            for dx in min_isog[J][I] do
-                d, x := Explode(dx);
+            for dxL in min_isog[J][I] do
+                d, x, L := Explode(dxL);
                 if keep_degree(I, J, d) then
                     if not IsDefined(isog[I][J], d) then
                         isog[I][J][d] := [];
                     end if;
-                    Append(~isog[I][J][d], <x, x*I>);
+                    Append(~isog[I][J][d], <x, L>);
                 end if;
             end for;
         end for;
@@ -146,8 +155,8 @@ intrinsic IsogeniesByDegree(ZFV::AlgEtQOrd, degree_bounds::SeqEnum : important_p
                     for m -> known in isog[I][K] do
                         for yL0 in known do
                             y, L0 := Explode(yL0);
-                            for dx in min_isog[K][J] do
-                                d, x := Explode(dx);
+                            for dxL in min_isog[K][J] do
+                                d, x := Explode(dxL);
                                 dm := d*m;
                                 if keep_degree(I, J, dm) then
                                     L := x * L0;
