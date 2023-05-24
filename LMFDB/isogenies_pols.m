@@ -182,61 +182,25 @@ intrinsic IsogeniesByDegree(ZFV::AlgEtQOrd, degree_bounds::SeqEnum : important_p
 end intrinsic;
 
 intrinsic AllPolarizations(ZFV::AlgEtQOrd, PHI::AlgEtQCMType, degree_bounds::SeqEnum[RngIntElt])->Assoc
-{Given the Z[F,V] order of an isogeny squarefree class, a p-Adic positive CMType PHI it returns an associative array whose keys are the canonical representatives of all isomorphism classes. The entry indexed by J will contain all polarizations that are composition of at most "max_depth" minimal isogenies, where "max_depth" is passed as a var arg (default value 2), the isogenies have degree bounded by the integer N, minimal means that it cannot be factor into a composition of two isogenies of degree gt than 1.}
+{Given the Z[F,V] order of an isogeny squarefree class, a p-Adic positive CMType PHI it returns an associative array whose keys are the canonical representatives of all isomorphism classes.
+//TODO
+.}
 
-    A:=Algebra(ZFV);
-    all_min_isog_to:=AllMinimalIsogeniesTo(ZFV, N);
-    all_pols:=AssociativeArray();
-    isom_cl:= //canonical reps of ICM(ZFV);
-
-    // we init the output 
-    for Jv in isom_cl do
-        Jpols:=AssociativeArray(); // will contain all pols find, sorted by degree.
-        all_pols[Jv]):=Jpols;
-    end for;
-    
-    can_reps_of_duals:=AssociativeArray();
-    for Jv in isom_cl do
-        J:=TraceDualIdeal(ComplexConjugate(Jv));
-        // I am looking for pol such that pol*J c Jv
-        // JJ:=canonical rep of J
-        test,J_to_JJ := IsIsomorphic(JJ,J); // this is sort of depth = 0, i.e. principal polarizations.
-                                            // since we have already run this code we don't test if we get polarizations.
-        assert test;
+    all_pols:=AssociativeArray(); // the output
+    all_isog:=IsogeniesByDegree(ZFV,degree_bounds : important_pairs:=[ < J , can_reps_of_duals[J][2] > : J in isom_cl ]);
+    for J in all_isog do
+        Jpols:=AssociativeArray(); // will contain all pols find, indexed by degree.
         S:=MultiplicatorRing(J);
-        can_reps_of_duals[Jv] := < J,JJ,S,J_to_JJ >;
-    end for;
-
-    for current_depth in [1..max_depth] do
-        for Jv in isom_cl do
-            Jpols:=all_pols[Jv];
-            J,JJ,S,J_to_JJ := Explode(can_reps_of_duals[Jv]);
-            cc := [<JJ,1,[J_to_JJ]>]; // JJ is the canonical representative for J
-            for d in [1..current_depth-1] do
-                newcc := [];
-                for triple in cc do
-                    I, d, flist := Explode(triple);
-                    if d lt current_depth then
-                        for II in isom_cl do
-                            for g in all_min_isog_to[II][I] do
-                                Append(~newcc, <II, d*g[1], flist cat [g[2]]>);
-                            end for;
-                        end for;
-                    else
-                    // at d = current_depth we want an isogeny landing in Jv
-                        for g in all_min_isog_to[Jv][I] do
-                            Append(~newcc, <Jv, d*g[1], flist cat [g]>);
-                        end for;
-                    end if;
-                end for;
-                cc := newcc;
-            end for;
-            // now we check if the concatented isogenies give polariations
-            for triple in cc do
-                _,d,flist := Explode(triple);
-                isog:=&*flist;
-                assert Index(Jv,isog*J) eq d;
-                US_over_USplus:=transversal_US_USplus(S);
+        US_over_USplus:=transversal_US_USplus(S);
+        Jv:=TraceDualIdeal(ComplexConjugate(J));
+        // I am looking for pol such that pol*J c Jv
+        // JJ:=canonical rep of Jv
+        test,JJ_to_Jv := IsIsomorphic(Jv,JJ); // JJ*JJ_to_Jv eq Jv
+        assert test;
+        for d ->isog_J_JJ_d in all_isog[J][JJ] do
+            pols_deg_d:=[];
+            for f in isog_J_JJ_d do
+                isog:=f*JJ_to_JV;
                 got_one:=false;
                 for v in US_over_USplus do
                     pp:=isog*v;
@@ -246,26 +210,18 @@ intrinsic AllPolarizations(ZFV::AlgEtQOrd, PHI::AlgEtQCMType, degree_bounds::Seq
                     end if;
                 end for;
                 if got_one then
-                    if not IsDefined(Jpols,d) then
-                        Jpols[d]:=[];
-                    end if;
-                    Jpols[d] cat:= [ pp*t : t in transversal_USplus_USUSb_general(S) ]; // this might contains isomorphic copies
+                    pols_deg_d cat:= [ pp*t : t in transversal_USplus_USUSb_general(S) ]; // this might contains isomorphic copies
                 end if;
             end for;
-            all_pols[Jv]:=Jpols; 
-        end for; 
-    end for;
-
-    for Jv in isom_cl do
-        Jpols:=all_pols[Jv];
-        keys:=Sort(Setseq(Keys(Jpols)); 
-        for d in keys do
-            Jpols[d]:=Setseq(Seqset([ CanonicalRepresentativePolarizationGeneral(J,x0) : x0 in Jpols[d] ])); 
-                // remove isomorphic pols by computing the canonical rep for each one and removing duplicates
-            assert forall{ pol : pol in Jpols[d] | d eq Index(Jv,pol*J) }; // sanity check
+            pols_deg_d_up_to_iso:={};
+            for x0 in pols_deg_d do
+                pol,seq:=CanonicalRepresentativePolarizationGeneral(J,x0);
+                Include(~pols_deg_d_up_to_iso, <pol,seq>); //isomorphic pols will have the same canonical rep
+            end for;
+            assert forall{ pol : pol in pols_deg_d_up_to_iso | d eq Index(Jv,pol[1]*J) }; // sanity check
+            Jpols[d]:=[ < pol[1] , pol[2] , DecompositionKernelOfIsogeny(J,Jv,pol[1]) > : pol in pols_deg_d_up_to_iso ];
         end for;
-        // TODO add kernels????
-        all_pols[Jv]:=Jpols; 
+        all_pols[J]:=Jpols;
     end for;
     return all_pols;
 end intrinsic;
