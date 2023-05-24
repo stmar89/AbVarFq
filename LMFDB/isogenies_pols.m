@@ -37,10 +37,10 @@ intrinsic ICM_CanonicalRepresentatives(ZFV::AlgEtQOrd) -> SeqEnum[AlgEtQIdl], As
         return Explode(ZFV`ICM_CanonicalRepresentatives);
     end if;
     ans := [];
-    pic_lookup := AssociativeArray();
+    icm_lookup := AssociativeArray();
     _ := CanonicalPicBases(ZFV); // sets bases
     for S in OverOrders(ZFV) do
-        pic_lookup[S] := AssociativeArray();
+        icm_lookup[S] := AssociativeArray();
         pic_iter := PicIteration(S, CanonicalPicBasis(ZFV) : include_pic_elt:=true);
         pic_iter := [<ZFV!!x[1], x[2], x[3]> : x in pic_iter];
         for WE in WKICM_barCanonicalRepresentatives(S) do
@@ -48,16 +48,16 @@ intrinsic ICM_CanonicalRepresentatives(ZFV::AlgEtQOrd) -> SeqEnum[AlgEtQIdl], As
             for trip in pic_iter do
                 I, ctr, Pelt := Explode(trip);
                 WI := ZFVWE * I;
-                pic_lookup[S][<W, Pelt>] := WI;
+                icm_lookup[S][<W, Pelt>] := WI;
                 Append(~ans, WI);
             end for;
         end for;
     end for;
-    ZFV`ICM_CanonicalRepresentatives := <ans, pic_lookup>;
-    return ans, pic_lookup;
+    ZFV`ICM_CanonicalRepresentatives := <ans, icm_lookup>;
+    return ans, icm_lookup;
 end intrinsic;
 
-intrinsic ICM_Identify(L::AlgEtQIdl, pic_lookup::Assoc) -> AlgEtQIdl, AlgEtQElt
+intrinsic ICM_Identify(L::AlgEtQIdl, icm_lookup::Assoc) -> AlgEtQIdl, AlgEtQElt
 {Given an ideal L, together with the lookup table output by ICM_CanonicalRepresentatives, returns the canonical representative I in the same class of the ICM as L, together with an element of the etale algebra x so that L = x*I}
     S := MultiplicatorRing(L);
     PS, pS := PicardGroup(S);
@@ -67,7 +67,7 @@ intrinsic ICM_Identify(L::AlgEtQIdl, pic_lookup::Assoc) -> AlgEtQIdl, AlgEtQElt
         if test_wk then
             // cLW=(L:W) is invertible, W*cLW = L
             g := cLW@@pS; // in Pic(S)
-            I := pic_lookup[S][<W, g>];
+            I := icm_lookup[S][<W, g>];
             test, x := IsIsomorphic(L, I); // x*I = L
             assert test;
             return I, x;
@@ -79,7 +79,7 @@ intrinsic AllMinimalIsogenies(ZFV::AlgEtQOrd, N::RngIntElt : degrees:=0)->Assoc
 {Given the ZFV order of a squarefree isogeny class, it returns an associative array, indexed by the canonical representatives J of isomorphism classes, in which each entry contains an associative array with data describing isogenies to J. This data consists of a tuple ... 
 //TODO finish descr
 }
-    isom_cl, pic_lookup := ICM_CanonicalRepresentatives(ZFV);
+    isom_cl, icm_lookup := ICM_CanonicalRepresentatives(ZFV);
     min_isog:=AssociativeArray();
     for I in isom_cl do
         min_isog[I] := AssociativeArray();
@@ -95,9 +95,8 @@ intrinsic AllMinimalIsogenies(ZFV::AlgEtQOrd, N::RngIntElt : degrees:=0)->Assoc
             if degrees cmpne 0 and not (deg in degrees) then
                 continue;
             end if;
-            I, x := ICM_Identify(L, pic_lookup);
-            Append(~min_isog[I][J], <deg, x, L>); // TODO: might want to store S
-                                              // x is a minimal isogeny from I to J of degree deg=#(J/L)
+            I, x := ICM_Identify(L, icm_lookup);
+            Append(~min_isog[I][J], <deg, x, L>); // x is a minimal isogeny from I to J of degree deg=#(J/L)
         end for;
     end for;
     return min_isog;
