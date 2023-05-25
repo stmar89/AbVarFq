@@ -215,7 +215,7 @@ intrinsic AllPolarizations(ZFV::AlgEtQOrd, PHI::AlgEtQCMType, degree_bounds::Seq
     t_can:=0;
     for J in isom_cl do
         JJ,JJ_to_Jv,Jv:=Explode(can_reps_of_duals[J]);
-        for d ->isog_J_JJ_d in all_isog[J][JJ] do
+        for d ->isog_J_JJ_d in all_isog[myHash(J)][myHash(JJ)] do
             pols_deg_d:=[];
             for f in isog_J_JJ_d do
                 isog:=f[1]*JJ_to_Jv;
