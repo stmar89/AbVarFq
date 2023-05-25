@@ -100,7 +100,7 @@ intrinsic AllMinimalIsogenies(ZFV::AlgEtQOrd, N::RngIntElt : degrees:=0)->Assoc
                 continue;
             end if;
             I, x := ICM_Identify(L, icm_lookup);
-            assert Index(J,x*I) eq deg;
+            assert2 Index(J,x*I) eq deg;
             Append(~min_isog[I][J], <deg, x, L>); // x is a minimal isogeny from I to J of degree deg=#(J/L)
         end for;
     end for;
@@ -145,8 +145,8 @@ intrinsic IsogeniesByDegree(ZFV::AlgEtQOrd, degree_bounds::SeqEnum : important_p
                     if not IsDefined(isog[I][J], d) then
                         isog[I][J][d] := [];
                     end if;
-                    assert Index(J,L) eq d;
-                    assert x*I eq L;
+                    assert2 Index(J,L) eq d;
+                    assert2 x*I eq L;
                     Append(~isog[I][J][d], <x, L>);
                 end if;
             end for;
@@ -174,7 +174,7 @@ intrinsic IsogeniesByDegree(ZFV::AlgEtQOrd, degree_bounds::SeqEnum : important_p
                                         if not hsh in hashes then
                                             // myHash is collision free
                                             Append(~isog[I][J][dm], <x*y, L>);
-                                            assert Index(J,x*y*I) eq dm;
+                                            assert2 Index(J,x*y*I) eq dm;
                                             added_something := true;
                                         end if;
                                     end if;
@@ -219,8 +219,8 @@ intrinsic AllPolarizations(ZFV::AlgEtQOrd, PHI::AlgEtQCMType, degree_bounds::Seq
             pols_deg_d:=[];
             for f in isog_J_JJ_d do
                 isog:=f[1]*JJ_to_Jv;
-                assert Index(JJ,f[1]*J) eq d;
-                assert Index(Jv,isog*J) eq d;
+                assert2 Index(JJ,f[1]*J) eq d;
+                assert2 Index(Jv,isog*J) eq d;
                 got_one:=false;
                 for v in US_over_USplus do
                     pp:=isog*v;
@@ -240,7 +240,7 @@ intrinsic AllPolarizations(ZFV::AlgEtQOrd, PHI::AlgEtQCMType, degree_bounds::Seq
                 Include(~pols_deg_d_up_to_iso, <pol,seq>); //isomorphic pols will have the same canonical rep
             end for;
             t_can +:=Cputime(t_can_Jd);
-            assert forall{ pol : pol in pols_deg_d_up_to_iso | d eq Index(Jv,pol[1]*J) }; // sanity check
+            assert2 forall{ pol : pol in pols_deg_d_up_to_iso | d eq Index(Jv,pol[1]*J) }; // sanity check
             Jpols[d]:=[ < pol[1] , pol[2] , DecompositionKernelOfIsogeny(J,Jv,pol[1]) > : pol in pols_deg_d_up_to_iso ];
         end for;
         all_pols[J]:=Jpols;
