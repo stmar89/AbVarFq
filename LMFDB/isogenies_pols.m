@@ -86,9 +86,9 @@ intrinsic AllMinimalIsogenies(ZFV::AlgEtQOrd, N::RngIntElt : degrees:=0)->Assoc
     isom_cl, icm_lookup := ICM_CanonicalRepresentatives(ZFV);
     min_isog:=AssociativeArray();
     for I in isom_cl do
-        min_isog[I] := AssociativeArray();
+        min_isog[myHash(I)] := AssociativeArray();
         for J in isom_cl do
-            min_isog[I][J] := [];
+            min_isog[myHash(I)][myHash(J)] := [];
         end for;
     end for;
     for J in isom_cl do
@@ -101,7 +101,7 @@ intrinsic AllMinimalIsogenies(ZFV::AlgEtQOrd, N::RngIntElt : degrees:=0)->Assoc
             end if;
             I, x := ICM_Identify(L, icm_lookup);
             assert2 Index(J,x*I) eq deg;
-            Append(~min_isog[I][J], <deg, x, L>); // x is a minimal isogeny from I to J of degree deg=#(J/L)
+            Append(~min_isog[myHash(I)][myHash(J)], <deg, x, L>); // x is a minimal isogeny from I to J of degree deg=#(J/L)
         end for;
     end for;
     return min_isog;
@@ -135,19 +135,19 @@ intrinsic IsogeniesByDegree(ZFV::AlgEtQOrd, degree_bounds::SeqEnum : important_p
     isog := AssociativeArray();
     isom_cl:=ICM_CanonicalRepresentatives(ZFV);
     for I in isom_cl do
-        isog[I] := AssociativeArray();
+        isog[myHash(I)] := AssociativeArray();
         for J in isom_cl do
-            isog[I][J] := AssociativeArray();
+            isog[myHash(I)][myHash(J)] := AssociativeArray();
             // for dxL in min_isog[J][I] do // I THINK THIS IS WRONG
-            for dxL in min_isog[I][J] do
+            for dxL in min_isog[myHash(I)][myHash(J)] do
                 d, x, L := Explode(dxL);
                 if keep_degree(I, J, d) then
-                    if not IsDefined(isog[I][J], d) then
-                        isog[I][J][d] := [];
+                    if not IsDefined(isog[myHash(I)][myHash(J)], d) then
+                        isog[myHash(I)][myHash(J)][d] := [];
                     end if;
                     assert2 Index(J,L) eq d;
                     assert2 x*I eq L;
-                    Append(~isog[I][J][d], <x, L>);
+                    Append(~isog[myHash(I)][myHash(J)][d], <x, L>);
                 end if;
             end for;
         end for;
@@ -157,23 +157,23 @@ intrinsic IsogeniesByDegree(ZFV::AlgEtQOrd, degree_bounds::SeqEnum : important_p
         for J in isom_cl do
             for I in isom_cl do
                 for K in isom_cl do
-                    for m -> known in isog[I][K] do
+                    for m -> known in isog[myHash(I)][myHash(K)] do
                         for yL0 in known do
                             y, L0 := Explode(yL0);
-                            for dxL in min_isog[K][J] do
+                            for dxL in min_isog[myHash(K)][myHash(J)] do
                                 d, x := Explode(dxL);
                                 dm := d*m;
                                 if keep_degree(I, J, dm) then
                                     L := x * L0;
-                                    if not IsDefined(isog[I][J], dm) then
-                                        isog[I][J][dm] := [<x*y, L>];
+                                    if not IsDefined(isog[myHash(I)][myHash(J)], dm) then
+                                        isog[myHash(I)][myHash(J)][dm] := [<x*y, L>];
                                         added_something := true;
                                     else
                                         hsh := myHash(L);
-                                        hashes := {myHash(M[2]) : M in isog[I][J][dm]};
+                                        hashes := {myHash(M[2]) : M in isog[myHash(I)][myHash(J)][dm]};
                                         if not hsh in hashes then
                                             // myHash is collision free
-                                            Append(~isog[I][J][dm], <x*y, L>);
+                                            Append(~isog[myHash(I)][myHash(J)][dm], <x*y, L>);
                                             assert2 Index(J,x*y*I) eq dm;
                                             added_something := true;
                                         end if;
