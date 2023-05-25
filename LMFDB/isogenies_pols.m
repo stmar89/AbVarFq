@@ -7,6 +7,7 @@ declare verbose AllPolarizations,1;
 
 // declare attributes AlgEtQOrd : ???
 declare attributes AlgEtQOrd: ICM_CanonicalRepresentatives;
+declare attributes AlgEtQIdl: IsomLabel;
 
 import "polarizations.m" : transversal_US_USplus,transversal_USplus_USUSb, is_polarization;
 
@@ -51,6 +52,9 @@ intrinsic ICM_CanonicalRepresentatives(ZFV::AlgEtQOrd) -> SeqEnum[AlgEtQIdl], As
             for trip in pic_iter do
                 I, ctr, Pelt := Explode(trip);
                 WI := ZFVWE * I;
+                if assigned WE`WELabel then
+                    WI`IsomLabel := Sprintf("%o.%o", WE`WELabel, ctr);
+                end if;
                 icm_lookup[S][<WE, Pelt>] := WI;
                 Append(~ans, WI);
             end for;
