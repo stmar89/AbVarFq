@@ -1,6 +1,9 @@
 /* vim: set syntax=magma :*/
 
 // TODO Merge with polarizations.m ????
+//
+
+declare verbose AllPolarizations,1;
 
 // declare attributes AlgEtQOrd : ???
 declare attributes AlgEtQOrd: ICM_CanonicalRepresentatives;
@@ -97,6 +100,7 @@ intrinsic AllMinimalIsogenies(ZFV::AlgEtQOrd, N::RngIntElt : degrees:=0)->Assoc
                 continue;
             end if;
             I, x := ICM_Identify(L, icm_lookup);
+            assert Index(J,x*I) eq deg;
             Append(~min_isog[I][J], <deg, x, L>); // x is a minimal isogeny from I to J of degree deg=#(J/L)
         end for;
     end for;
@@ -125,19 +129,24 @@ intrinsic IsogeniesByDegree(ZFV::AlgEtQOrd, degree_bounds::SeqEnum : important_p
             return d in proper_degrees;
         end if;
     end function;
+    t0:=Cputime();
     min_isog := AllMinimalIsogenies(ZFV, N : degrees:=degrees);
+    vprintf AllPolarizations : "time spent on AllMinimalIsogenies %o\n",Cputime(t0);
     isog := AssociativeArray();
     isom_cl:=ICM_CanonicalRepresentatives(ZFV);
     for I in isom_cl do
         isog[I] := AssociativeArray();
         for J in isom_cl do
             isog[I][J] := AssociativeArray();
-            for dxL in min_isog[J][I] do
+            // for dxL in min_isog[J][I] do // I THINK THIS IS WRONG
+            for dxL in min_isog[I][J] do
                 d, x, L := Explode(dxL);
                 if keep_degree(I, J, d) then
                     if not IsDefined(isog[I][J], d) then
                         isog[I][J][d] := [];
                     end if;
+                    assert Index(J,L) eq d;
+                    assert x*I eq L;
                     Append(~isog[I][J][d], <x, L>);
                 end if;
             end for;
@@ -187,7 +196,7 @@ intrinsic AllPolarizations(ZFV::AlgEtQOrd, PHI::AlgEtQCMType, degree_bounds::Seq
 {Given the Z[F,V] order of an isogeny squarefree class, a p-Adic positive CMType PHI it returns an associative array whose keys are the canonical representatives of all isomorphism classes.
 //TODO
 .}
-
+    t_tot:=Cputime();
     isom_cl, icm_lookup := ICM_CanonicalRepresentatives(ZFV);
     can_reps_of_duals:=AssociativeArray();
     all_pols:=AssociativeArray(); // the output
@@ -200,7 +209,10 @@ intrinsic AllPolarizations(ZFV::AlgEtQOrd, PHI::AlgEtQCMType, degree_bounds::Seq
         JJ,JJ_to_Jv:=ICM_Identify(Jv,icm_lookup);
         can_reps_of_duals[J]:=<JJ,JJ_to_Jv,Jv>;
     end for;
+    t0:=Cputime();
     all_isog:=IsogeniesByDegree(ZFV,degree_bounds : important_pairs:=[ < J , can_reps_of_duals[J][1] > : J in isom_cl ]);
+    vprintf AllPolarizations : "time spent on IsogeniesByDegree: %o\n",Cputime(t0);
+    t_can:=0;
     for J in isom_cl do
         JJ,JJ_to_Jv,Jv:=Explode(can_reps_of_duals[J]);
         for d ->isog_J_JJ_d in all_isog[J][JJ] do
@@ -221,16 +233,20 @@ intrinsic AllPolarizations(ZFV::AlgEtQOrd, PHI::AlgEtQCMType, degree_bounds::Seq
                     pols_deg_d cat:= [ pp*t : t in transversal_USplus_USUSb_general(S) ]; // this might contains isomorphic copies
                 end if;
             end for;
+            t_can_Jd:=Cputime();
             pols_deg_d_up_to_iso:={};
             for x0 in pols_deg_d do
                 pol,seq:=CanonicalRepresentativePolarizationGeneral(J,x0);
                 Include(~pols_deg_d_up_to_iso, <pol,seq>); //isomorphic pols will have the same canonical rep
             end for;
+            t_can +:=Cputime(t_can_Jd);
             assert forall{ pol : pol in pols_deg_d_up_to_iso | d eq Index(Jv,pol[1]*J) }; // sanity check
             Jpols[d]:=[ < pol[1] , pol[2] , DecompositionKernelOfIsogeny(J,Jv,pol[1]) > : pol in pols_deg_d_up_to_iso ];
         end for;
         all_pols[J]:=Jpols;
     end for;
+    vprintf AllPolarizations : "time spent on computing canonical reps and removing duplicates: %o\n",t_can;
+    vprintf AllPolarizations : "time spent on computing all polarizations: %o\n",Cputime(t_tot);
     return all_pols;
 end intrinsic;
 
