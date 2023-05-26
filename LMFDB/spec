@@ -1,9 +1,12 @@
 {
-  lmfdb.m
-  labelling_wk_classes.m
-  polarizations.m
-  padictocc.m
-  Picardext.m
-  IsProduct.m
-  MonGenOrd.m
+IsProduct.m
+MonGenOrd.m
+Picardext.m
+example_period_matrix.txt
+isogenies_pols.m
+ker_isog.m
+labelling_wk_classes.m
+lmfdb.m
+padictocc.m
+polarizations.m
 }
