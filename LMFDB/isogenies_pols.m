@@ -15,12 +15,20 @@ transversal_USplus_USUSb_general:=function(S)
 // Given an order S, it returns a transveral in S of the quotient S^*_+/<u\bar(u) : u in S^*> where
 // S^*_+ is the subgroups of S^* consisting of totally real totally positive units.
     if not assigned S`transversal_USplus_USUSb then
-        // Modify
-
-        US,uS:=UnitGroup(S);
-        USplus:=TotallyRealPositiveUnitGroup(S);
-        USUSb:=sub< USplus | [ USplus!((g*ComplexConjugate(g))@@uS) : g in [uS(g) : g in Generators(US) ]]>;
-        S`transversal_USplus_USUSb:=[ uS(t) : t in Transversal(USplus,USUSb)];
+        test,Sb:=IsConjugateStable(S);
+        if test then
+            _:=transversal_USplus_USUSb(S); // this caches the attribute
+        else
+            SSb:=S*Sb; // the smallest order containing both S and Sb
+            U,u:=UnitGroup(SSb);
+            US,uS:=UnitGroup(S);
+            gens_US:=[ uS(g) : g in Generators(US) ];
+            USUSb:=sub< U | [(g*ComplexConjugate(g))@@u : g in gens_US ] >;     // sub = < u * \bar u : u in S^* >
+            USplus:=TotallyRealPositiveUnitGroup(S);
+            USplus_USUSb:=sub<U | [ (uS(g))@@u : g in Generators(USplus) ] cat Setseq(Generators(USUSb)) >;
+            USUSb:=sub< USplus_USUSb | [ USplus_USUSb!g : g in Generators(USUSb) ]>;
+            S`transversal_USplus_USUSb:=[ u(t) : t in Transversal(USplus_USUSb,USUSb)];
+        end if;
     end if;
     return S`transversal_USplus_USUSb;
 end function;
