@@ -3,6 +3,7 @@
 declare attributes AlgEtQOrd : PrincipalPolarizationsIsogenyClass,
                                transversal_US_USplus,
                                transversal_USplus_USUSb;
+declare attributes AlgEtQ : pAdicPosCMType;
 
 transversal_US_USplus:=function(S)
 // Given an order S, it returns a transveral in S of the quotient S^*/S^*_+, where
@@ -75,6 +76,9 @@ end intrinsic;
 
 intrinsic pAdicPosCMType(A::AlgEtQ : precpAdic := 30, precCC := 30 ) -> AlgEtQCMType
 { Given an etale algebra A = Q[x]/h = Q[F], where h is a squarefree ordinary q-Weil polynomial, it returns an AlgEtCMType PHI of A such that phi(F) has positive p-adic valuation according to some fixed embedding of \barQp in C. It uses the package padictocc.m written by John Voight. }
+    if assigned A`pAdicPosCMType then
+        return A`pAdicPosCMType;
+    end if;
     h:=ChangeRing(DefiningPolynomial(A),Integers());
     _,p:=IsPrimePower(ConstantCoefficient(h));
     require IsCoprime(Coefficients(h)[(Degree(h) div 2)+1],p) : "The isogeny class is not ordinary";
@@ -93,6 +97,7 @@ intrinsic pAdicPosCMType(A::AlgEtQ : precpAdic := 30, precCC := 30 ) -> AlgEtQCM
     end for;
     assert #cmtype_homs eq (Degree(h) div 2);
     PHI:=CMType(cmtype_homs);
+    A`pAdicPosCMType:=PHI;
     return PHI;
 end intrinsic;
 
