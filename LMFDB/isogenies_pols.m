@@ -14,6 +14,7 @@ import "polarizations.m" : transversal_US_USplus,transversal_USplus_USUSb, is_po
 transversal_USplus_USUSb_general:=function(S)
 // Given an order S, it returns a transveral in S of the quotient S^*_+/<u\bar(u) : u in S^*> where
 // S^*_+ is the subgroups of S^* consisting of totally real totally positive units.
+// It is very similar to transversal_USplus_USUSb, but works also when S is no conjugate stable.
     if not assigned S`transversal_USplus_USUSb then
         test,Sb:=IsConjugateStable(S);
         if test then
@@ -44,7 +45,7 @@ is_weak_eq_same_mult_ring:=function(I,J)
 end function;
 
 intrinsic ICM_CanonicalRepresentatives(ZFV::AlgEtQOrd) -> SeqEnum[AlgEtQIdl], Assoc
-{}
+{Given the Frobenius order of a squafree isogeny class it returns the canonical representatives of the isomorphsim classes. Each ideal has a label attached to it.}
     if assigned ZFV`ICM_CanonicalRepresentatives then
         return Explode(ZFV`ICM_CanonicalRepresentatives);
     end if;
