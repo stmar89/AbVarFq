@@ -109,7 +109,7 @@ intrinsic CanonicalCosetRep(g::GrpAbElt, H::GrpAb) -> GrpAbElt, GrpAb
                 best := h;
                 first := eh;
             end if;
-        end for
+        end for;
         return best, H;
     else
         // iterate over G until you find an element of g+H
@@ -133,7 +133,7 @@ intrinsic RepresentativeMinimalIsogenies(ZFV::AlgEtQOrd, N::RngIntElt : degrees:
         return ZFV`RepresentativeMinimalIsogeniesTo[<N, degrees>];
     end if;
     if not assigned ZFV`CanonicalPicBases then
-        _ = CanonicalPicBases(ZFV);
+        _ := CanonicalPicBases(ZFV);
     end if;
     isom_cl, icm_lookup := ICM_CanonicalRepresentatives(ZFV);
     // It should be possible to implement this function without enumerating the whole ICM, but instead just enumerating weak equivalence classes.
@@ -253,6 +253,7 @@ intrinsic NonprincipalPolarizations(ZFV::AlgEtQOrd, PHI::AlgEtQCMType, degree_bo
         J, J_to_Iv := ICM_Identify(Iv, icm_lookup);
         WI := I`WErep; Ipic := I`Pelt;
         WJ := J`WErep; Jpic := J`Pelt;
+        Jpols:=AssociativeArray();
         for d -> isog_I_J_d in isog[myHash(WI)][myHash(WJ)] do
             for data in isog_I_J_d do
                 x, h, H, L := Explode(data);
