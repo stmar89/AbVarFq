@@ -42,7 +42,8 @@ try
     ZFV := LoadSchemaWKClasses(Read(Sprintf("%oavdata/wk_classes/%o_schema.txt", fld, label)));
     A := Algebra(ZFV);
     if OpenTest(cmfile, "r") then
-        PHI := LoadpAdicPosCMType(ZFVBasis(A), Read(cmfile));
+        cmdata := Split(Read(cmfile), ":")[2]
+        PHI := LoadpAdicPosCMType(ZFVBasis(A), cmdata);
         assert assigned A`pAdicPosCMType;
     end if;
     av_fq_pol := [];
