@@ -7,9 +7,9 @@ declare verbose AllPolarizations,1;
 
 // declare attributes AlgEtQOrd : ???
 declare attributes AlgEtQOrd: ICM_CanonicalRepresentatives, RepresentativeMinimalIsogeniesTo;
-declare attributes AlgEtQIdl: IsomLabel, WErep, PElt;
+declare attributes AlgEtQIdl: IsomLabel, WErep, Pelt;
 
-import "polarizations.m" : transversal_US_USplus,transversal_USplus_USUSb, is_polarization;
+import "polarizations.m" : transversal_US_USplus, transversal_USplus_USUSb, is_polarization;
 
 transversal_USplus_USUSb_general:=function(S)
 // Given an order S, it returns a transveral in S of the quotient S^*_+/<u\bar(u) : u in S^*> where
@@ -257,6 +257,7 @@ intrinsic NonprincipalPolarizations(ZFV::AlgEtQOrd, PHI::AlgEtQCMType, degree_bo
         S := MultiplicatorRing(I);
         Iv := TraceDualIdeal(ComplexConjugate(I));
         J, J_to_Iv := ICM_Identify(Iv, icm_lookup);
+        Jv := TraceDualIdeal(ComplexConjugate(J));
         WI := I`WErep; Ipic := I`Pelt;
         WJ := J`WErep; Jpic := J`Pelt;
         Jpols:=AssociativeArray();
@@ -268,7 +269,7 @@ intrinsic NonprincipalPolarizations(ZFV::AlgEtQOrd, PHI::AlgEtQCMType, degree_bo
                 if Ipic - Jpic - h in H then
                     // This isogeny has the right domain and codomain to be a polarization.
                     got_one := false;
-                    for v in transveral_US_USplus(S) do
+                    for v in transversal_US_USplus(S) do
                         pp := x*v; // TODO: need to think about how to use IsPrincipal appropriately here.
                         if is_polarization(pp, PHI) then
                             got_one := true;
@@ -288,8 +289,8 @@ intrinsic NonprincipalPolarizations(ZFV::AlgEtQOrd, PHI::AlgEtQCMType, degree_bo
                 Include(~pols_deg_d_up_to_iso, <pol,seq>); //isomorphic pols will have the same canonical rep
             end for;
             t_can +:=Cputime(t_can_Jd);
-            assert2 forall{ pol : pol in pols_deg_d_up_to_iso | d eq Index(Jv,pol[1]*J) }; // sanity check
-            Jpols[d]:=[ < pol[1] , pol[2] , DecompositionKernelOfIsogeny(J,Jv,pol[1]) > : pol in pols_deg_d_up_to_iso ];
+            assert2 forall{ pol : pol in pols_deg_d_up_to_iso | d eq Index(Jv, pol[1]*J) }; // sanity check
+            Jpols[d]:=[ < pol[1] , pol[2] , DecompositionKernelOfIsogeny(J, Jv, pol[1]) > : pol in pols_deg_d_up_to_iso ];
         end for;
         all_pols[J]:=Jpols;
     end for;
