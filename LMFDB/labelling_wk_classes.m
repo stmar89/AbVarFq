@@ -634,6 +634,7 @@ intrinsic LoadSchemaWKClasses(str::MonStgElt)->AlgEtQOrd
         end for;
         S`MinimalOverOrders:=min_oo_at_primes;
         S`WKICM_bar:=wkS;
+        S`WKICM_barCanonicalRepresentatives:=wkS;
     end for;
 
     R`OverOrders:=oo;

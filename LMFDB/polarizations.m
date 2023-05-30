@@ -3,6 +3,7 @@
 declare attributes AlgEtQOrd : PrincipalPolarizationsIsogenyClass,
                                transversal_US_USplus,
                                transversal_USplus_USUSb;
+declare attributes AlgEtQ : pAdicPosCMType;
 
 transversal_US_USplus:=function(S)
 // Given an order S, it returns a transveral in S of the quotient S^*/S^*_+, where
@@ -75,6 +76,9 @@ end intrinsic;
 
 intrinsic pAdicPosCMType(A::AlgEtQ : precpAdic := 30, precCC := 30 ) -> AlgEtQCMType
 { Given an etale algebra A = Q[x]/h = Q[F], where h is a squarefree ordinary q-Weil polynomial, it returns an AlgEtCMType PHI of A such that phi(F) has positive p-adic valuation according to some fixed embedding of \barQp in C. It uses the package padictocc.m written by John Voight. }
+    if assigned A`pAdicPosCMType then
+        return A`pAdicPosCMType;
+    end if;
     h:=ChangeRing(DefiningPolynomial(A),Integers());
     _,p:=IsPrimePower(ConstantCoefficient(h));
     require IsCoprime(Coefficients(h)[(Degree(h) div 2)+1],p) : "The isogeny class is not ordinary";
@@ -93,6 +97,7 @@ intrinsic pAdicPosCMType(A::AlgEtQ : precpAdic := 30, precCC := 30 ) -> AlgEtQCM
     end for;
     assert #cmtype_homs eq (Degree(h) div 2);
     PHI:=CMType(cmtype_homs);
+    A`pAdicPosCMType:=PHI;
     return PHI;
 end intrinsic;
 
@@ -137,7 +142,7 @@ RemoveBlanks:=function(str)
 end function;
 
 intrinsic PrintPrincipalPolarizationsIsogenyClass(R::AlgEtQOrd)->MonStgElt
-{Given the order R=Z[F,V] of an ordinary squarefree isogeny class, it computes the principal polarizatons and return a string that can printed to file. This string can be loaded back in magma using LoadPrincipalPolarizationsIsogenyClass.}
+{Given the order R=Z[F,V] of an ordinary squarefree isogeny class, it computes the principal polarizatons and return a string that can printed to file. This string can be loaded back in magma using LoadPrincipalPolarizationsIsogenyClass. The output is not canonical.}
     A:=Algebra(R);
     nf:=Components(A);
     nf_poly:=[ Coefficients((DefiningPolynomial(K))) : K in nf ];
@@ -165,7 +170,7 @@ intrinsic PrintPrincipalPolarizationsIsogenyClass(R::AlgEtQOrd)->MonStgElt
 end intrinsic;
 
 intrinsic LoadPrincipalPolarizationsIsogenyClass(str::MonStgElt)->AlgEtQOrd
-{Given a string produced with PrintPrincipalPolarizationsIsogenyClass, it returns the orders Z[F,V] after populating the attribute PrincipalPolarizationIsogenyClass, which contains the output of PrincipalPolarizationIsogneyClass.}
+{Given a string produced with PrintPrincipalPolarizationsIsogenyClass, it returns the orders Z[F,V] after populating the attribute PrincipalPolarizationIsogenyClass, which contains the output of PrincipalPolarizationIsogneyClass. The string doesn't need to describe canonical representatives.}
     data:=eval(str);
     PP:=PolynomialRing(Rationals());
     ff:=[ PP!f : f in data[1]];
@@ -225,7 +230,7 @@ intrinsic PeriodMatrix(I::AlgEtQIdl,x0::AlgEtQElt,phi::AlgEtQCMType) -> AlgMatEl
 end intrinsic;
 
 intrinsic CanonicalRepresentativePolarization(I::AlgEtQIdl,x0::AlgEtQElt) -> AlgEtQElt,SeqEnum[FldRatElt]
-{Given an ideal I and an element x0 representing a polarization for I, we want to look at the set x0*u*\bar(u) where u runs over the units of (I:I)=S. We compute the image of this set via the Log map. We use ShortestVectors on this lattice, pullback the output in the algebra, computhe the action of the torsion units of S on these elements, represent them with respect to [V^(g-1),...,V,1,F,...,F^g], sort them with respec to the lexigographic order of their coefficients and take the smalles.}
+{Given an ideal I and an element x0 representing a polarization for I, we want to look at the set x0*u*\bar(u) where u runs over the units of (I:I)=S. We compute the image of this set via the Log map. We use ShortestVectors on this lattice, pullback the output in the algebra, computhe the action of the torsion units of S on these elements, represent them with respect to [V^(g-1),...,V,1,F,...,F^g], sort them with respec to the lexigographic order of their coefficients and take the smallest.}
 
     S:=MultiplicatorRing(I);
     require IsConjugateStable(S) : "implemented only for conjugate stable orders, at the moment";

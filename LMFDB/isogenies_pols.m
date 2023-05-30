@@ -14,13 +14,22 @@ import "polarizations.m" : transversal_US_USplus,transversal_USplus_USUSb, is_po
 transversal_USplus_USUSb_general:=function(S)
 // Given an order S, it returns a transveral in S of the quotient S^*_+/<u\bar(u) : u in S^*> where
 // S^*_+ is the subgroups of S^* consisting of totally real totally positive units.
+// It is very similar to transversal_USplus_USUSb, but works also when S is no conjugate stable.
     if not assigned S`transversal_USplus_USUSb then
-        // Modify
-
-        US,uS:=UnitGroup(S);
-        USplus:=TotallyRealPositiveUnitGroup(S);
-        USUSb:=sub< USplus | [ USplus!((g*ComplexConjugate(g))@@uS) : g in [uS(g) : g in Generators(US) ]]>;
-        S`transversal_USplus_USUSb:=[ uS(t) : t in Transversal(USplus,USUSb)];
+        test,Sb:=IsConjugateStable(S);
+        if test then
+            _:=transversal_USplus_USUSb(S); // this caches the attribute
+        else
+            SSb:=S*Sb; // the smallest order containing both S and Sb
+            U,u:=UnitGroup(SSb);
+            US,uS:=UnitGroup(S);
+            gens_US:=[ uS(g) : g in Generators(US) ];
+            USUSb:=sub< U | [(g*ComplexConjugate(g))@@u : g in gens_US ] >;     // sub = < u * \bar u : u in S^* >
+            USplus:=TotallyRealPositiveUnitGroup(S);
+            USplus_USUSb:=sub<U | [ (uS(g))@@u : g in Generators(USplus) ] cat Setseq(Generators(USUSb)) >;
+            USUSb:=sub< USplus_USUSb | [ USplus_USUSb!g : g in Generators(USUSb) ]>;
+            S`transversal_USplus_USUSb:=[ u(t) : t in Transversal(USplus_USUSb,USUSb)];
+        end if;
     end if;
     return S`transversal_USplus_USUSb;
 end function;
@@ -36,7 +45,7 @@ is_weak_eq_same_mult_ring:=function(I,J)
 end function;
 
 intrinsic ICM_CanonicalRepresentatives(ZFV::AlgEtQOrd) -> SeqEnum[AlgEtQIdl], Assoc
-{}
+{Given the Frobenius order of a squafree isogeny class it returns the canonical representatives of the isomorphsim classes. Each ideal has a label attached to it.}
     if assigned ZFV`ICM_CanonicalRepresentatives then
         return Explode(ZFV`ICM_CanonicalRepresentatives);
     end if;

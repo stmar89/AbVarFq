@@ -3,7 +3,12 @@
 // declare attributes AlgEtQOrd :
 
 intrinsic DecompositionKernelOfIsogeny(I::AlgEtQIdl , J::AlgEtQIdl, x::AlgEtQElt)->SeqEnum
-{Decomposition of J/x*L.}
+{Given fractional ideals I and J and an element x such that xI c J, it returns the decomposition of M=J/x*L into 4 parts: M = Mrr + Mrl + Mlr + Mll. 
+Mrr is the submodule of M for which F and V act invertibly.
+Mrl is the submodule of M for which F acts invertibly, and V does not.
+Mlr is the submodule of M for which V acts invertibly, and F does not.
+Mll is the submodule of M for which neither F nor V act invertibly.i
+The output is a sequence of tpars <mij,Mij> where mij:J->Mij is the quotient map composed with the project onto the Mij component.}
     L:=x*I;
     require L subset J : "The elements is not an isogeny between the two ideals";
     R:=Order(I);
