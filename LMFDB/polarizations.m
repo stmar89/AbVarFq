@@ -3,7 +3,7 @@
 declare attributes AlgEtQOrd : PrincipalPolarizationsIsogenyClass,
                                transversal_US_USplus,
                                transversal_USplus_USUSb;
-declare attributes AlgEtQ : pAdicPosCMType;
+declare attributes AlgEtQ : pAdicPosCMType, ZFVBasis;
 
 transversal_US_USplus:=function(S)
 // Given an order S, it returns a transveral in S of the quotient S^*/S^*_+, where
@@ -229,6 +229,20 @@ intrinsic PeriodMatrix(I::AlgEtQIdl,x0::AlgEtQElt,phi::AlgEtQCMType) -> AlgMatEl
     end while;
 end intrinsic;
 
+intrinsic ZFVBasis(A::AlgEtQ) -> SeqEnum[AlgEtQElt]
+{The basis V^(g-1),...,V,1,F,...,F^g}
+    if assigned A`ZFVBasis then
+        return A`ZFVBasis;
+    end if;
+    g:=Dimension(A) div 2;
+    F:=PrimitiveElement(A);
+    q:=Truncate(ConstantCoefficient(DefiningPolynomial(A))^(1/g));
+    V:=q/F;
+    basis:=[ V^i : i in [g-1..0 by -1]] cat [F^i : i in [1..g]];
+    A`ZFVBasis := basis;
+    return basis;
+end intrinsic;
+
 intrinsic CanonicalRepresentativePolarization(I::AlgEtQIdl,x0::AlgEtQElt) -> AlgEtQElt,SeqEnum[FldRatElt]
 {Given an ideal I and an element x0 representing a polarization for I, we want to look at the set x0*u*\bar(u) where u runs over the units of (I:I)=S. We compute the image of this set via the Log map. We use ShortestVectors on this lattice, pullback the output in the algebra, computhe the action of the torsion units of S on these elements, represent them with respect to [V^(g-1),...,V,1,F,...,F^g], sort them with respec to the lexigographic order of their coefficients and take the smallest.}
 
@@ -237,9 +251,7 @@ intrinsic CanonicalRepresentativePolarization(I::AlgEtQIdl,x0::AlgEtQElt) -> Alg
     A:=Algebra(x0);
     g:=Dimension(A) div 2;
     F:=PrimitiveElement(A);
-    q:=Truncate(ConstantCoefficient(DefiningPolynomial(A))^(1/g));
-    V:=q/F;
-    basis:=[ V^i : i in [g-1..0 by -1]] cat [F^i : i in [1..g]];
+    basis:=ZFVBasis(A);
 
     if g eq #Components(A) then // then sub below would be the trivial group and the code would not modify x0. Early exit
         y0 := AbsoluteCoordinates([x0],basis);

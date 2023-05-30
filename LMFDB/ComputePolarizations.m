@@ -15,6 +15,7 @@ av_fq_we_columns := ["label", "pic_invs", "pic_basis", "is_product", "product_pa
 av_fq_isog_output := Sprintf("%oavdata/av_fq_isog_output/%o", fld, label);
 av_fq_isog_columns := ["pic_prime_gens"];
 allproduct_output := Sprintf("%oavdata/allproduct_output/%o", fld, label);
+cmfile := Sprintf("%opAdicPos/output_parallel1/%o_pAdicPos.txt", fld, label);
 AttachSpec(fld * "AlgEt/spec");
 AttachSpec(fld * "AbVarFq/LMFDB/spec");
 SetClassGroupBounds("GRH");
@@ -39,6 +40,11 @@ try
     end for;
     assert geom_endalg_is_comm cmpne 0;
     ZFV := LoadSchemaWKClasses(Read(Sprintf("%oavdata/wk_classes/%o_schema.txt", fld, label)));
+    A := Algebra(ZFV);
+    if OpenTest(cmfile, "r") then
+        PHI := LoadpAdicPosCMType(ZFVBasis(A), Read(cmfile));
+        assert assigned A`pAdicPosCMType;
+    end if;
     av_fq_pol := [];
     av_fq_we := [];
     av_fq_isog := AssociativeArray();
