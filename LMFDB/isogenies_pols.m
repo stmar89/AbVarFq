@@ -189,9 +189,9 @@ intrinsic RepresentativeIsogenies(ZFV::AlgEtQOrd, degree_bounds::SeqEnum)->Assoc
     vprintf AllPolarizations : "time spent on AllMinimalIsogenies %o\n",Cputime(t0);
     isog := AssociativeArray();
     isom_cl, icm_lookup :=ICM_CanonicalRepresentatives(ZFV);
-    we_reps := &cat[[icm_lookup[S][<WE, P.0>] : WE in WKICM_barCanonicalRepresentatives(S) where P := PicardGroup(S)] : S in OverOrders(ZFV)];
+    we_reps := &cat[[icm_lookup[S][<WE, P.0>] : WE in WKICM_barCanonicalRepresentatives(S) ] where P := PicardGroup(S) : S in OverOrders(ZFV)];
     we_hashes := [myHash(J) : J in we_reps];
-    we_proj := &cat[[P0Pmap : WE in WKICM_barCanonicalRepresentatives(S) where _,_,P0Pmap := CanonicalPicBasis(S)] : S in OverOrders(ZFV)];
+    we_proj := &cat[[P0Pmap where _,_,P0Pmap := CanonicalPicBasis(S) : WE in WKICM_barCanonicalRepresentatives(S) ] : S in OverOrders(ZFV)];
     isog := AssociativeArray();
     while true do
         added_something := false;
