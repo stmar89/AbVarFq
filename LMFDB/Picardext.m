@@ -120,6 +120,11 @@ intrinsic CanonicalPicGenerators(S::AlgEtQOrd) -> SeqEnum, SeqEnum
     end while;
 end intrinsic;
 
+intrinsic CanonicalPicPrimaryBasis(ZFV::AlgEtQ) -> SeqEnum
+{Produces a deterministically chosen primary abelian basis for Pic(ZFV)}
+    return [];
+end intrinsic;
+
 intrinsic CanonicalPicGenerators(S::AlgEtQOrd, construction::SeqEnum) -> SeqEnum
 {A version that produces the canonical generators using the saved construction, and returned as prime ideals in the maximal order of S together with their orders in Pic(S) (so that the computation of Pic(S) isn't required).
 Note that the returned generators are not independent; see CanonicalPicBasis}
@@ -309,6 +314,11 @@ Note that if you're calling this for many different pos, it's probably better to
     invs, construction := Explode(basis_info);
     basis := CanonicalPicBasis(S, gens, basis_info);
     return IdealFromPosition(pos, basis, invs);
+end intrinsic;
+
+intrinsic CanonicalPicardGroup(S::AlgEtQOrd) -> GrpAb, Map
+{A version of PicardGroup, with the same semantics, but not depending on any random choices and stable across changes to Magma}
+    return 1;
 end intrinsic;
 
 intrinsic PicIteration(S::AlgEtQOrd, basis::SeqEnum : filter:=0, include_pic_elt:=false) -> SeqEnum
