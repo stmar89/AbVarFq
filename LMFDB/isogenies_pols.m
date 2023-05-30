@@ -44,6 +44,7 @@ is_weak_eq_same_mult_ring:=function(I,J)
     return test,cIJ,cJI;
 end function;
 
+// TODO move the next intrisic to a different package?
 intrinsic ICM_CanonicalRepresentatives(ZFV::AlgEtQOrd) -> SeqEnum[AlgEtQIdl], Assoc
 {Given the Frobenius order of a squafree isogeny class it returns the canonical representatives of the isomorphsim classes. Each ideal has a label attached to it.}
     if assigned ZFV`ICM_CanonicalRepresentatives then
@@ -76,6 +77,7 @@ intrinsic ICM_CanonicalRepresentatives(ZFV::AlgEtQOrd) -> SeqEnum[AlgEtQIdl], As
     return ans, icm_lookup;
 end intrinsic;
 
+// TODO move the next intrisic to a different package?
 intrinsic ICM_Identify(L::AlgEtQIdl, icm_lookup::Assoc) -> AlgEtQIdl, AlgEtQElt, AlgEtQOrd, AlgEtQIdl, GrpAbElt
 {Given an ideal L, together with the lookup table output by ICM_CanonicalRepresentatives, returns the canonical representative I in the same class of the ICM as L, together with an element of the etale algebra x so that L = x*I}
     S := MultiplicatorRing(L);
@@ -121,6 +123,9 @@ intrinsic CanonicalCosetRep(g::GrpAbElt, H::GrpAb) -> GrpAbElt, GrpAb
         end for;
     end if;
 end intrinsic;
+
+
+//TODO The code of the next few intrinsic is very complicated (eg many nested for loops). Needs more explaination.
 
 intrinsic RepresentativeMinimalIsogenies(ZFV::AlgEtQOrd, N::RngIntElt : degrees:=[])->Assoc
 {Given the ZFV order of a squarefree isogeny class, it returns an associative array, indexed by the canonical representatives J of isomorphism classes, in which each entry contains an associative array with data describing isogenies to J. This data consists of a tuple ... 
@@ -523,3 +528,14 @@ intrinsic CanonicalRepresentativePolarizationGeneral(I::AlgEtQIdl,x0::AlgEtQElt)
 
     return candidates[1], den, nums;
 end intrinsic;
+
+/* TESTS
+    TODO Add tests. Some ideas:
+        For AllPolarizations: - compute some output using slow naive numeration process of sublattices of the dual variety.
+                              - Compare with Example 7.2 in https://arxiv.org/abs/1805.10223
+                                f := x^4 + 2*x^3 - 7*x^2 + 22*x + 121;
+                              - not sure what to do for minimal isogenies...maybe compute some 
+                                for elliptic curves and check for volcanoes?
+*/
+
+
