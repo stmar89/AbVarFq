@@ -207,7 +207,8 @@ intrinsic RepresentativeIsogenies(ZFV::AlgEtQOrd, degree_bounds::SeqEnum)->Assoc
                             y, g, G, L0 := Explode(yL0);
                             for data in min_isog[hshI][hshK] do
                                 d, x, h, H := Explode(data);
-                                if d*m in degrees then
+                                dm := d*m;
+                                if dm in degrees then
                                     gh, GH := CanonicalCosetRep(g+h, G+H);
                                     I0 := icm_lookup[SI][<I, projI(gh)>];
                                     xy := x*y;
