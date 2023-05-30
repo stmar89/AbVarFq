@@ -8,5 +8,6 @@ ker_isog.m
 labelling_wk_classes.m
 lmfdb.m
 padictocc.m
+LoadpAdicPosCMType.m
 polarizations.m
 }
