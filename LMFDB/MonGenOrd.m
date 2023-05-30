@@ -28,7 +28,7 @@ intrinsic SmallestMonogenicGeneratorOverZFV(S::AlgEtQOrd,ZFV::AlgEtQOrd: limit:=
     g:=Dimension(A) div 2;
     q:=Truncate(ConstantCoefficient(DefiningPolynomial(A))^(1/g));
     V:=q/F;
-    basis:=[ V^i : i in [g-1..0 by -1] ] cat [F^i : i in [1..g]];
+    basis:=ZFVBasis(A);
     seq:=MonogenicGeneratorsOverOrder(S,ZFV : limit:=limit);
     if #seq eq 0 then
         return [PowerStructure(AlgEtQElt)|],[PowerStructure(RngIntElt)|],[PowerStructure(SeqEnum)|];
@@ -57,6 +57,7 @@ intrinsic SmallestMonogenicGeneratorOverZFV(S::AlgEtQOrd,ZFV::AlgEtQOrd: limit:=
 end intrinsic;
 
 /*
+    // on diopahntus
     SetDebugOnError(true);
     AttachSpec("~/packages_github/AlgEt/spec");
     Attach("~/packages_github/AbVarFq/LMFDB/MonGenOrd.m");

@@ -190,11 +190,7 @@ The canonical represenatative is defined as follows:
 
                 A:=Algebra(S);
                 f:=DefiningPolynomial(A);
-                g:=Degree(f) div 2;
-                q:=Round(ConstantCoefficient(f)^(1/g));
-                F:=PrimitiveElement(A);
-                V:=q/F;
-                basis:=[ V^i : i in [g-1..0 by -1]] cat [F^i : i in [1..g]];
+                basis:=ZFVBasis(A);
                 pp:=SortSingularPrimes(S);
                 G:=G_acting(pp[1]);
                 size:=#G[2]*#G[3];
@@ -269,13 +265,7 @@ Note that from the SortKey, and the order S, one can always reconstruct the cano
     if cm le 2 then
         return [ seq_of_dims(I) : I in WKICM_bar(S) ];
     else
-        A:=Algebra(S);
-        f:=DefiningPolynomial(A);
-        g:=Degree(f) div 2;
-        q:=Round(ConstantCoefficient(f)^(1/g));
-        F:=PrimitiveElement(A);
-        V:=q/F;
-        basis:=[ V^i : i in [g-1..0 by -1]] cat [F^i : i in [1..g]];
+        basis:=ZFVBasis(Algebra(S));
         return [ seq_of_dims(I) cat my_hnf(I,basis) : I in WKICM_barCanonicalRepresentatives(S) ];
     end if;
 end intrinsic;
@@ -287,12 +277,7 @@ The SortKey of S is consists of two integers N.i where:
 - i is the index that determines, the position of S in the list of orders with the same N, sorted lexicographically 
   with respect to the output of my_hnf(S,basis) with basis = [ V^(g-1),...,V , 1 , F, ... F^g).}
     A:=Algebra(seq[1]);
-    f:=DefiningPolynomial(A);
-    g:=Degree(f) div 2;
-    q:=Round(ConstantCoefficient(f)^(1/g));
-    F:=PrimitiveElement(A);
-    V:=q/F;
-    basis:=[ V^i : i in [g-1..0 by -1]] cat [F^i : i in [1..g]];
+    basis:=ZFVBasis(A);
     O:=MaximalOrder(A);
     return [ [Index(O,S)] cat my_hnf(S,basis) : S in seq ];
 end intrinsic;
@@ -373,14 +358,11 @@ end function;
 
 intrinsic FillSchema(R::AlgEtQOrd)->MonStgElt
 { see Table av_fq_weak_equivalences at https://github.com/roed314/root-unitary/blob/stage_based/postgres_schema.md  }
-    f:=ChangeRing(DefiningPolynomial(Algebra(R)),Integers());
-    F:=PrimitiveElement(Algebra(R));
-    g:=Degree(f) div 2;
-    q:=Round(ConstantCoefficient(f)^(1/g));
-    V:=q/F;
-    basis:=[ V^i : i in [g-1..0 by -1]] cat [F^i : i in [1..g]];
+    A:=Algebra(R);
+    F:=PrimitiveElement(A);
+    basis:=ZFVBasis(A);
 
-    isog_label:=IsogenyLabel(f);
+    isog_label:=IsogenyLabel(DefiningPolynomial(A));
     oo:=OverOrders(R);
     oo_sort_keys:=SortKeysOrders(oo);
     ParallelSort(~oo_sort_keys,~oo);
@@ -576,7 +558,7 @@ intrinsic LoadSchemaWKClasses(str::MonStgElt)->AlgEtQOrd
     A:=EtaleAlgebra(f);
     F:=PrimitiveElement(A);
     V:=q/F;
-    basis:=[ V^i : i in [g-1..0 by -1]] cat [F^i : i in [1..g]];
+    basis:=ZFVBasis(A);
 
     zb_in_A:=function(nums,den)
         return [SumOfProducts([c/den : c in n ],basis) : n in nums ];

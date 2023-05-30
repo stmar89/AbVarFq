@@ -483,9 +483,7 @@ intrinsic CanonicalRepresentativePolarizationGeneral(I::AlgEtQIdl,x0::AlgEtQElt)
     A:=Algebra(x0);
     g:=Dimension(A) div 2;
     F:=PrimitiveElement(A);
-    q:=Truncate(ConstantCoefficient(DefiningPolynomial(A))^(1/g));
-    V:=q/F;
-    basis:=[ V^i : i in [g-1..0 by -1]] cat [F^i : i in [1..g]];
+    basis:=ZFVBasis(A);
 
     if g eq #Components(A) then // then sub below would be the trivial group and the code would not modify x0. Early exit
         y0 := AbsoluteCoordinates([x0],basis);

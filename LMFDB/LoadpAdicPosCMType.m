@@ -15,9 +15,7 @@ end intrinsic;
 
 
 /*
-
-
-
+    // to be run on lovelace
     AttachSpec("~/packages_github/AlgEt/spec");
     AttachSpec("~/packages_github/AbVarFq/LMFDB/spec");
     Attach("~/packages_github/AbVarFq/LMFDB/LoadpAdicPosCMType.m");
@@ -33,9 +31,7 @@ end intrinsic;
         label,str:=Explode(Split(str,":"));
         g,q,f:=LabelToPoly(label);
         A:=EtaleAlgebra(f);
-        F:=PrimitiveElement(A);
-        V:=q/F;
-        basis:=[ V^i : i in [g-1..0 by -1]] cat [F^i : i in [1..g]];
+        basis:=ZFVBasis(A);
         PHI:=LoadpAdicPosCMType(basis,str);
         printf ".";
     end for;

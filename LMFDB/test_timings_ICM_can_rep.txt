@@ -22,7 +22,7 @@
     // the labels above took ~100 secs to compute the principal polarizations.
     // those should be resonable tests for timings of ICM_representative 
 
-    fld_wk_schema:="/home/roed/avdata/wk_classes/";
+    fld_wk_schema:="/scratch/abvar/avdata/wk_classes/";
     for label in labels_old_timings do
         ZFV:=LoadSchemaWKClasses(Read(fld_wk_schema cat label[1] cat "_schema.txt"));
         t0:=Cputime();
