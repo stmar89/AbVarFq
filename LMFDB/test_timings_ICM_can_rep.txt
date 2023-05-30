@@ -1,0 +1,34 @@
+/* vim: set syntax=magma :*/
+
+    SetClassGroupBounds("GRH");
+    SetColumns(0);
+
+    fld_packages:="~/packages_github/";
+    AttachSpec(fld_packages cat "AlgEt/spec"); 
+    AttachSpec(fld_packages cat "AbVarFq/LMFDB/spec"); 
+    
+    labels_old_timings:=[
+    <"3.25.h_r_abx",1.200,624>,
+    <"3.16.ab_c_ah",2.650,832>,  
+    <"3.16.ac_af_v",2.190,660>,  
+    <"3.25.l_df_tk",1.590,472>, 
+    <"3.25.ag_ah_ex",0.960,288>, 
+    <"3.25.ao_dt_asy",73.160,10480>, 
+    <"3.25.l_dn_tu",13.710,1944>, 
+    <"3.25.e_bm_bq",4.920,576>,
+    <"4.4.c_ae_ac_bb",40.580,1284>,
+    <"3.25.am_dk_aue",75.750,10400>
+    ];
+    // the labels above took ~100 secs to compute the principal polarizations.
+    // those should be resonable tests for timings of ICM_representative 
+
+    fld_wk_schema:="/home/roed/avdata/wk_classes/";
+    for label in labels_old_timings do
+        ZFV:=LoadSchemaWKClasses(Read(fld_wk_schema cat label[1] cat "_schema.txt"));
+        t0:=Cputime();
+            icm:=#ICM_CanonicalRepresentatives(ZFV);
+            assert icm eq label[3];
+        t1:=Cputime(t0);
+        printf "%o,\ticm=%o,\told_time=%.3o,\tnew_time=%.3o\n",label[1],icm,label[2],t1;
+    end for;
+
