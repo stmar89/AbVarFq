@@ -6,8 +6,8 @@
 declare verbose AllPolarizations,1;
 
 // declare attributes AlgEtQOrd : ???
-declare attributes AlgEtQOrd: ICM_CanonicalRepresentatives;
-declare attributes AlgEtQIdl: IsomLabel;
+declare attributes AlgEtQOrd: ICM_CanonicalRepresentatives, RepresentativeMinimalIsogeniesTo;
+declare attributes AlgEtQIdl: IsomLabel, WErep, PElt;
 
 import "polarizations.m" : transversal_US_USplus,transversal_USplus_USUSb, is_polarization;
 
@@ -44,8 +44,9 @@ intrinsic ICM_CanonicalRepresentatives(ZFV::AlgEtQOrd) -> SeqEnum[AlgEtQIdl], As
     icm_lookup := AssociativeArray();
     _ := CanonicalPicBases(ZFV); // sets bases
     for S in OverOrders(ZFV) do
+        basis, _, proj := CanonicalPicBasis(S);
         icm_lookup[S] := AssociativeArray();
-        pic_iter := PicIteration(S, CanonicalPicBasis(S) : include_pic_elt:=true);
+        pic_iter := PicIteration(S, basis : include_pic_elt:=true);
         pic_iter := [<ZFV!!x[1], x[2], x[3]> : x in pic_iter];
         for WE in WKICM_barCanonicalRepresentatives(S) do
             ZFVWE := ZFV!!WE;
@@ -55,6 +56,8 @@ intrinsic ICM_CanonicalRepresentatives(ZFV::AlgEtQOrd) -> SeqEnum[AlgEtQIdl], As
                 if assigned WE`WELabel then
                     WI`IsomLabel := Sprintf("%o.%o", WE`WELabel, ctr);
                 end if;
+                WI`WErep := ZFVWE;
+                WI`Pelt := Pelt@@proj;
                 icm_lookup[S][<WE, Pelt>] := WI;
                 Append(~ans, WI);
             end for;
@@ -64,10 +67,9 @@ intrinsic ICM_CanonicalRepresentatives(ZFV::AlgEtQOrd) -> SeqEnum[AlgEtQIdl], As
     return ans, icm_lookup;
 end intrinsic;
 
-intrinsic ICM_Identify(L::AlgEtQIdl, icm_lookup::Assoc) -> AlgEtQIdl, AlgEtQElt
+intrinsic ICM_Identify(L::AlgEtQIdl, icm_lookup::Assoc) -> AlgEtQIdl, AlgEtQElt, AlgEtQOrd, AlgEtQIdl, GrpAbElt
 {Given an ideal L, together with the lookup table output by ICM_CanonicalRepresentatives, returns the canonical representative I in the same class of the ICM as L, together with an element of the etale algebra x so that L = x*I}
     S := MultiplicatorRing(L);
-    assert assigned S`PicardGroup;
     PS, pS := PicardGroup(S);
     wkS := WKICM_barCanonicalRepresentatives(S);
     for i->W in wkS do
@@ -78,11 +80,209 @@ intrinsic ICM_Identify(L::AlgEtQIdl, icm_lookup::Assoc) -> AlgEtQIdl, AlgEtQElt
             I := icm_lookup[S][<W, g>];
             test, x := IsIsomorphic(L, I); // x*I = L
             assert test;
-            return I, x;
+            return I, x, S, W, g;
         end if;
     end for;
 end intrinsic;
 
+intrinsic CanonicalCosetRep(g::GrpAbElt, H::GrpAb) -> GrpAbElt, GrpAb
+{Given an element g and a subgroup H of an ambient abelian group G, finds a canonically chosen representative of g+H (and also returns H itself for convenience).  The output only depends on g+H.}
+    if Order(g) eq 1 then
+        return g, H;
+    end if;
+    G := Parent(g);
+    if (#H)^2 le #G then
+        // iterate over H and find the smallest element
+        best := g; first := Eltseq(g);
+        for h in H do
+            eh := Eltseq(h);
+            if eh lt first then
+                best := h;
+                first := eh;
+            end if;
+        end for
+        return best, H;
+    else
+        // iterate over G until you find an element of g+H
+        for h in G do
+            // iterating over abelian groups happens in a strange order, but that's okay for us as long as it's consistent.
+            if h - g in H then
+                return h;
+            end if;
+        end for;
+    end if;
+end intrinsic;
+
+intrinsic RepresentativeMinimalIsogenies(ZFV::AlgEtQOrd, N::RngIntElt : degrees:=[])->Assoc
+{Given the ZFV order of a squarefree isogeny class, it returns an associative array, indexed by the canonical representatives J of isomorphism classes, in which each entry contains an associative array with data describing isogenies to J. This data consists of a tuple ... 
+//TODO finish descr
+}
+    if not assigned ZFV`RepresentativeMinimalIsogeniesTo then
+        ZFV`RepresentativeMinimalIsogeniesTo := AssociativeArray();
+    end if;
+    if IsDefined(ZFV`RepresentativeMinimalIsogeniesTo, <N, degrees>) then
+        return ZFV`RepresentativeMinimalIsogeniesTo[<N, degrees>];
+    end if;
+    if not assigned ZFV`CanonicalPicBases then
+        _ = CanonicalPicBases(ZFV);
+    end if;
+    isom_cl, icm_lookup := ICM_CanonicalRepresentatives(ZFV);
+    // It should be possible to implement this function without enumerating the whole ICM, but instead just enumerating weak equivalence classes.
+    // But we need to call ICM_Identify, which currently relies on the lookup table constructed in ICM_CanonicalRepresentatives, so we don't try to do this now.
+    min_isog := AssociativeArray();
+    we_reps := &cat[[icm_lookup[S][<WE, P.0>] : WE in WKICM_barCanonicalRepresentatives(S) where P := PicardGroup(S)] : S in OverOrders(ZFV)];
+    we_hashes := [myHash(J) : J in we_reps];
+    for i->I in we_reps do
+        min_isog[we_hashes[i]] := AssociativeArray();
+        for j->J in we_reps do
+            min_isog[we_hashes[i]][we_hashes[j]] := [];
+        end for;
+    end for;
+    for J in isom_cl do
+        S := MultiplicatorRing(J);
+        P := PicardGroup(S);
+        _, _, P0Pmap := CanonicalPicBasis(S);
+        WE := J`WErep;
+        hshJ := myHash(J);
+        Ls := MaximalIntermediateIdeals(J, N*J);
+        for L in Ls do
+            deg := Index(J, L);
+            if degrees ne [] and not (deg in degrees) then
+                continue;
+            end if;
+            I, x, IS, IWE, Ig := ICM_Identify(L, icm_lookup);
+            assert2 Index(J, x*I) eq deg;
+            Ig, Ker := CanonicalCosetRep(Ig@@P0Pmap, Kernel(P0Pmap));
+            Append(~min_isog[myHash(IWE)][hshJ], <deg, x, Ig, Ker, I, L>); // x is a minimal isogeny from I to J of degree deg=#(J/L); I = IWE * Ig as canonical representatives
+        end for;
+    end for;
+    ZFV`RepresentativeMinimalIsogeniesTo[<N, degrees>] := min_isog;
+    return min_isog;
+end intrinsic;
+
+intrinsic RepresentativeIsogenies(ZFV::AlgEtQOrd, degree_bounds::SeqEnum)->Assoc
+{}
+    N := LCM(degree_bounds);
+    degrees := {};
+    for B in degree_bounds do
+        for d in Divisors(B) do
+            if d eq 1 then continue; end if;
+            Include(~degrees, d);
+        end for;
+    end for;
+    t0:=Cputime();
+    min_isog := RepresentativeMinimalIsogenies(ZFV, N : degrees:=degrees);
+    vprintf AllPolarizations : "time spent on AllMinimalIsogenies %o\n",Cputime(t0);
+    isog := AssociativeArray();
+    isom_cl, icm_lookup :=ICM_CanonicalRepresentatives(ZFV);
+    we_reps := &cat[[icm_lookup[S][<WE, P.0>] : WE in WKICM_barCanonicalRepresentatives(S) where P := PicardGroup(S)] : S in OverOrders(ZFV)];
+    we_hashes := [myHash(J) : J in we_reps];
+    we_proj := &cat[[P0Pmap : WE in WKICM_barCanonicalRepresentatives(S) where _,_,P0Pmap := CanonicalPicBasis(S)] : S in OverOrders(ZFV)];
+    isog := AssociativeArray();
+    while true do
+        added_something := false;
+        for i->I in we_reps do
+            hshI := we_hashes[i]; projI := we_proj[i];
+            SI := MultiplicatorRing(I);
+            for j->J in we_reps do
+                hshJ := we_hashes[j]; projJ := we_proj[j];
+                for k->K in we_reps do
+                    hshK := we_hashes[k]; projK := we_proj[k];
+                    for m->known in isog[hshK][hshJ] do
+                        for yL0 in known do
+                            y, g, G, L0 := Explode(yL0);
+                            for data in min_isog[hshI][hshK] do
+                                d, x, h, H := Explode(data);
+                                if d*m in degrees then
+                                    gh, GH := CanonicalCosetRep(g+h, G+H);
+                                    I0 := icm_lookup[SI][<I, projI(gh)>];
+                                    xy := x*y;
+                                    L := (xy) * I0;
+                                    if not IsDefined(isog[hshI][hshJ], dm) then
+                                        isog[hshI][hshJ][dm] := [<xy, gh, GH, L>];
+                                        added_something := true;
+                                    else
+                                        hsh := myHash(L);
+                                        hashes := {myHash(M[4]) : M in isog[hshI][hshJ][dm]};
+                                        if not hsh in hashes then
+                                            // myHash is collision free
+                                            Append(~isog[hshI][hshJ][dm], <xy, gh, GH, L>);
+                                            assert2 Index(J, L) eq dm;
+                                            added_something := true;
+                                        end if;
+                                    end if;
+                                end if;
+                            end for;
+                        end for;
+                    end for;
+                end for;
+            end for;
+        end for;
+        if not added_something then
+            break;
+        end if;
+    end while;
+    return isog;
+end intrinsic;
+
+intrinsic NonprincipalPolarizations(ZFV::AlgEtQOrd, PHI::AlgEtQCMType, degree_bounds::SeqEnum[RngIntElt])->Assoc
+{Given the Z[F,V] order of an isogeny squarefree class, a p-Adic positive CMType PHI it returns an associative array whose keys are the canonical representatives of all isomorphism classes.
+//TODO
+.}
+    t_tot := Cputime();
+    isom_cl, icm_lookup := ICM_CanonicalRepresentatives(ZFV);
+    can_reps_of_duals := AssociativeArray();
+    all_pols := AssociativeArray(); // the output
+    t0 := Cputime();
+    isog := RepresentativeIsogenies(ZFV, degree_bounds);
+    vprintf AllPolarizations : "time spent on IsogeniesByDegree: %o\n", Cputime(t0);
+    t_can := 0;
+    for I in isom_cl do
+        // I am looking for pol such that pol*I c Iv
+        S := MultiplicatorRing(I);
+        Iv := TraceDualIdeal(ComplexConjugate(I));
+        J, J_to_Iv := ICM_Identify(Iv, icm_lookup);
+        WI := I`WErep; Ipic := I`Pelt;
+        WJ := J`WErep; Jpic := J`Pelt;
+        for d -> isog_I_J_d in isog[myHash(WI)][myHash(WJ)] do
+            for data in isog_I_J_d do
+                x, h, H, L := Explode(data);
+                // x is the element inducing the isogeny from WI+h to WJ with image L, H is the subgroup of Pic(ZFV) that we can translate our domain by
+                // So x also maps WI+h+Jpic to WJ+Jpic = J, so we just need to see if I can be reached from WI+h+Jpic using the subgroup H
+                if Ipic - Jpic - h in H then
+                    // This isogeny has the right domain and codomain to be a polarization.
+                    got_one := false;
+                    for v in transveral_US_USplus(S) do
+                        pp := x*v; // TODO: need to think about how to use IsPrincipal appropriately here.
+                        if is_polarization(pp, PHI) then
+                            got_one := true;
+                            break;
+                        end if;
+                    end for;
+                    if got_one then
+                        pols_deg_d cat:= [ pp*t : t in transversal_USplus_USUSb_general(S) ]; // this might contains isomorphic copies
+                    end if;
+                end if;
+            end for;
+            t_can_Jd:=Cputime();
+            // TODO: Below here still needs adaptation
+            pols_deg_d_up_to_iso:={};
+            for x0 in pols_deg_d do
+                pol,seq:=CanonicalRepresentativePolarizationGeneral(J,x0);
+                Include(~pols_deg_d_up_to_iso, <pol,seq>); //isomorphic pols will have the same canonical rep
+            end for;
+            t_can +:=Cputime(t_can_Jd);
+            assert2 forall{ pol : pol in pols_deg_d_up_to_iso | d eq Index(Jv,pol[1]*J) }; // sanity check
+            Jpols[d]:=[ < pol[1] , pol[2] , DecompositionKernelOfIsogeny(J,Jv,pol[1]) > : pol in pols_deg_d_up_to_iso ];
+        end for;
+        all_pols[J]:=Jpols;
+    end for;
+    vprintf AllPolarizations : "time spent on computing canonical reps and removing duplicates: %o\n",t_can;
+    vprintf AllPolarizations : "time spent on computing all polarizations: %o\n",Cputime(t_tot);
+    return all_pols;
+end intrinsic;
+
+// Old version for comparison; use RepresentativeMinimalIsogenies instead
 intrinsic AllMinimalIsogenies(ZFV::AlgEtQOrd, N::RngIntElt : degrees:=0)->Assoc
 {Given the ZFV order of a squarefree isogeny class, it returns an associative array, indexed by the canonical representatives J of isomorphism classes, in which each entry contains an associative array with data describing isogenies to J. This data consists of a tuple ... 
 //TODO finish descr
@@ -111,6 +311,7 @@ intrinsic AllMinimalIsogenies(ZFV::AlgEtQOrd, N::RngIntElt : degrees:=0)->Assoc
     return min_isog;
 end intrinsic;
 
+// Old version for comparison; use PotentialPolarizations instead
 intrinsic IsogeniesByDegree(ZFV::AlgEtQOrd, degree_bounds::SeqEnum : important_pairs:=0) -> Assoc
 {Given the ZFV order of a squarefree isogeny class, together with a sequence of integers, return an associative array A so that A[I][J][d] consists of all isogenies of degree d from I to J for all integers d dividing any element of degree_bounds.  Each isogeny is stored as a pair <x,L> where x is an element mapping I into J and L = x*I (which is a submodule of J of an appropriate index).}
     // imporant pairs, if given, should be a list of tuples <I,J> of canonical representatives (see note below for how they're used)
@@ -163,7 +364,7 @@ intrinsic IsogeniesByDegree(ZFV::AlgEtQOrd, degree_bounds::SeqEnum : important_p
                 for K in isom_cl do
                     for m -> known in isog[myHash(I)][myHash(K)] do
                         for yL0 in known do
-                            y, L0 := Explode(yL0);
+                            y, g, L0 := Explode(yL0);
                             for dxL in min_isog[myHash(K)][myHash(J)] do
                                 d, x := Explode(dxL);
                                 dm := d*m;
@@ -206,8 +407,6 @@ intrinsic AllPolarizations(ZFV::AlgEtQOrd, PHI::AlgEtQCMType, degree_bounds::Seq
     all_pols:=AssociativeArray(); // the output
     for J in isom_cl do
         Jpols:=AssociativeArray(); // will contain all pols find, indexed by degree.
-        S:=MultiplicatorRing(J);
-        US_over_USplus:=transversal_US_USplus(S);
         Jv:=TraceDualIdeal(ComplexConjugate(J));
         // I am looking for pol such that pol*J c Jv
         JJ,JJ_to_Jv:=ICM_Identify(Jv,icm_lookup);
@@ -218,6 +417,7 @@ intrinsic AllPolarizations(ZFV::AlgEtQOrd, PHI::AlgEtQCMType, degree_bounds::Seq
     vprintf AllPolarizations : "time spent on IsogeniesByDegree: %o\n",Cputime(t0);
     t_can:=0;
     for J in isom_cl do
+        S:=MultiplicatorRing(J);
         JJ,JJ_to_Jv,Jv:=Explode(can_reps_of_duals[J]);
         for d ->isog_J_JJ_d in all_isog[myHash(J)][myHash(JJ)] do
             pols_deg_d:=[];
@@ -226,7 +426,7 @@ intrinsic AllPolarizations(ZFV::AlgEtQOrd, PHI::AlgEtQCMType, degree_bounds::Seq
                 assert2 Index(JJ,f[1]*J) eq d;
                 assert2 Index(Jv,isog*J) eq d;
                 got_one:=false;
-                for v in US_over_USplus do
+                for v in transversal_US_USplus(S) do
                     pp:=isog*v;
                     if is_polarization(pp,PHI) then
                         got_one:=true;

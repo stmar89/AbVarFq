@@ -1,7 +1,9 @@
 # Attach this to a running copy of Sage
 
 opj = os.path.join
-from collections import Counter
+from collections import Counter, defaultdict
+from sage.all import ZZ
+
 
 def create_upload_files(basefolders, exclude_gq=[]):
     isodata = []
@@ -55,3 +57,55 @@ def create_upload_files(basefolders, exclude_gq=[]):
         _ = F.write(":".join(["label", "isog_label", "endomorphism_ring", "isom_label", "degree", "kernel", "aut_group", "geom_aut_group", "is_jacobian", "representative"]) + "\n")
         _ = F.write(":".join(["text", "text", "text", "text", "smallint", "smallint[]", "text", "text", "boolean", "jsonb"]) + "\n\n")
         _ = F.write("".join(poldata))
+
+def load
+
+def compute_diagramx(basefolder, outfile="av_fq_diagramx.update", parallelopts="-j32 --timeout 60"):
+    # Given a folder containing weak equivalence data (in the form read by LoadSchemaWKClasses), uses graphviz to find a layout for the endomorphism rings in each weak equivalence class.
+    diagramx = {}
+    os.makedirs("/tmp/abvar_diagramx_in")
+    os.makedirs("/tmp/abvar_diagramx_out")
+    for label in os.listdir(basefolder):
+        nodes = []
+        edges = []
+        ranks = defaultdict(list)
+        mlabels = []
+        with open(opj(basefolder, label)) as F:
+            for line in F:
+                pieces = line.strip().split(":")
+                invertible, mring, min_over = pieces[7], pieces[3], pieces[10]
+                if invertible == "t":
+                    mlabels.append(mring)
+                    if len(min_over) == 2: # [] or {}
+                        min_over = ""
+                    else:
+                        min_over = '","'.join(min_over[1:-1].split(","))
+                    N = ZZ(mring.split(".")[0])
+                    nodes.append(f'"{mring}" [label="{tex}"],shape=plaintext]')
+                    if min_over:
+                        edges.append(f'"{mring}" -> {{"{min_over}"}} [dir=none]')
+                    ranks[sum(e for (p,e) in N.factor())].append(mring)
+        if len(nodes) <= 3:
+            # early exits, since we don't need to do anything in these cases
+            # We write 
+            for mring in mlabels:
+                diagramx[f"{label}.{mring}.1"] = 5000
+        else:
+            nodes = ";\n".join(nodes)
+            edges = ";\n".join(edges)
+            if edges:
+                edges += ";" # deal with no edges by moving semicolon here.
+            ranks = ";\n".join('{rank=same; "%s"}' % ('" "'.join(labs)) for labs in ranks.values())
+            graph = f"""strict digraph "{label}" {{
+rankdir=TB;
+splines=line;
+{edges}
+{nodes};
+{ranks};
+}}
+"""
+            infile = opj("/tmp", "abvar_diagramx_in", label)
+            with open(infile, "w") as F:
+                _ = F.write(graph)
+    subprocess.run('ls /tmp/abvar_diagramx_in | parallel %s "dot -Tplain -o /tmp/abvar_diagramx_out/{1} /tmp/abvar_diagramx_in/{1}"' % parallelopts, shell=True, check=True)
+    for label in os.listdir("/tmp/abvar_diagramx_out")

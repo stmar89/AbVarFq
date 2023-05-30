@@ -233,10 +233,12 @@ intrinsic CanonicalPicBases(ZFV::AlgEtQOrd) -> List, List
     vprint User1: "igens finished", Cputime() - t0;
     bases := [* *];
     basis_constructions := [* *];
+    pic_maps := [* *];
     for i->S in oo do
         if i eq j then
             Sgens := ZFVgens;
             P := P0;
+            P0Pmap := IdentityHomomorphism(P);
         else
             vprint User1: "Starting PicardGroup", i; t0:=Cputime();
             P, pmap := PicardGroup(S);
@@ -250,18 +252,19 @@ intrinsic CanonicalPicBases(ZFV::AlgEtQOrd) -> List, List
         assert &and[Parent(b) eq P : b in basis];
         Append(~bases, basis);
         Append(~basis_constructions, bcon);
+        Append(~pic_maps, P0Pmap);
     end for;
-    ZFV`CanonicalPicBases := <bases, basis_constructions>;
+    ZFV`CanonicalPicBases := <bases, basis_constructions, pic_maps>;
     for i in [1..#oo] do
         S := oo[i];
         P := PicardGroup(S);
         assert &and[Parent(b) eq P : b in bases[i]];
-        S`CanonicalPicBasis := <bases[i], basis_constructions[i]>;
+        S`CanonicalPicBasis := <bases[i], basis_constructions[i], pic_maps[i]>;
     end for;
     return bases, basis_constructions;
 end intrinsic;
 
-intrinsic CanonicalPicBasis(S::AlgEtQOrd) -> SeqEnum, SeqEnum
+intrinsic CanonicalPicBasis(S::AlgEtQOrd) -> SeqEnum, SeqEnum, Map
 {}
     if not assigned S`CanonicalPicBasis then
         error "You must first call CanonicalPicBases(ZFV) on the Frobenius order ZFV";
