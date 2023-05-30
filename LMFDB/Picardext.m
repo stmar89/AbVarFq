@@ -529,3 +529,11 @@ Note that this will pull back large ideals if the Picard group is large, so is p
     printf "Test successful in %os: same generators chosen\n", Cputime() - t0;
 end intrinsic;
 
+/*
+    TODO Add a list of tests:
+        - are the canonical gens chosen consistently?
+        - is the sorting of PicIteration consistent?
+        - are the canonical ideal reps chosen consistently?
+
+
+*/
