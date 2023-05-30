@@ -43,10 +43,8 @@ try
     A := Algebra(ZFV);
     if OpenTest(cmfile, "r") then
         cmdata := Split(Read(cmfile), ":")[2];
-        print label, cmdata;
         PHI := LoadpAdicPosCMType(ZFVBasis(A), cmdata);
         assert assigned A`pAdicPosCMType;
-        print "CM type loaded";
     end if;
     av_fq_pol := [];
     av_fq_we := [];
