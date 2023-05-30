@@ -60,7 +60,7 @@ end intrinsic;
     // on diopahntus
     SetDebugOnError(true);
     AttachSpec("~/packages_github/AlgEt/spec");
-    Attach("~/packages_github/AbVarFq/LMFDB/MonGenOrd.m");
+    AttachSpec("~/packages_github/AbVarFq/LMFDB/spec");
     _<x>:=PolynomialRing(Integers());
     f:=(x^2-2)*(x^2-3)*(x^2-5);
     A:=EtaleAlgebra(f);
