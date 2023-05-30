@@ -1,6 +1,6 @@
 /* vim: set syntax=magma :*/
 
-declare attributes AlgEtQOrd:CanonicalPicGenerators,CanonicalPicBasis,CanonicalPicBases,BasisBar,TraceDualPic. CanonicalPicardGroup;
+declare attributes AlgEtQOrd:CanonicalPicGenerators,CanonicalPicBasis,CanonicalPicBases,BasisBar,TraceDualPic, CanonicalPicardGroup;
 // TODO add description of the attributes above.
 
 // TODO add description of the functions below.
@@ -364,7 +364,6 @@ intrinsic PicIteration(S::AlgEtQOrd, basis::SeqEnum : filter:=0, include_pic_elt
 // TODO Is the Ideal in the output canonical? It should be for our purposes.
 }
     P, pmap := CanonicalPicardGroup(S);
-    assert assigned S`PicardGroup;
     if #P eq 1 then
         if filter cmpeq 0 or filter(P.0) then
             if include_pic_elt then
