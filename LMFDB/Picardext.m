@@ -85,7 +85,7 @@ intrinsic CanonicalPicGenerators(S::AlgEtQOrd) -> SeqEnum, SeqEnum, SeqEnum
     ideals := [];
     if #P eq 1 then
         S`CanonicalPicGenerators := <Pgens, construction>;
-        return Pgens, construction;
+        return Pgens, construction, ideals;
     end if;
     O_asProd, F_asProd, F_indexes := asProdData(S);
     primes_above_p := AssociativeArray();
@@ -122,7 +122,7 @@ intrinsic CanonicalPicGenerators(S::AlgEtQOrd) -> SeqEnum, SeqEnum, SeqEnum
                         Psub := sub<P|Pgens>;
                         if #Psub eq #P then
                             S`CanonicalPicGenerators := <Pgens, construction>;
-                            return Pgens, construction;
+                            return Pgens, construction, ideals;
                         end if;
                     end if;
                 end if;
@@ -277,7 +277,7 @@ intrinsic CanonicalPicBases(ZFV::AlgEtQOrd) -> List, List, List, List
         Append(~basis_constructions, bcon);
         Append(~pic_maps, P0Pmap);
         Sideals := [S!!gen_ideals[u] : u in [1..#gen_ideals]];
-        Append(~basis_ideals, [&*[Sideals[u]^bcon[2][v][u] : u in [1..#gen_ideals]] : v in [1..#basis]])
+        Append(~basis_ideals, [&*[Sideals[u]^bcon[2][v][u] : u in [1..#gen_ideals]] : v in [1..#basis]]);
     end for;
     ZFV`CanonicalPicBases := <bases, basis_constructions, pic_maps, basis_ideals>;
     for i in [1..#oo] do
@@ -349,8 +349,9 @@ intrinsic CanonicalPicardGroup(S::AlgEtQOrd) -> GrpAb, Map
     invs, con := Explode(bcon);
     A := AbelianGroup(invs);
     AtoP := iso<A->P|basis>;
-    new_pmap := map<P->Codomain(pmap)| rep:->&*[basis[i]^v[i] : i in [1..#basis]] where v:=Eltseq(rep@@AtoP),
+    new_pmap := map<P->Codomain(pmap)| rep:->&*[ideals[i]^v[i] : i in [1..#ideals]] where v:=Eltseq(rep@@AtoP),
                                        id:->id@@pmap>;
+    return P, new_pmap;
 end intrinsic;
 
 intrinsic PicIteration(S::AlgEtQOrd, basis::SeqEnum : filter:=0, include_pic_elt:=false) -> SeqEnum
