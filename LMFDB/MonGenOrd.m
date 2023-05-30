@@ -1,7 +1,7 @@
 /* vim: set syntax=magma :*/
 
 intrinsic MonogenicGeneratorsOverOrder(S::AlgEtQOrd,R::AlgEtQOrd : limit:=100)->SeqEnum[AlgEtQElt]
-{Given order R subset S, returns a sequence of elements x such that S=R[x]. This sequence is produced with a randomized search over 100 candidates is not necessarily complete. If none is found then the empty list is returned. The limit 100 can be modified by setting the vararg "limit".}
+{Given order R subset S, returns a sequence of elements x such that S=R[x]. This sequence is produced with a randomized search over 100 candidates. In particular, it is not necessarily complete. If none is found then the empty list is returned. The limit 100 can be modified by setting the vararg "limit".}
     require R subset S : "The orders are not one inside the other.";
     if R eq S then
         return [Zero(Algebra(R))];
@@ -22,7 +22,7 @@ intrinsic MonogenicGeneratorsOverOrder(S::AlgEtQOrd,R::AlgEtQOrd : limit:=100)->
 end intrinsic;
 
 intrinsic SmallestMonogenicGeneratorOverZFV(S::AlgEtQOrd,ZFV::AlgEtQOrd: limit:=100)->SeqEnum[AlgEtQElt],SeqEnum[MonStgElt]
-{Returns a sequence of minimal monogenic generators of S over ZFV, if any is found, where minimal is with respect to the lenght of the string of printing in the basis V^(g-1),...,V,1,F,...,F^g }
+{Returns a sequence of minimal monogenic generators of S over ZFV, if any is found, where minimal is with respect to the lenght of the string of printing with respect to the basis V^(g-1),...,V,1,F,...,F^g.}
     A:=Algebra(S);
     F:=PrimitiveElement(A);
     g:=Dimension(A) div 2;

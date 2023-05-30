@@ -1,6 +1,9 @@
 /* vim: set syntax=magma :*/
 
 declare attributes AlgEtQOrd:CanonicalPicGenerators,CanonicalPicBasis,CanonicalPicBases,BasisBar,TraceDualPic;
+// TODO add description of the attributes above.
+
+// TODO add description of the functions below.
 
 function asProdData(S)
     A := Algebra(S);
@@ -66,7 +69,9 @@ function CanonicalPrimeIdealsOverPrime(i, p, S, O_asProd, F_asProd, F_indexes)
 end function;
 
 intrinsic CanonicalPicGenerators(S::AlgEtQOrd) -> SeqEnum, SeqEnum
-{}
+{
+//TODO
+}
     if assigned S`CanonicalPicGenerators then
         return Explode(S`CanonicalPicGenerators);
     end if;
@@ -127,7 +132,9 @@ end intrinsic;
 
 intrinsic CanonicalPicGenerators(S::AlgEtQOrd, construction::SeqEnum) -> SeqEnum
 {A version that produces the canonical generators using the saved construction, and returned as prime ideals in the maximal order of S together with their orders in Pic(S) (so that the computation of Pic(S) isn't required).
-Note that the returned generators are not independent; see CanonicalPicBasis}
+Note that the returned generators are not independent; see CanonicalPicBasis.
+//TODO what is the 'saved construction'?
+}
     O_asProd, F_asProd, F_indexes := asProdData(S);
     O := MaximalOrder(Algebra(S));
     gens := [];
@@ -154,7 +161,9 @@ intrinsic sprint(X::.) -> MonStgElt
 end intrinsic;
 
 intrinsic GensToBasis(S::AlgEtQOrd, gens::SeqEnum) -> SeqEnum, SeqEnum
-{Takes as input an order S in an etale algebra and a sequence gens of generators of Pic(S), and returns a basis of Pic(S) (aligning with the structure described by AbelianInvariants(Pic(S)))}
+{Takes as input an order S in an etale algebra and a sequence gens of generators of Pic(S), and returns a basis of Pic(S) (aligning with the structure described by AbelianInvariants(Pic(S))).
+//TODO there are two outputs. What is the second one?
+}
     P := PicardGroup(S);
     invs := AbelianInvariants(P);
     vprint User1: "Starting GensToBasis", Index(MaximalOrder(Algebra(S)), S), sprint(invs); t0:=Cputime();
@@ -221,7 +230,9 @@ intrinsic GensToBasis(S::AlgEtQOrd, gens::SeqEnum) -> SeqEnum, SeqEnum
 end intrinsic;
 
 intrinsic CanonicalPicBases(ZFV::AlgEtQOrd) -> List, List
-{Find an abelian basis for the Picard group of each overorder of ZFV using a deterministic method}
+{Find an abelian basis for the Picard group of each overorder of ZFV using a deterministic method.
+//TODO Document the 'deterministic method'.
+}
     if assigned ZFV`CanonicalPicBases then
         return Explode(ZFV`CanonicalPicBases);
     end if;
@@ -270,7 +281,9 @@ intrinsic CanonicalPicBases(ZFV::AlgEtQOrd) -> List, List
 end intrinsic;
 
 intrinsic CanonicalPicBasis(S::AlgEtQOrd) -> SeqEnum, SeqEnum, Map
-{}
+{
+//TODO
+    }
     if not assigned S`CanonicalPicBasis then
         error "You must first call CanonicalPicBases(ZFV) on the Frobenius order ZFV";
     end if;
@@ -299,7 +312,9 @@ function IntToInvVec(pos, invs)
 end function;
 
 intrinsic IdealFromPosition(pos::RngIntElt, basis::SeqEnum, invs::SeqEnum) -> AlgEtQIdl
-{}
+{
+//TODO
+    }
     coeffs := IntToInvVec(pos - 1, invs);
     assert #coeffs eq #basis;
     return &*[basis[j]^coeffs[j] : j in [1..#basis]];
@@ -307,8 +322,10 @@ end intrinsic;
 
 intrinsic IdealFromPosition(pos::RngIntElt, ZFV::AlgEtQOrd, S::AlgEtQOrd, gen_info::SeqEnum, basis_info::Tup) -> AlgEtQIdl
 {Given a an integer pos between 1 and #Pic(S) and saved information, computes an ideal that is equivalent in the Picard group to the one produced in position pos in the iteration.
-gen_info - second part of output of CanonicalPicGenerators(ZFV)
+gen_info - second part of output of CanonicalPicGenerators(ZFV) //TODO I don't understand this line
+//TODO what are gen_info and basis_info
 Note that if you're calling this for many different pos, it's probably better to compute gens and basis and use another form of IdealFromPosition.
+//TODO What are 'gens' and 'basis'. How do I compute them?
 }
     gens := CanonicalPicGenerators(ZFV, gen_info);
     invs, construction := Explode(basis_info);
@@ -322,7 +339,10 @@ intrinsic CanonicalPicardGroup(S::AlgEtQOrd) -> GrpAb, Map
 end intrinsic;
 
 intrinsic PicIteration(S::AlgEtQOrd, basis::SeqEnum : filter:=0, include_pic_elt:=false) -> SeqEnum
-{Iterates over the elements of the Picard group in a consistent order, using a filter function on Pic(S).  basis_info should be an entry in the *first* part of the output of CanonicalPicBases(S), and filter should be take a single element of Pic(S) as input and return a boolean (the ideal is included if the output is true).  The output is a sequence of pairs <i, I>, where I is an ideal and i is the index of that ideal in the overall iteration.}
+{Iterates over the elements of the Picard group in a consistent order, using a filter function on Pic(S).  basis_info should be an entry in the *first* part of the output of CanonicalPicBases(S), and filter should take a single element of Pic(S) as input and return a boolean (the ideal is included if the output is true).  The output is a sequence of pairs <I,i>, where I is an ideal and i is the index of that ideal in the overall iteration.
+// TODO the output consists of triples if include_pic_elt is true. Please add a comment about this vararg.
+// TODO Is the Ideal in the output canonical? It should be for our purposes.
+}
     P, pmap := PicardGroup(S);
     assert assigned S`PicardGroup;
     if #P eq 1 then
@@ -367,7 +387,7 @@ intrinsic PicIteration(S::AlgEtQOrd, basis::SeqEnum : filter:=0, include_pic_elt
 end intrinsic;
 
 intrinsic BasisBar(S::AlgEtQOrd) -> SeqEnum
-{Returns the conjugates of the non-canonical basis elements}
+{Returns the conjugates of the non-canonical basis elements.}
     if assigned S`BasisBar then
         return S`BasisBar;
     end if;
@@ -379,7 +399,9 @@ intrinsic BasisBar(S::AlgEtQOrd) -> SeqEnum
 end intrinsic;
 
 intrinsic TraceDualPic(S::AlgEtQOrd) -> SeqEnum
-{}
+{
+//TODO
+}
     if assigned S`TraceDualPic then
         return S`TraceDualPic;
     end if;
@@ -391,7 +413,9 @@ intrinsic TraceDualPic(S::AlgEtQOrd) -> SeqEnum
 end intrinsic;
 
 intrinsic PPolPossIteration(S::AlgEtQOrd) -> SeqEnum
-{Called internally from PPolIteration}
+{Called internally from PPolIteration
+//TODO what does it do?
+}
     vprint User1: "Looking up canonical Pic basis";
     basis := CanonicalPicBasis(S);
     if IsGorenstein(S) and IsConjugateStable(S) and #PicardGroup(S) gt 1 then
@@ -415,7 +439,9 @@ intrinsic PPolPossIteration(S::AlgEtQOrd) -> SeqEnum
 end intrinsic;
 
 intrinsic PPolIteration(ZFV::AlgEtQOrd) -> List
-{Given the Frobenius order, returns a list of quadruples <we, pic_ctr, I, pol>, where I is an ideal in the weak equivalence class we with picard group counter pic_ctr, and pol is the reduced principal polarization for I}
+{Given the Frobenius order, returns a list of quadruples <we, pic_ctr, I, pol>, where I is an ideal in the weak equivalence class we with picard group counter pic_ctr, and pol is the reduced principal polarization for I.
+//TODO as of now, I is canonical only up to iso. To be fixed.
+}
     A := Algebra(ZFV);
     vprint User1: "Computing CM type..."; t0 := Cputime();
     prec := 30;
@@ -462,7 +488,9 @@ intrinsic PPolIteration(ZFV::AlgEtQOrd) -> List
 end intrinsic;
 
 intrinsic Random(G::GrpAuto : word_len:=40) -> GrpAutoElt
-{}
+{
+//TODO
+    }
     gens := [<g, Order(g)> : g in Generators(G)];
     gens := [pair : pair in gens | pair[2] ne 1];
     r := Identity(G);
@@ -476,8 +504,7 @@ end intrinsic;
 
 intrinsic TestCanonicalPicBases(ZFV::AlgEtQOrd)
 {The algorithm for computing the Picard group of S uses randomness; here we check that two different runs of PicardGroup(S) yield the same choice of generators out of CanonicalPicBases.
-Note that this will pull back large ideals if the Picard group is large, so is probably best restricted to small Pic(S)
-}
+Note that this will pull back large ideals if the Picard group is large, so is probably best restricted to small Pic(S).}
     t0:=Cputime();
     oo := OverOrders(ZFV);
     printf "Finished computing %o overorders in %os\n", #oo, Cputime()-t0; t0:=Cputime();
@@ -512,3 +539,11 @@ Note that this will pull back large ideals if the Picard group is large, so is p
     printf "Test successful in %os: same generators chosen\n", Cputime() - t0;
 end intrinsic;
 
+/*
+    TODO Add a list of tests:
+        - are the canonical gens chosen consistently?
+        - is the sorting of PicIteration consistent?
+        - are the canonical ideal reps chosen consistently?
+
+
+*/
