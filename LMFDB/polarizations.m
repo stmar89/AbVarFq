@@ -54,7 +54,7 @@ intrinsic PrincipalPolarizations(I::AlgEtQIdl,PHI::AlgEtQCMType)->SeqEnum[AlgEtQ
     Iv:=TraceDualIdeal(ComplexConjugate(I));
     test,iso:=IsIsomorphic(Iv,I); // iso*I eq Iv
     if not test then
-        Ipols:=[];
+        Ipols:=[PowerStructure(AlgEtQElt)|]; //empty sseq
     else
         S:=MultiplicatorRing(I);
         got_one:=false;
