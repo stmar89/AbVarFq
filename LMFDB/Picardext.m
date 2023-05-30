@@ -6,6 +6,10 @@ declare attributes AlgEtQOrd:CanonicalPicGenerators,CanonicalPicBasis,CanonicalP
 // TODO add description of the functions below.
 
 function asProdData(S)
+    // This function takes as input an order in an etale algebra, and returns several sequences associated to the decomposition of the algebra into fields.
+    // - O_asProd is a tuple expressing the maximal order containing S as a direct product of maximal orders of number fields
+    // - F_asProd is a tuple expressing the conductor of S as a direct product of ideals in these maximal orders
+    // - F_indexes as
     A := Algebra(S);
     O := MaximalOrder(A);
     F := Conductor(S);
@@ -68,7 +72,7 @@ function CanonicalPrimeIdealsOverPrime(i, p, S, O_asProd, F_asProd, F_indexes)
     return SLp;
 end function;
 
-intrinsic CanonicalPicGenerators(S::AlgEtQOrd) -> SeqEnum, SeqEnum
+intrinsic CanonicalPicGenerators(S::AlgEtQOrd) -> SeqEnum, SeqEnum, SeqEnum
 {
 //TODO
 }
@@ -78,6 +82,7 @@ intrinsic CanonicalPicGenerators(S::AlgEtQOrd) -> SeqEnum, SeqEnum
     P, pmap := PicardGroup(S);
     Pgens := [];
     construction := [];
+    ideals := [];
     if #P eq 1 then
         S`CanonicalPicGenerators := <Pgens, construction>;
         return Pgens, construction;
@@ -113,6 +118,7 @@ intrinsic CanonicalPicGenerators(S::AlgEtQOrd) -> SeqEnum, SeqEnum
                     if #sub<P|Pgens cat [plift]> gt #Psub then
                         Append(~Pgens, plift);
                         Append(~construction, <i, p, pcnt, Order(plift)>);
+                        Append(~ideals, Sprime);
                         Psub := sub<P|Pgens>;
                         if #Psub eq #P then
                             S`CanonicalPicGenerators := <Pgens, construction>;
@@ -229,7 +235,7 @@ intrinsic GensToBasis(S::AlgEtQOrd, gens::SeqEnum) -> SeqEnum, SeqEnum
     return basis, <invs, construction>;
 end intrinsic;
 
-intrinsic CanonicalPicBases(ZFV::AlgEtQOrd) -> List, List
+intrinsic CanonicalPicBases(ZFV::AlgEtQOrd) -> List, List, List, List
 {Find an abelian basis for the Picard group of each overorder of ZFV using a deterministic method.
 //TODO Document the 'deterministic method'.
 }
@@ -243,13 +249,14 @@ intrinsic CanonicalPicBases(ZFV::AlgEtQOrd) -> List, List
     vprint User1: "Starting PicardGroup"; t0 := Cputime();
     P0, pmap0 := PicardGroup(ZFV);
     vprint User1: "PicardGroup finished", Cputime() - t0; t0 := Cputime();
-    ZFVgens, gens_construction := CanonicalPicGenerators(ZFV);
+    ZFVgens, gens_construction, gen_ideals := CanonicalPicGenerators(ZFV);
     vprint User1: "CanonicalPicGenerators finished", Cputime() - t0; t0:=Cputime();
     igens := [pmap0(P0.k) : k in [1..Ngens(P0)]];
     vprint User1: "igens finished", Cputime() - t0;
     bases := [* *];
     basis_constructions := [* *];
     pic_maps := [* *];
+    basis_ideals := [* *];
     for i->S in oo do
         if i eq j then
             Sgens := ZFVgens;
@@ -269,15 +276,17 @@ intrinsic CanonicalPicBases(ZFV::AlgEtQOrd) -> List, List
         Append(~bases, basis);
         Append(~basis_constructions, bcon);
         Append(~pic_maps, P0Pmap);
+        Sideals := [S!!gen_ideals[u] : u in [1..#gen_ideals]];
+        Append(~basis_ideals, [&*[Sideals[u]^bcon[2][v][u] : u in [1..#gen_ideals]] : v in [1..#basis]])
     end for;
-    ZFV`CanonicalPicBases := <bases, basis_constructions, pic_maps>;
+    ZFV`CanonicalPicBases := <bases, basis_constructions, pic_maps, basis_ideals>;
     for i in [1..#oo] do
         S := oo[i];
         P := PicardGroup(S);
         assert &and[Parent(b) eq P : b in bases[i]];
-        S`CanonicalPicBasis := <bases[i], basis_constructions[i], pic_maps[i]>;
+        S`CanonicalPicBasis := <bases[i], basis_constructions[i], pic_maps[i], basis_ideals[i]>;
     end for;
-    return bases, basis_constructions;
+    return bases, basis_constructions, pic_maps, basis_ideals;
 end intrinsic;
 
 intrinsic CanonicalPicBasis(S::AlgEtQOrd) -> SeqEnum, SeqEnum, Map
@@ -334,8 +343,14 @@ Note that if you're calling this for many different pos, it's probably better to
 end intrinsic;
 
 intrinsic CanonicalPicardGroup(S::AlgEtQOrd) -> GrpAb, Map
-{A version of PicardGroup, with the same semantics, but not depending on any random choices and stable across changes to Magma}
-    return 1;
+{A version of PicardGroup, with the same semantics, but not depending on any random choices and stable across changes to Magma.  You must call CanonicalPicBases on ZFV first.}
+    P, pmap := PicardGroup(S);
+    basis, bcon, _, ideals := CanonicalPicBasis(S);
+    invs, con := Explode(bcon);
+    A := AbelianGroup(invs);
+    AtoP := iso<A->P|basis>;
+    new_pmap := map<P->Codomain(pmap)| rep:->&*[basis[i]^v[i] : i in [1..#basis]] where v:=Eltseq(rep@@AtoP),
+                                       id:->id@@pmap>;
 end intrinsic;
 
 intrinsic PicIteration(S::AlgEtQOrd, basis::SeqEnum : filter:=0, include_pic_elt:=false) -> SeqEnum
