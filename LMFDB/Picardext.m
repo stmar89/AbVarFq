@@ -84,7 +84,7 @@ intrinsic CanonicalPicGenerators(S::AlgEtQOrd) -> SeqEnum, SeqEnum, SeqEnum
     construction := [];
     ideals := [];
     if #P eq 1 then
-        S`CanonicalPicGenerators := <Pgens, construction>;
+        S`CanonicalPicGenerators := <Pgens, construction, ideals>;
         return Pgens, construction, ideals;
     end if;
     O_asProd, F_asProd, F_indexes := asProdData(S);
@@ -121,7 +121,7 @@ intrinsic CanonicalPicGenerators(S::AlgEtQOrd) -> SeqEnum, SeqEnum, SeqEnum
                         Append(~ideals, Sprime);
                         Psub := sub<P|Pgens>;
                         if #Psub eq #P then
-                            S`CanonicalPicGenerators := <Pgens, construction>;
+                            S`CanonicalPicGenerators := <Pgens, construction, ideals>;
                             return Pgens, construction, ideals;
                         end if;
                     end if;
