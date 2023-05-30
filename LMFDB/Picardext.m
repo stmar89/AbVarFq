@@ -1,6 +1,6 @@
 /* vim: set syntax=magma :*/
 
-declare attributes AlgEtQOrd:CanonicalPicGenerators,CanonicalPicBasis,CanonicalPicBases,BasisBar,TraceDualPic;
+declare attributes AlgEtQOrd:CanonicalPicGenerators,CanonicalPicBasis,CanonicalPicBases,BasisBar,TraceDualPic. CanonicalPicardGroup;
 // TODO add description of the attributes above.
 
 // TODO add description of the functions below.
@@ -344,6 +344,9 @@ end intrinsic;
 
 intrinsic CanonicalPicardGroup(S::AlgEtQOrd) -> GrpAb, Map
 {A version of PicardGroup, with the same semantics, but not depending on any random choices and stable across changes to Magma.  You must call CanonicalPicBases on ZFV first.}
+    if assigned S`CanonicalPicardGroup then
+        return Explode(S`CanonicalPicardGroup);
+    end if;
     P, pmap := PicardGroup(S);
     basis, bcon, _, ideals := CanonicalPicBasis(S);
     invs, con := Explode(bcon);
@@ -351,6 +354,7 @@ intrinsic CanonicalPicardGroup(S::AlgEtQOrd) -> GrpAb, Map
     AtoP := iso<A->P|basis>;
     new_pmap := map<P->Codomain(pmap)| rep:->&*[ideals[i]^v[i] : i in [1..#ideals]] where v:=Eltseq(rep@@AtoP),
                                        id:->id@@pmap>;
+    S`CanonicalPicardGroup := <P, new_pmap>;
     return P, new_pmap;
 end intrinsic;
 
@@ -359,7 +363,7 @@ intrinsic PicIteration(S::AlgEtQOrd, basis::SeqEnum : filter:=0, include_pic_elt
 // TODO the output consists of triples if include_pic_elt is true. Please add a comment about this vararg.
 // TODO Is the Ideal in the output canonical? It should be for our purposes.
 }
-    P, pmap := PicardGroup(S);
+    P, pmap := CanonicalPicardGroup(S);
     assert assigned S`PicardGroup;
     if #P eq 1 then
         if filter cmpeq 0 or filter(P.0) then
