@@ -144,7 +144,7 @@ intrinsic RepresentativeMinimalIsogenies(ZFV::AlgEtQOrd, N::RngIntElt : degrees:
     // It should be possible to implement this function without enumerating the whole ICM, but instead just enumerating weak equivalence classes.
     // But we need to call ICM_Identify, which currently relies on the lookup table constructed in ICM_CanonicalRepresentatives, so we don't try to do this now.
     min_isog := AssociativeArray();
-    we_reps := &cat[[icm_lookup[S][<WE, P.0>] : WE in WKICM_barCanonicalRepresentatives(S) where P := PicardGroup(S)] : S in OverOrders(ZFV)];
+    we_reps := &cat[[icm_lookup[S][<WE, P.0>] : WE in WKICM_barCanonicalRepresentatives(S) ] where P := PicardGroup(S) : S in OverOrders(ZFV)];
     we_hashes := [myHash(J) : J in we_reps];
     for i->I in we_reps do
         min_isog[we_hashes[i]] := AssociativeArray();
