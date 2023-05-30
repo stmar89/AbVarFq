@@ -2,12 +2,16 @@
 
 freeze;
 
-
+// 2019 JV:
 // Must change lines 2010, 2132, and 2247 of 
 //     package/Ring/GaloisGroup/Galois.m
 // to read "prec := 20" (instead of 'prec := 1').
 // The assumption made is that the prime chosen for the p-adic computation
 // is unramified, so every root is a unit root.  :(
+//
+// Update SM, using Magma 2.27-9: It seems that the changes in line 2010 and 2132 have been incorporated at a certain point. 
+// The code has changed since the above comment was made, so I am not 100% sure. 
+// Moreover, I could not track where the change in line 2247 should be.
 
 intrinsic pAdicToComplexRootsGMod(f::RngUPolElt[FldRat], p::RngIntElt : precpAdic := 0, precCC := 0) -> 
     SeqEnum[RngPadElt], SeqEnum[FldComElt], GrpPerm
