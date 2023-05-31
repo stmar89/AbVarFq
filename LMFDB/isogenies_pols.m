@@ -274,6 +274,7 @@ intrinsic NonprincipalPolarizations(ZFV::AlgEtQOrd, PHI::AlgEtQCMType, degree_bo
         WJ := J`WErep; Jpic := J`Pelt;
         Ipols:=AssociativeArray();
         for d -> isog_I_J_d in isog[myHash(WI)][myHash(WJ)] do
+            pols_deg_d := [];
             for data in isog_I_J_d do
                 x, h, H, L := Explode(data);
                 // x is the element inducing the isogeny from WI+h to WJ with image L, H is the subgroup of Pic(ZFV) that we can translate our domain by
