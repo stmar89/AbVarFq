@@ -437,7 +437,6 @@ intrinsic AllPolarizations(ZFV::AlgEtQOrd, PHI::AlgEtQCMType, degree_bounds::Seq
     can_reps_of_duals:=AssociativeArray();
     all_pols:=AssociativeArray(); // the output
     for J in isom_cl do
-        Jpols:=AssociativeArray(); // will contain all pols find, indexed by degree.
         Jv:=TraceDualIdeal(ComplexConjugate(J));
         // I am looking for pol such that pol*J c Jv
         JJ,JJ_to_Jv:=ICM_Identify(Jv,icm_lookup);
@@ -448,6 +447,7 @@ intrinsic AllPolarizations(ZFV::AlgEtQOrd, PHI::AlgEtQCMType, degree_bounds::Seq
     vprintf AllPolarizations : "time spent on IsogeniesByDegree: %o\n",Cputime(t0);
     t_can:=0;
     for J in isom_cl do
+        Jpols:=AssociativeArray(); // will contain all pols find, indexed by degree.
         S:=MultiplicatorRing(J);
         JJ,JJ_to_Jv,Jv:=Explode(can_reps_of_duals[J]);
         for d ->isog_J_JJ_d in all_isog[myHash(J)][myHash(JJ)] do
@@ -476,7 +476,9 @@ intrinsic AllPolarizations(ZFV::AlgEtQOrd, PHI::AlgEtQCMType, degree_bounds::Seq
             end for;
             t_can +:=Cputime(t_can_Jd);
             assert2 forall{ pol : pol in pols_deg_d_up_to_iso | d eq Index(Jv,pol[1]*J) }; // sanity check
-            Jpols[d]:=[ < pol[1] , pol[2] , DecompositionKernelOfIsogeny(J,Jv,pol[1]) > : pol in pols_deg_d_up_to_iso ];
+            if #pols_deg_d_up_to_iso gt 0 then
+                Jpols[d]:=[ < pol[1] , pol[2] , DecompositionKernelOfIsogeny(J,Jv,pol[1]) > : pol in pols_deg_d_up_to_iso ];
+            end if;
         end for;
         all_pols[J]:=Jpols;
     end for;
