@@ -263,7 +263,7 @@ intrinsic NonprincipalPolarizations(ZFV::AlgEtQOrd, PHI::AlgEtQCMType, degree_bo
         J, J_to_Iv := ICM_Identify(Iv, icm_lookup);
         WI := I`WErep; Ipic := I`Pelt;
         WJ := J`WErep; Jpic := J`Pelt;
-        Jpols:=AssociativeArray();
+        Ipols:=AssociativeArray();
         for d -> isog_I_J_d in isog[myHash(WI)][myHash(WJ)] do
             for data in isog_I_J_d do
                 x, h, H, L := Explode(data);
@@ -293,9 +293,9 @@ intrinsic NonprincipalPolarizations(ZFV::AlgEtQOrd, PHI::AlgEtQCMType, degree_bo
             end for;
             t_can +:=Cputime(t_can_Jd);
             assert2 forall{ pol : pol in pols_deg_d_up_to_iso | d eq Index(Iv, pol[1]*I) }; // sanity check
-            Jpols[d]:=[ < pol[1] , pol[2] , DecompositionKernelOfIsogeny(I, Iv, pol[1]) > : pol in pols_deg_d_up_to_iso ];
+            Ipols[d]:=[ < pol[1] , pol[2] , DecompositionKernelOfIsogeny(I, Iv, pol[1]) > : pol in pols_deg_d_up_to_iso ];
         end for;
-        all_pols[J]:=Jpols;
+        all_pols[I]:=Ipols;
     end for;
     vprintf AllPolarizations : "time spent on computing canonical reps and removing duplicates: %o\n",t_can;
     vprintf AllPolarizations : "time spent on computing all polarizations: %o\n",Cputime(t_tot);
