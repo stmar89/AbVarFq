@@ -292,6 +292,77 @@ intrinsic CanonicalRepresentativePolarization(I::AlgEtQIdl,x0::AlgEtQElt) -> Alg
     return candidates[1], den, nums;
 end intrinsic;
 
+
+intrinsic LoadPPAVS(label, directory : prec := 100)
+{ loads precomputed PPAVs in an isogeny class }
+    recs := getrecs(directory cat "/av_fq_pol_output/" cat label);
+    g, q, f := LabelToPoly(label);
+
+    R := LoadSchemaWKClasses(Read(directory cat "/wk_classes/" cat label cat "_schema.txt"));
+    reps_isom, _ := ICM_CanonicalRepresentatives(R);
+    isom_labels := [label cat "." cat r`IsomLabel : r in reps_isom];
+
+    A := Algebra(reps_isom[1]);
+    F:=PrimitiveElement(A);
+    V:=q/F;
+    basis:=[ V^i : i in [g-1..0 by -1]] cat [F^i : i in [1..g]];
+    zb_in_A:=function(jsonb)
+        rep := Split(jsonb, ",[]");
+        den := atoi(rep[1]);
+        nums := atoii(Sprint(rep[2..#rep]));
+        return SumOfProducts([c/den : c in nums], basis);
+    end function;
+
+    reps_pp := [zb_in_A(rec[10]) : rec in recs];
+
+    res := [<reps_isom[Index(isom_labels, recs[i][1])], elt> : i->elt in reps_pp];;
+
+
+    // checks polarization sends I to its dual TraceDual Complex conjugate
+    assert forall{ x0*I eq TraceDualIdeal(ComplexConjugate(I)) where I, x0 := Explode(elt) : elt in res};
+
+    pps_by_isom := AssociativeArray();
+    for label in isom_labels do
+        pps_by_isom[label] := [];
+    end for;
+    // check that the ratio with any other is totally positive
+    for elt in res do
+        label := elt[1]`IsomLabel;
+        b, v := IsDefined(pps_by_isom, label);
+        if not b then
+            pps_by_isom[label] := [];
+            v := pps_by_isom[label];
+        end if;
+        Append(~v, elt[2]);
+        // assert that it is purely imaginary
+        assert elt[2] eq -ComplexConjugate(elt[2]);
+    end for;
+    homs := HomsToC(A : Prec:=prec);
+    CC := ComplexFieldExtra(prec);
+    for v in pps_by_isom do
+        assert forall{
+            Real(qCC) gt 0 and Imaginary(qCC) lt CC`epscomp where qCC := CC!h(q)
+            : h in homs, q in quotients}
+             where quotients := [elt1/elt2 : i->elt1 in v, j->elt2 in v | i gt j];
+    end for;
+    return res;
+end intrinsic;
+
+intrinsic PeriodMatricesCanonicalLift(label, directory, prec) -> SeqEnum, SeqEnum
+{ returns the period matrices associated to PPAVs in a isogeny class, by loading precomputed data, see LoadPPAVS }
+    CC := ComplexFieldExtra(prec);
+    ppavs := LoadPPAVS(label, directory);
+    A := Algebra(ppavs[1,1]);
+    fields, _, _ := Components(A);
+    PHI := CMType(ppavs[1,2]);
+    ChangePrecision(~PHI, Ceiling(prec*1.2)+100);
+    res := [
+        <elt[1], elt[2], Matrix(CC, bigP), Matrix(CC, t)>
+        where bigP, t := PeriodMatrix(elt[1], elt[2], PHI)
+        : elt in ppavs];
+    return res, fields;
+end intrinsic;
+
     /*
     fld_m_files:="~/packages_github/AbVarFq/LMFDB/";
     fld:="~/266_wk_icm_rec/";
