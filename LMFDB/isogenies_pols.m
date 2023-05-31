@@ -152,12 +152,10 @@ intrinsic RepresentativeMinimalIsogenies(ZFV::AlgEtQOrd, N::RngIntElt : degrees:
             min_isog[we_hashes[i]][we_hashes[j]] := [];
         end for;
     end for;
-    for J in isom_cl do
+    for j->J in we_reps do
         S := MultiplicatorRing(J);
         P := PicardGroup(S);
         _, _, P0Pmap := CanonicalPicBasis(S);
-        WE := J`WErep;
-        hshJ := myHash(J);
         Ls := MaximalIntermediateIdeals(J, N*J);
         for L in Ls do
             deg := Index(J, L);
@@ -167,7 +165,7 @@ intrinsic RepresentativeMinimalIsogenies(ZFV::AlgEtQOrd, N::RngIntElt : degrees:
             I, x, IS, IWE, Ig := ICM_Identify(L, icm_lookup);
             assert2 Index(J, x*I) eq deg;
             Ig, Ker := CanonicalCosetRep(Ig@@P0Pmap, Kernel(P0Pmap));
-            Append(~min_isog[myHash(IWE)][hshJ], <deg, x, Ig, Ker, I, L>); // x is a minimal isogeny from I to J of degree deg=#(J/L); I = IWE * Ig as canonical representatives
+            Append(~min_isog[myHash(IWE)][we_hashes[j]], <deg, x, Ig, Ker, I, L>); // x is a minimal isogeny from I to J of degree deg=#(J/L); I = IWE * Ig as canonical representatives
         end for;
     end for;
     ZFV`RepresentativeMinimalIsogeniesTo[<N, degrees>] := min_isog;
