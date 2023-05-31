@@ -161,7 +161,7 @@ intrinsic RepresentativeMinimalIsogenies(ZFV::AlgEtQOrd, N::RngIntElt : degrees:
         Ls := MaximalIntermediateIdeals(J, N*J);
         for L in Ls do
             deg := Index(J, L);
-            if degrees ne [] and not (deg in degrees) then
+            if degrees cmpne [] and not (deg in degrees) then
                 continue;
             end if;
             I, x, IS, IWE, Ig := ICM_Identify(L, icm_lookup);
