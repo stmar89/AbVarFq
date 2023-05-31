@@ -384,7 +384,7 @@ intrinsic IsogeniesByDegree(ZFV::AlgEtQOrd, degree_bounds::SeqEnum : important_p
                 for K in isom_cl do
                     for m -> known in isog[myHash(I)][myHash(K)] do
                         for yL0 in known do
-                            y, g, L0 := Explode(yL0);
+                            y, L0 := Explode(yL0);
                             for dxL in min_isog[myHash(K)][myHash(J)] do
                                 d, x := Explode(dxL);
                                 dm := d*m;
