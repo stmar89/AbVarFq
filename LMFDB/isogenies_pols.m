@@ -257,7 +257,6 @@ intrinsic NonprincipalPolarizations(ZFV::AlgEtQOrd, PHI::AlgEtQCMType, degree_bo
         S := MultiplicatorRing(I);
         Iv := TraceDualIdeal(ComplexConjugate(I));
         J, J_to_Iv := ICM_Identify(Iv, icm_lookup);
-        Jv := TraceDualIdeal(ComplexConjugate(J));
         WI := I`WErep; Ipic := I`Pelt;
         WJ := J`WErep; Jpic := J`Pelt;
         Jpols:=AssociativeArray();
@@ -277,7 +276,7 @@ intrinsic NonprincipalPolarizations(ZFV::AlgEtQOrd, PHI::AlgEtQCMType, degree_bo
                         end if;
                     end for;
                     if got_one then
-                        pols_deg_d cat:= [ pp*t : t in transversal_USplus_USUSb_general(S) ]; // this might contains isomorphic copies
+                        pols_deg_d cat:= [ pp*t : t in transversal_USplus_USUSb_general(S) ]; // this might contain isomorphic copies
                     end if;
                 end if;
             end for;
@@ -289,8 +288,8 @@ intrinsic NonprincipalPolarizations(ZFV::AlgEtQOrd, PHI::AlgEtQCMType, degree_bo
                 Include(~pols_deg_d_up_to_iso, <pol,seq>); //isomorphic pols will have the same canonical rep
             end for;
             t_can +:=Cputime(t_can_Jd);
-            assert2 forall{ pol : pol in pols_deg_d_up_to_iso | d eq Index(Jv, pol[1]*J) }; // sanity check
-            Jpols[d]:=[ < pol[1] , pol[2] , DecompositionKernelOfIsogeny(J, Jv, pol[1]) > : pol in pols_deg_d_up_to_iso ];
+            assert2 forall{ pol : pol in pols_deg_d_up_to_iso | d eq Index(Iv, pol[1]*I) }; // sanity check
+            Jpols[d]:=[ < pol[1] , pol[2] , DecompositionKernelOfIsogeny(I, Iv, pol[1]) > : pol in pols_deg_d_up_to_iso ];
         end for;
         all_pols[J]:=Jpols;
     end for;
