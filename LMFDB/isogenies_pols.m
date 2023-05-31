@@ -192,9 +192,18 @@ intrinsic RepresentativeIsogenies(ZFV::AlgEtQOrd, degree_bounds::SeqEnum)->Assoc
     we_proj := &cat[[P0Pmap where _,_,P0Pmap := CanonicalPicBasis(S) : WE in WKICM_barCanonicalRepresentatives(S) ] : S in OverOrders(ZFV)];
     isog := AssociativeArray();
     for i->I in we_reps do
-        isog[we_hashes[i]] := AssociativeArray();
+        hshI := we_hashes[i];
+        isog[hshI] := AssociativeArray();
         for j->J in we_reps do
-            isog[we_hashes[i]][we_hashes[j]] := AssociativeArray();
+            hshJ := we_hashes[j];
+            isog[hshI][hshJ] := AssociativeArray();
+            for data in min_isog[hshI][hshJ] do
+                d, x, h, H, _, L := Explode(data);
+                if not IsDefined(isog[hshI][hshJ], d) then
+                    isog[hshI][hshJ][d] := [];
+                end if;
+                Append(~isog[hshI][hshJ][d], <x, h, H, L>);
+            end for;
         end for;
     end for;
     while true do
@@ -363,7 +372,6 @@ intrinsic IsogeniesByDegree(ZFV::AlgEtQOrd, degree_bounds::SeqEnum : important_p
         isog[myHash(I)] := AssociativeArray();
         for J in isom_cl do
             isog[myHash(I)][myHash(J)] := AssociativeArray();
-            // for dxL in min_isog[J][I] do // I THINK THIS IS WRONG
             for dxL in min_isog[myHash(I)][myHash(J)] do
                 d, x, L := Explode(dxL);
                 if keep_degree(I, J, d) then
