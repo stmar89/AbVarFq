@@ -191,6 +191,12 @@ intrinsic RepresentativeIsogenies(ZFV::AlgEtQOrd, degree_bounds::SeqEnum)->Assoc
     we_hashes := [myHash(J) : J in we_reps];
     we_proj := &cat[[P0Pmap where _,_,P0Pmap := CanonicalPicBasis(S) : WE in WKICM_barCanonicalRepresentatives(S) ] : S in OverOrders(ZFV)];
     isog := AssociativeArray();
+    for i->I in we_reps do
+        isog[we_hashes[i]] := AssociativeArray();
+        for j->J in we_reps do
+            min_isog[we_hashes[i]][we_hashes[j]] := AssociativeArray();
+        end for;
+    end for;
     while true do
         added_something := false;
         for i->I in we_reps do
