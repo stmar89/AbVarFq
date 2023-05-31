@@ -1,0 +1,102 @@
+/* vim: set syntax=magma :*/
+
+    SetClassGroupBounds("GRH");
+    SetColumns(0);
+
+    SetDebugOnError(true);
+
+    fld_packages:="~/packages_github/";
+    AttachSpec(fld_packages cat "AlgEt/spec"); 
+    AttachSpec(fld_packages cat "AbVarFq/LMFDB/spec"); 
+    AttachSpec(fld_packages cat "CHIMP/CHIMP.spec"); 
+    fld_wk_schema:="/scratch/abvar/avdata/wk_classes/";
+    fld_pAdciPosCMType:="/scratch/abvar/pAdicPos/output_parallel1/";
+
+    //TODO
+    labels_degs:=[
+    <"2.11.c_ah",[4,25]> // Ex 7.2 from https://arxiv.org/pdf/1805.10223.pdf  
+    ]; 
+
+    // The following functions are inefficient, but simple and hence presumably very reliable methods to compute
+    // polarizations of a fixed degree.
+
+    transversal:=function(S)
+    // returns a transversal of Q = S*/<v bar(v) : v in S*> meet S*.
+        zbS:=ZBasis(S);
+        T:=Order(zbS cat [ ComplexConjugate(z) : z in zbS ]);
+        UT,uT:=UnitGroup(T); //uT:UT->T
+        US, uS := UnitGroup(S); //uS:US->S
+        gensUinS:=[ uS(US.i) : i in [1..Ngens(US)]];
+        USUSb:=sub< UT | [ (g*ComplexConjugate(g))@@uT : g in gensUinS ]>;
+        USinUT:=sub<UT | [ g@@uT : g in gensUinS ]>;
+        Q,q:=quo< USinUT | USinUT meet USUSb >; // q:=USinUT->Q
+                                                // Q = S*/<v bar(v) : v in S*> meet S*
+        QinT:=[ uT(UT!(b@@q)) : b in Q];
+        return QinT;
+    end function;
+
+    is_polarization:=function(l,PHI)
+    // l an element of K, PHI a CMType
+        test1:=l eq -ComplexConjugate(l);
+        test2:=forall{phi : phi in Homs(PHI) | Im(phi(l)) gt 0 };
+        return test1 and test2;
+    end function;
+
+    polarizations_of_degree:=function(I,PHI,N)
+        Ipols:=[];
+        Iv:=TraceDualIdeal(ComplexConjugate(I));
+        Js:=IdealsOfIndex(Iv,N);
+        // [ ElementaryDivisors(Quotient(Iv,J)) : J in Js ];
+        for J in Js do
+            Jpols:=[];
+            test,iso:=IsIsomorphic(I,J);
+            if test then
+                S:=MultiplicatorRing(I);
+                for u in transversal(S) do
+                    l:=u*iso;
+                    if is_polarization(l,PHI) then
+                        Append(~Jpols,l);
+                    end if;
+                end for;
+                Ipols cat:=Jpols;
+            end if;
+        end for;
+        return Ipols;
+    end function;
+
+    output_naive:=AssociativeArray();
+    output_new:=AssociativeArray();
+    for label_degs in labels_degs do 
+
+        label,degrees:=Explode(label_degs);
+        output_naive_label:=AssociativeArray();
+        ZFV:=LoadSchemaWKClasses(Read(fld_wk_schema cat label cat "_schema.txt"));
+        A:=Algebra(ZFV);
+        icm:=ICM_CanonicalRepresentatives(ZFV);
+        basis:=ZFVBasis(A);
+        PHI:=LoadpAdicPosCMType(basis,Split(Read(fld_pAdciPosCMType cat label cat "_pAdicPos.txt"),":")[2]);
+
+        t0:=Cputime();
+        for I in icm do
+            pols_I:=AssociativeArray();
+            for d in degrees do
+                pols:=polarizations_of_degree(I,PHI,d);
+                if #pols gt 0 then
+                    pols_I[d]:=pols;
+                end if;
+            end for;
+            output_naive_label[I]:=pols_I;
+        end for;
+        output_naive[label]:=output_naive_label;
+        t_naive:=Cputime(t0);
+
+        t0:=Cputime();
+        output_new_label:=AllPolarizations(ZFV,PHI,degrees);
+        output_new[label]:=output_new_label;
+        t_new:=Cputime(t0);
+
+        t_naive,t_new;
+        assert Keys(output_new_label) eq Keys(output_naive_label);
+        assert forall{ I : I in icm | Keys(output_new_label[I]) eq Keys(output_naive_label[I]) };
+        assert forall{ I : I in icm | forall{ d : d in Keys(output_new_label[I]) | #output_new_label[I][d] eq #output_naive_label[I][d] }};
+    end for;    
