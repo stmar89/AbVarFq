@@ -299,7 +299,7 @@ end intrinsic;
 
 
 
-intrinsic LoadPPAVS(label, directory : prec := 100) -> SeqEnum
+intrinsic LoadPPAVs(label, directory : prec := 100) -> SeqEnum
 { loads precomputed PPAVs in an isogeny class }
     recs := getrecs(directory cat "/av_fq_pol_output/" cat label);
     g, q, f := LabelToPoly(label);
@@ -357,7 +357,7 @@ end intrinsic;
 intrinsic PeriodMatricesCanonicalLift(label, directory, prec) -> SeqEnum, SeqEnum
 { returns the period matrices associated to PPAVs in a isogeny class, by loading precomputed data, see LoadPPAVS }
     CC := ComplexFieldExtra(prec);
-    ppavs := LoadPPAVS(label, directory);
+    ppavs := LoadPPAVs(label, directory);
     A := Algebra(ppavs[1,1]);
     fields, _, _ := Components(A);
     PHI := CMType(ppavs[1,2]);

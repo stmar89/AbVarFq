@@ -3,13 +3,14 @@
 // WPSNormalizeCC
 
 intrinsic IgusaInvariantsG2(tau::ModMatFldElt) -> SeqEnum
+{ Computes the IgusaInvariants from a small period matrix }
     tau := ReduceSmallPeriodMatrix(tau);
     CC := BaseRing(tau);
     R<x> := PolynomialRing(CC);
     fCC := x * (x - 1) * &*[x - r: r in RosenhainInvariants(tau)];
     JCC := IgusaInvariants(fCC);
     return WPSNormalizeCC([2,4,6,8,10], JCC);
-end function;
+end intrinsic;
 
 intrinsic IgusaToAffineInvariants(Jlist::SeqEnum) -> SeqEnum
 { Convert Igusa invariants to Affine invariants away from J10 = 0 }
