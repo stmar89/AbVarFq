@@ -30,7 +30,7 @@ transversal_USplus_USUSb:=function(S)
 end function;
 
 is_polarization:=function(l,PHI)
-// l an element of K, PHI a CMType, it returns wheather l is totally imaginary and PHI-positive, that is, 
+// l an element of K, PHI a CMType, it returns wheather l is totally imaginary and PHI-positive, that is,
 // Im(phi(l))>0 for every phi in PHI.
     test1:=l eq -ComplexConjugate(l);
     test2:=forall{phi : phi in Homs(PHI) | Im(phi(l)) gt 0 };
@@ -41,16 +41,16 @@ intrinsic PrincipalPolarizations(I::AlgEtQIdl,PHI::AlgEtQCMType)->SeqEnum[AlgEtQ
 {Given an ideal I and a CM-Type PHI, returns all the principal polarizations of I with respect to PHI.}
 
     // First we test if there exists iso such that iso*I = Iv. If not, then I is not self-dual.
-    // Assume that there exists such an iso. 
+    // Assume that there exists such an iso.
     // Given iso1 with iso1*I=Iv, then iso1 is of the form iso1=v*iso, where v is in S^*.
     // Given two principal polarizations l and l1, then there eixsts a totally real totally positive unit v of S such that l1=v*l.
-    // Moreover, (I,l) is isomorphic to (I,l1) as PPAV if and only if l1=u*\bar{u} for some u in S^*. 
-    // Combining these facts, we get that to determine whether there is a principal polarization of I, it suffices to check 
-    // elements of the form iso*v where v loops over a transversal of S^*/S^*_+, 
+    // Moreover, (I,l) is isomorphic to (I,l1) as PPAV if and only if l1=u*\bar{u} for some u in S^*.
+    // Combining these facts, we get that to determine whether there is a principal polarization of I, it suffices to check
+    // elements of the form iso*v where v loops over a transversal of S^*/S^*_+,
     // where S^*_+ is the subgroupsof S^* consisting of totally real totally positive units.
-    // If we find a principal polarization, say l, then all non-isomorphic one will be of the form l1=v*l, where v loops over a 
+    // If we find a principal polarization, say l, then all non-isomorphic one will be of the form l1=v*l, where v loops over a
     // transversal of S^*_+/<u*\bar{u} : u in S^*>.
-    
+
     Iv:=TraceDualIdeal(ComplexConjugate(I));
     test,iso:=IsIsomorphic(Iv,I); // iso*I eq Iv
     if not test then
@@ -82,7 +82,7 @@ intrinsic pAdicPosCMType(A::AlgEtQ : precpAdic := 30, precCC := 30 ) -> AlgEtQCM
     h:=ChangeRing(DefiningPolynomial(A),Integers());
     _,p:=IsPrimePower(ConstantCoefficient(h));
     require IsCoprime(Coefficients(h)[(Degree(h) div 2)+1],p) : "The isogeny class is not ordinary";
-    rtspp,rtsCC:=pAdicToComplexRoots(PolynomialRing(Rationals())!h,p : precpAdic := precpAdic, precCC:=precCC ); 
+    rtspp,rtsCC:=pAdicToComplexRoots(PolynomialRing(Rationals())!h,p : precpAdic := precpAdic, precCC:=precCC );
         //from paddictocc.m. works only for ordinary
     homs:=HomsToC(A : Prec:=precCC );
     FA:=PrimitiveElement(A);
@@ -217,7 +217,7 @@ intrinsic PeriodMatrix(I::AlgEtQIdl,x0::AlgEtQElt,phi::AlgEtQCMType) -> AlgMatEl
             im_smallPM:=Matrix([[Im(x) : x in Eltseq(r)] :r in Rows(smallPM)]);
             test_pos_def:=forall{e : e in Eigenvalues(im_smallPM) | e[1] gt 0 };
             require test_symm and test_pos_def : "Precision issue. Increase the precision of the given cm-type";
-            return bigPM,smallPM;     
+            return bigPM,smallPM;
         catch e
             "We double the precision of the CMType";
             old_prec:=Precision(phi);
@@ -260,7 +260,7 @@ intrinsic CanonicalRepresentativePolarization(I::AlgEtQIdl,x0::AlgEtQElt) -> Alg
         return x0, den, nums;
     end if;
 
-    homs:=HomsToC(A); 
+    homs:=HomsToC(A);
     prec:=Precision(Codomain(homs[1]));
     // are the homs sorted in conjugate pairs?
     assert forall{ k : k in [1..g] | Abs(homs[2*k-1](F) - ComplexConjugate(homs[2*k](F))) lt 10^-(prec div 2)};
@@ -268,7 +268,7 @@ intrinsic CanonicalRepresentativePolarization(I::AlgEtQIdl,x0::AlgEtQElt) -> Alg
     homs:=[homs[2*k-1] : k in [1..g]]; //one per conjugate pair to define the Log map
     US,uS:=UnitGroup(S);
     gens_US:=[ uS(g) : g in Generators(US) ]; // the torsion unit probably does do nothing
-    
+
     sub:=sub< US | [(g*ComplexConjugate(g))@@uS : g in gens_US ] >;     // sub = < u * \bar u : u in S^* >
     gens_sub_inS:=[ uS(g) : g in Generators(sub) ];
     rnk_sub:=#gens_sub_inS;
@@ -278,7 +278,7 @@ intrinsic CanonicalRepresentativePolarization(I::AlgEtQIdl,x0::AlgEtQElt) -> Alg
     img_x0:=Vector([ Log(Abs(h(x0))) : h in homs ]);
     closest_vects:=ClosestVectors(L,-img_x0); //note the minus sign!
     all_coords:=[ Coordinates(cv) : cv in closest_vects];
-    candidates:=[ x0*&*[ gens_sub_inS[i]^coord[i] : i in [1..rnk_sub] ] : coord in all_coords ]; 
+    candidates:=[ x0*&*[ gens_sub_inS[i]^coord[i] : i in [1..rnk_sub] ] : coord in all_coords ];
     // A priori, I believe that I should act on candidates with the torsion units of the totally real totally positive units in S
     // But there is only 1 (which also the torsion subgroup of sub = < u*\bar u>
 
