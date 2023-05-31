@@ -5,6 +5,11 @@ declare attributes AlgEtQOrd : PrincipalPolarizationsIsogenyClass,
                                transversal_USplus_USUSb;
 declare attributes AlgEtQ : pAdicPosCMType, ZFVBasis;
 
+import "labelling_wk_classes.m" : LabelToPoly;
+
+// Depends on CHIMP for:
+// ComplexFieldExtra, atoi, atoii, getrecs
+
 transversal_US_USplus:=function(S)
 // Given an order S, it returns a transveral in S of the quotient S^*/S^*_+, where
 // S^*_+ is the subgroups of S^* consisting of totally real totally positive units.
@@ -293,7 +298,8 @@ intrinsic CanonicalRepresentativePolarization(I::AlgEtQIdl,x0::AlgEtQElt) -> Alg
 end intrinsic;
 
 
-intrinsic LoadPPAVS(label, directory : prec := 100)
+
+intrinsic LoadPPAVS(label, directory : prec := 100) -> SeqEnum
 { loads precomputed PPAVs in an isogeny class }
     recs := getrecs(directory cat "/av_fq_pol_output/" cat label);
     g, q, f := LabelToPoly(label);

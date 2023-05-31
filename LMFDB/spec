@@ -10,4 +10,5 @@ lmfdb.m
 padictocc.m
 LoadpAdicPosCMType.m
 polarizations.m
+genus2matching.m
 }
