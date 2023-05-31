@@ -303,7 +303,9 @@ intrinsic NonprincipalPolarizations(ZFV::AlgEtQOrd, PHI::AlgEtQCMType, degree_bo
             end for;
             t_can +:=Cputime(t_can_Jd);
             assert2 forall{ pol : pol in pols_deg_d_up_to_iso | d eq Index(Iv, pol[1]*I) }; // sanity check
-            Ipols[d]:=[ < pol[1] , pol[2] , DecompositionKernelOfIsogeny(I, Iv, pol[1]) > : pol in pols_deg_d_up_to_iso ];
+            if #pols_deg_d_up_to_iso gt 0 then
+                Ipols[d]:=[ < pol[1] , pol[2] , DecompositionKernelOfIsogeny(I, Iv, pol[1]) > : pol in pols_deg_d_up_to_iso ];
+            end if;
         end for;
         all_pols[I]:=Ipols;
     end for;
