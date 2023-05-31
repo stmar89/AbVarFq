@@ -194,7 +194,7 @@ intrinsic RepresentativeIsogenies(ZFV::AlgEtQOrd, degree_bounds::SeqEnum)->Assoc
     for i->I in we_reps do
         isog[we_hashes[i]] := AssociativeArray();
         for j->J in we_reps do
-            min_isog[we_hashes[i]][we_hashes[j]] := AssociativeArray();
+            isog[we_hashes[i]][we_hashes[j]] := AssociativeArray();
         end for;
     end for;
     while true do
