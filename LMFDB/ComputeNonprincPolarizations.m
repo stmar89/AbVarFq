@@ -51,7 +51,7 @@ try
             aut_grp := Sprintf("%o.%o", aut_grp[1], aut_grp[2]);
             for d->Idpols in Ipols do
                 for data in Idpols do
-                    den, nums, kerinfo := Explode(data);
+                    pol, den, nums, kerinfo := Explode(data);
                     poldata := AssociativeArray();
 
                     //we, pic_ctr, I, den, nums := Explode(nppol);

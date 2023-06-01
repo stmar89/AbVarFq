@@ -471,13 +471,13 @@ intrinsic AllPolarizations(ZFV::AlgEtQOrd, PHI::AlgEtQCMType, degree_bounds::Seq
             t_can_Jd:=Cputime();
             pols_deg_d_up_to_iso:={};
             for x0 in pols_deg_d do
-                pol,seq:=CanonicalRepresentativePolarizationGeneral(J,x0);
-                Include(~pols_deg_d_up_to_iso, <pol,seq>); //isomorphic pols will have the same canonical rep
+                pol,den,nums:=CanonicalRepresentativePolarizationGeneral(J,x0);
+                Include(~pols_deg_d_up_to_iso, <pol,den,nums>); //isomorphic pols will have the same canonical rep
             end for;
             t_can +:=Cputime(t_can_Jd);
             assert2 forall{ pol : pol in pols_deg_d_up_to_iso | d eq Index(Jv,pol[1]*J) }; // sanity check
             if #pols_deg_d_up_to_iso gt 0 then
-                Jpols[d]:=[ < pol[1] , pol[2] , DecompositionKernelOfIsogeny(J,Jv,pol[1]) > : pol in pols_deg_d_up_to_iso ];
+                Jpols[d]:=[ < pol[1] , pol[2] , pol[3], DecompositionKernelOfIsogeny(J,Jv,pol[1]) > : pol in pols_deg_d_up_to_iso ];
             end if;
         end for;
         all_pols[J]:=Jpols;
