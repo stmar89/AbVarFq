@@ -8,9 +8,10 @@ else
 end if;
 //SetDebugOnError(true);
 issue_file := Sprintf("%onpoldata/issues", fld);
-av_fq_pol_output := Sprintf("%oavdata/av_fq_pol_output/%o", fld, label);
+av_fq_pol_output := Sprintf("%onpoldata/av_fq_pol_output/%o", fld, label);
 av_fq_pol_columns := ["label", "isog_label", "endomorphism_ring", "isom_label", "degree", "kernel", "degree_rr", "kernel_rr", "degree_rl", "kernel_rl", "degree_lr", "kernel_lr", "degree_ll", "kernel_ll", "aut_group", "geom_aut_group", "is_jacobian", "representative"];
 cmfile := Sprintf("%opAdicPos/output_parallel1/%o_pAdicPos.txt", fld, label);
+AttachSpec(fld * "CHIMP/CHIMP.spec");
 AttachSpec(fld * "AlgEt/spec");
 AttachSpec(fld * "AbVarFq/LMFDB/spec");
 SetClassGroupBounds("GRH");

@@ -16,6 +16,7 @@ av_fq_isog_output := Sprintf("%oavdata/av_fq_isog_output/%o", fld, label);
 av_fq_isog_columns := ["pic_prime_gens"];
 allproduct_output := Sprintf("%oavdata/allproduct_output/%o", fld, label);
 cmfile := Sprintf("%opAdicPos/output_parallel1/%o_pAdicPos.txt", fld, label);
+AttachSpec(fld * "CHIMP/CHIMP.spec");
 AttachSpec(fld * "AlgEt/spec");
 AttachSpec(fld * "AbVarFq/LMFDB/spec");
 SetClassGroupBounds("GRH");
