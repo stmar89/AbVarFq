@@ -48,6 +48,8 @@ end intrinsic;
 
 intrinsic FillKernelInfo(~poldata::Assoc, kerinfo::SeqEnum)
 {Adds the output of DecompositionKernelOfIsogeny to an array for printing}
+    K := DirectSum([A[1] : A in kerinfo]);
+    poldata["kernel"] := Sprintf("{%o}", Join([Sprint(c) : c in AbelianInvariants(K)], ","));
     types := ["rr", "rl", "lr", "ll"];
     for i->typ in types do
         M := kerinfo[i][1];
