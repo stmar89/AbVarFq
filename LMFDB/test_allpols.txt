@@ -103,5 +103,5 @@
         assert Keys(output_new_label) eq Keys(output_naive_label);
         assert forall{ I : I in icm | Keys(output_new_label[I]) eq Keys(output_naive_label[I]) };
         assert forall{ I : I in icm | forall{ d : d in Keys(output_new_label[I]) | #output_new_label[I][d] eq #output_naive_label[I][d] }};
-        printf "All asserts are passed. Congrats!";
+        printf "All asserts are passed. Congrats!\n\n";
     end for;    
