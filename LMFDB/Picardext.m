@@ -1,7 +1,13 @@
 /* vim: set syntax=magma :*/
 
-declare attributes AlgEtQOrd:CanonicalPicGenerators,CanonicalPicBasis,CanonicalPicBases,BasisBar,TraceDualPic, CanonicalPicardGroup;
-// TODO add description of the attributes above.
+// All of these attributes are caches for the intrinsics of the same name
+declare attributes AlgEtQOrd:
+        CanonicalPicGenerators,
+        CanonicalPicBasis,
+        CanonicalPicBases,
+        BasisBar,
+        TraceDualPic,
+        CanonicalPicardGroup;
 
 // TODO add description of the functions below.
 
@@ -74,7 +80,12 @@ end function;
 
 intrinsic CanonicalPicGenerators(S::AlgEtQOrd) -> SeqEnum, SeqEnum, SeqEnum
 {
-//TODO
+Given an order, produces a deterministic sequence of prime ideals that generate Pic(S).  Namely, we iterate through primes (ordered first by norm and then by LMFDB labels of their components within ideals of the same norm), including a prime ideal if it enlarges the subgroup of Pic(S) generated up to now.
+
+The output is three sequences of the same length:
+- the sequence of elements of Pic(S)
+- the sequence of quadruples <i, p, pcnt, m> describing which component i of the algebra the ideal is nonmaximal for, p a rational prime and pcnt the counter for prime ideals of the component above p in the LMFDB ordering, and m the order of this element of the Picard group
+- the sequence of prime ideals of S
 }
     if assigned S`CanonicalPicGenerators then
         return Explode(S`CanonicalPicGenerators);
@@ -129,11 +140,6 @@ intrinsic CanonicalPicGenerators(S::AlgEtQOrd) -> SeqEnum, SeqEnum, SeqEnum
             end for;
         end for;
     end while;
-end intrinsic;
-
-intrinsic CanonicalPicPrimaryBasis(ZFV::AlgEtQ) -> SeqEnum
-{Produces a deterministically chosen primary abelian basis for Pic(ZFV)}
-    return [];
 end intrinsic;
 
 intrinsic CanonicalPicGenerators(S::AlgEtQOrd, construction::SeqEnum) -> SeqEnum
@@ -459,7 +465,6 @@ end intrinsic;
 
 intrinsic PPolIteration(ZFV::AlgEtQOrd) -> List
 {Given the Frobenius order, returns a list of quadruples <we, pic_ctr, I, pol>, where I is an ideal in the weak equivalence class we with picard group counter pic_ctr, and pol is the reduced principal polarization for I.
-//TODO as of now, I is canonical only up to iso. To be fixed.
 }
     A := Algebra(ZFV);
     vprint User1: "Computing CM type..."; t0 := Cputime();

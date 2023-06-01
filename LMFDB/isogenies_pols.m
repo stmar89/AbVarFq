@@ -127,6 +127,7 @@ end intrinsic;
 
 //TODO The code of the next few intrinsic is very complicated (eg many nested for loops). Needs more explaination.
 
+// The following two intrinsics give representative isogenies under the action of Pic(Z[F,V]).  
 intrinsic RepresentativeMinimalIsogenies(ZFV::AlgEtQOrd, N::RngIntElt : degrees:=[])->Assoc
 {Given the ZFV order of a squarefree isogeny class, it returns an associative array, indexed by the canonical representatives J of isomorphism classes, in which each entry contains an associative array with data describing isogenies to J. This data consists of a tuple ... 
 //TODO finish descr
@@ -295,7 +296,6 @@ intrinsic NonprincipalPolarizations(ZFV::AlgEtQOrd, PHI::AlgEtQCMType, degree_bo
                 end if;
             end for;
             t_can_Jd:=Cputime();
-            // TODO: Below here still needs adaptation
             pols_deg_d_up_to_iso:={};
             for x0 in pols_deg_d do
                 pol,seq:=CanonicalRepresentativePolarizationGeneral(J,x0);
@@ -486,7 +486,7 @@ intrinsic AllPolarizations(ZFV::AlgEtQOrd, PHI::AlgEtQCMType, degree_bounds::Seq
 end intrinsic;
 
 intrinsic CanonicalRepresentativePolarizationGeneral(I::AlgEtQIdl,x0::AlgEtQElt) -> AlgEtQElt,SeqEnum[FldRatElt]
-{Given an ideal I and an element x0 representing a polarization for I, we want to look at the set x0*u*\bar(u) where u runs over the units of (I:I)=S. We compute the image of this set via the Log map. We use ShortestVectors on this lattice, pullback the output in the algebra, computhe the action of the torsion units of S on these elements, represent them with respect to [V^(g-1),...,V,1,F,...,F^g], sort them with respec to the lexigographic order of their coefficients and take the smallest.}
+{Given an ideal I and an element x0 representing a polarization for I, we want to look at the set x0*u*\bar(u) where u runs over the units of (I:I)=S. We compute the image of this set via the Log map. We use ShortestVectors on this lattice, pullback the output in the algebra, computhe the action of the torsion units of S on these elements, represent them with respect to [V^(g-1),...,V,1,F,...,F^g], sort them with respect to the lexigographic order of their coefficients and take the smallest.}
 // this is very similar to the code of CanonicalRepresentativePolarization
     S:=MultiplicatorRing(I);
     test,Sb:=IsConjugateStable(S);
