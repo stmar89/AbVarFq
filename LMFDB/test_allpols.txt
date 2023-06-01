@@ -70,7 +70,7 @@
     for label_degs in labels_degs do 
 
         label,degrees:=Explode(label_degs);
-        printf "testing %o\n,label";
+        printf "testing %o\n",label;
         output_naive_label:=AssociativeArray();
         ZFV:=LoadSchemaWKClasses(Read(fld_wk_schema cat label cat "_schema.txt"));
         A:=Algebra(ZFV);
