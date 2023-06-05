@@ -59,8 +59,6 @@ def create_upload_files(basefolders, exclude_gq=[]):
         _ = F.write(":".join(["text", "text", "text", "text", "smallint", "smallint[]", "text", "text", "boolean", "jsonb"]) + "\n\n")
         _ = F.write("".join(poldata))
 
-def load
-
 def compute_diagramx(basefolder, outfile="av_fq_diagramx.update", parallelopts="-j32 --timeout 60"):
     # Given a folder containing weak equivalence data (in the form read by LoadSchemaWKClasses), uses graphviz to find a layout for the endomorphism rings in each weak equivalence class.
     diagramx = {}
