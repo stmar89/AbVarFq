@@ -1,6 +1,7 @@
 # Attach this to a running copy of Sage
 
-opj = os.path.join
+import os
+opj, ope = os.path.join, os.path.exists
 from collections import Counter, defaultdict
 from sage.all import ZZ
 
@@ -63,9 +64,18 @@ def load
 def compute_diagramx(basefolder, outfile="av_fq_diagramx.update", parallelopts="-j32 --timeout 60"):
     # Given a folder containing weak equivalence data (in the form read by LoadSchemaWKClasses), uses graphviz to find a layout for the endomorphism rings in each weak equivalence class.
     diagramx = {}
-    os.makedirs("/tmp/abvar_diagramx_in")
-    os.makedirs("/tmp/abvar_diagramx_out")
+    todofile = "/tmp/abvar_diagramx.todo"
+    indir = "/tmp/abvar_diagramx_in"
+    outdir = "/tmp/abvar_diagramx_out"
+    os.makedirs(indir, exist_ok=True)
+    os.makedirs(outdir, exist_ok=True)
+    todo = []
     for label in os.listdir(basefolder):
+        if ope(opj(outdir, label)): # diagramx already computed for this isogeny class
+            continue
+        todo.append(label)
+        if ope(opj(indir, label)): # input file already exists for this isogeny class
+            continue
         nodes = []
         edges = []
         ranks = defaultdict(list)
@@ -87,9 +97,10 @@ def compute_diagramx(basefolder, outfile="av_fq_diagramx.update", parallelopts="
                     ranks[sum(e for (p,e) in N.factor())].append(mring)
         if len(nodes) <= 3:
             # early exits, since we don't need to do anything in these cases
-            # We write 
-            for mring in mlabels:
-                diagramx[f"{label}.{mring}.1"] = 5000
+            with open(opj(outdir, label), "w") as F:
+                _ = F.write("graph 1.0\n")
+                for mring in mlabels:
+                    _ = F.write(f'node "{mring}" 0.5\n')
         else:
             nodes = ";\n".join(nodes)
             edges = ";\n".join(edges)
@@ -104,8 +115,35 @@ splines=line;
 {ranks};
 }}
 """
-            infile = opj("/tmp", "abvar_diagramx_in", label)
-            with open(infile, "w") as F:
+            with open(opj(indir, label), "w") as F:
                 _ = F.write(graph)
-    subprocess.run('ls /tmp/abvar_diagramx_in | parallel %s "dot -Tplain -o /tmp/abvar_diagramx_out/{1} /tmp/abvar_diagramx_in/{1}"' % parallelopts, shell=True, check=True)
-    for label in os.listdir("/tmp/abvar_diagramx_out")
+    if todo:
+        with open(todofile, "w") as Ftodo:
+            _ = Ftodo.write("\n".join(todo) + "\n")
+        subprocess.run('parallel %s -a %s "dot -Tplain -o %s/{1} %s/{1}"' % (parallelopts, todofile, outdir, indir), shell=True, check=True)
+    with open(outfile, "w") as Fout:
+        _ = Fout.write("label|diagramx\ntext|smallint\n\n")
+        for label in os.listdir(outdir):
+            with open(opj(outdir, label)) as F:
+                # When there are long output lines, dot uses a backslash at the end of the line to indicate a line continuation.
+                maxx = 0
+                minx = 10000
+                lines = []
+                continuing = False
+                for line in F:
+                    line = line.strip()
+                    if continuing:
+                        lines[-1] += line
+                    else:
+                        lines.append(line)
+                    continuing = line[-1] == "\\"
+                    if continuing:
+                        lines[-1] = lines[-1][:-1]
+                for line in lines:
+                    if line.startswith("graph"):
+                        scale = float(line.split()[2])
+                    elif line.startswith("node"):
+                        pieces = line.split()
+                        mring = pieces[1].replace('"', '')
+                        diagram_x = int(round(10000 * float(pieces[2]) / scale))
+                        _ = Fout.write(f"{label}.{mring}.1|{diagram_x}\n")
