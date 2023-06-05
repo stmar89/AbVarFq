@@ -14,7 +14,8 @@
 
     //TODO
     labels_degs:=[
-    <"2.11.c_ah",[4,25]> // Ex 7.2 from https://arxiv.org/pdf/1805.10223.pdf  
+    <"2.11.c_ah",[4,25]>, // Ex 7.2 from https://arxiv.org/pdf/1805.10223.pdf  
+    <"4.4.ad_h_ai_l",[16,81,625,36,100,225,49]> //Pic(ZFV) has 312
     ]; 
 
     // The following functions are inefficient, but simple and hence presumably very reliable methods to compute
@@ -69,12 +70,19 @@
     for label_degs in labels_degs do 
 
         label,degrees:=Explode(label_degs);
+        printf "testing %o\n",label;
         output_naive_label:=AssociativeArray();
         ZFV:=LoadSchemaWKClasses(Read(fld_wk_schema cat label cat "_schema.txt"));
         A:=Algebra(ZFV);
         icm:=ICM_CanonicalRepresentatives(ZFV);
         basis:=ZFVBasis(A);
         PHI:=LoadpAdicPosCMType(basis,Split(Read(fld_pAdciPosCMType cat label cat "_pAdicPos.txt"),":")[2]);
+
+        t0:=Cputime();
+        output_new_label:=AllPolarizations(ZFV,PHI,degrees);
+        output_new[label]:=output_new_label;
+        t_new:=Cputime(t0);
+        printf "AllPolarizations takes %o secs\n",t_new;
 
         t0:=Cputime();
         for I in icm do
@@ -89,14 +97,11 @@
         end for;
         output_naive[label]:=output_naive_label;
         t_naive:=Cputime(t0);
+        printf "The naive methods takes %o secs\n",t_naive;
 
-        t0:=Cputime();
-        output_new_label:=AllPolarizations(ZFV,PHI,degrees);
-        output_new[label]:=output_new_label;
-        t_new:=Cputime(t0);
-
-        t_naive,t_new;
+        
         assert Keys(output_new_label) eq Keys(output_naive_label);
         assert forall{ I : I in icm | Keys(output_new_label[I]) eq Keys(output_naive_label[I]) };
         assert forall{ I : I in icm | forall{ d : d in Keys(output_new_label[I]) | #output_new_label[I][d] eq #output_naive_label[I][d] }};
+        printf "All asserts are passed. Congrats!\n\n";
     end for;    
