@@ -451,6 +451,7 @@ intrinsic AllPolarizations(ZFV::AlgEtQOrd, PHI::AlgEtQCMType, degree_bounds::Seq
         S:=MultiplicatorRing(J);
         JJ,JJ_to_Jv,Jv:=Explode(can_reps_of_duals[J]);
         for d ->isog_J_JJ_d in all_isog[myHash(J)][myHash(JJ)] do
+            if not IsSquare(d) then continue; end if; // the degree of a polarization has to be a square
             pols_deg_d:=[];
             for f in isog_J_JJ_d do
                 isog:=f[1]*JJ_to_Jv;
