@@ -81,7 +81,7 @@ def compute_diagramx(basefolder, outfile="av_fq_diagramx.update", parallelopts="
         with open(opj(basefolder, label)) as F:
             for line in F:
                 pieces = line.strip().split(":")
-                invertible, mring, min_over = pieces[7], pieces[3], pieces[10]
+                invertible, mring, min_over, pic_size = pieces[7], pieces[3], pieces[10], pieces[2]
                 if invertible == "t":
                     mlabels.append(mring)
                     if len(min_over) == 2: # [] or {}
@@ -89,6 +89,13 @@ def compute_diagramx(basefolder, outfile="av_fq_diagramx.update", parallelopts="
                     else:
                         min_over = '","'.join(min_over[1:-1].split(","))
                     N = ZZ(mring.split(".")[0])
+                    # We get an approximation to the latex used (we don't omit .1 when there's only one mring of a given index; it won't matter since in that case horizontal space isn't a big deal; and we omit the number of weak equivalence classes with a given mring)
+                    if N == 1:
+                        factored_index = "1"
+                    else:
+                        factored_index = r"\cdot".join((f"{p}^{{{e}}}" if e > 1 else f"{p}") for (p, e) in N.factor())
+                    istr = f"_{{{i}}}"
+                    tex = "[%s]%s%s" % (factored_index, pic_size, istr)
                     nodes.append(f'"{mring}" [label="{tex}"],shape=plaintext]')
                     if min_over:
                         edges.append(f'"{mring}" -> {{"{min_over}"}} [dir=none]')
