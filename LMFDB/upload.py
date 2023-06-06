@@ -146,7 +146,9 @@ splines=line;
                     if continuing:
                         lines[-1] = lines[-1][:-1]
                 for line in lines:
-                    if line.startswith("graph"):
+                    if line == "graph 1.0":
+                        scale = 1.0
+                    elif line.startswith("graph"):
                         scale = float(line.split()[2])
                     elif line.startswith("node"):
                         pieces = line.split()
