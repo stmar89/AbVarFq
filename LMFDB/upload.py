@@ -4,6 +4,7 @@ import os
 opj, ope = os.path.join, os.path.exists
 from collections import Counter, defaultdict
 from sage.all import ZZ
+import subprocess
 
 
 def create_upload_files(basefolders, exclude_gq=[]):
