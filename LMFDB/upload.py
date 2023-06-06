@@ -97,7 +97,7 @@ def compute_diagramx(basefolder, outfile="av_fq_diagramx.update", parallelopts="
                         factored_index = r"\cdot".join((f"{p}^{{{e}}}" if e > 1 else f"{p}") for (p, e) in N.factor())
                     istr = f"_{{{i}}}"
                     tex = "[%s]%s%s" % (factored_index, pic_size, istr)
-                    nodes.append(f'"{mring}" [label="{tex}"],shape=plaintext]')
+                    nodes.append(f'"{mring}" [label="{tex}",shape=plaintext]')
                     if min_over:
                         edges.append(f'"{mring}" -> {{"{min_over}"}} [dir=none]')
                     ranks[sum(e for (p,e) in N.factor())].append(mring)
