@@ -12,6 +12,8 @@ def create_upload_files(ppolfolder, npolfolder, exclude_gq=[]):
     poldata = []
     wedata = []
     polcnts = Counter()
+    poldegs = defaultdict(set)
+    by_isodeg = defaultdict(lambda: defaultdict(list))
     for base in [ppolfolder, npolfolder]:
         for label in os.listdir(opj(base, "av_fq_pol_output")):
             if exclude_gq:
@@ -20,28 +22,41 @@ def create_upload_files(ppolfolder, npolfolder, exclude_gq=[]):
                     continue
             with open(opj(base, "av_fq_pol_output", label)) as F:
                 for line in F:
+                    pieces = line.split(":")
                     if base == ppolfolder:
                         polcnts[label] += 1
                         # Need to insert rr, rl, lr, ll degrees and kernels
-                        pieces = line.split(":")
                         pieces[6:6] = ["1:{}:1:{}:1:{}:1:{}"]
-                        line = ":".join(pieces)
+                    else:
+                        # In the nonprincipal case, we included the endomorphism ring label in the isom_label, while in the principal case we didn't.  We trim it out here
+                        assert pieces[3].count(".") == 3
+                        pieces[3] = ".".join(pieces[3].split(".")[2:])
                     # Some representatives surpass the limit of 131072 digits for a numeric type.  So we make them strings instead, since we're using jsonb.
-                    if len(line) > 131072:
-                        pieces = line.split(":")
-                        rep = pieces[-1]
-                        den, num = rep[1:-2].split(",[")
+                    rep = pieces[-1]
+                    den, num = rep[1:-2].split(",[")
+                    num = num.split(",")
+                    key = tuple(ZZ(n)/ZZ(den) for n in num)
+                    if len(rep) > 131072:
                         if len(den) > 131072 or any(len(n) > 131072 for n in num):
                             num = ",".join(f'"{n}"' for n in num)
                             pieces[-1] = f'["{den}",[{num}]]\n'
-                            line = ":".join(pieces)
-                    poldata.append(line)
+                    by_isodeg[pieces[0]][int(pieces[4])].append((key, pieces))
+    # Now that we have polarized abvars sorted by their unpolarized isomorphism class and degree,
+    # we throw out those that aren't minimal for degree (under the divisibility order),
+    # sort and add pol_ctr to the data line, and add degree and pol_ctr to the label
+    for ulabel, by_deg in by_isodeg.items():
+        keep = [d for d in by_deg if len([e for e in by_deg if d % e == 0]) == 1]
+        for d in keep:
+            for i, (key, pieces) in enumerate(sorted(by_deg[d])):
+                pieces[0] += f".{d}.{i+1}"
+                pieces[4:4] = [str(i+1)]
+                poldata.append(":".join(pieces))
     for label in os.listdir(opj(ppolfolder, "av_fq_we_output")):
         if exclude_gq:
             g, q, isocls = label.split(".")
             if (g,q) in exclude_gq:
                 continue
-        with open(opj(base, "av_fq_we_output", label)) as F:
+        with open(opj(ppolfolder, "av_fq_we_output", label)) as F:
             for line in F:
                 # The isogeny label was left off of the label; fortunately it came first
                 wedata.append(f"{label}.line")
@@ -50,7 +65,7 @@ def create_upload_files(ppolfolder, npolfolder, exclude_gq=[]):
             g, q, isocls = label.split(".")
             if (g,q) in exclude_gq:
                 continue
-        with open(opj(base, "av_fq_isog_output", label)) as F:
+        with open(opj(ppolfolder, "av_fq_isog_output", label)) as F:
             pic_prime_gens = F.read().strip()
             isodata.append(f"{label}:{polcnts[label]}:{pic_prime_gens}\n")
     with open("av_fq_isog.update", "w") as F:
@@ -62,8 +77,8 @@ def create_upload_files(ppolfolder, npolfolder, exclude_gq=[]):
         _ = F.write(":".join(["text", "integer[]", "integer[]", "boolean", "jsonb", "boolean", "jsonb", "boolean", "boolean"]) + "\n\n")
         _ = F.write("".join(wedata))
     with open("av_fq_pol.update", "w") as F:
-        _ = F.write(":".join(["label", "isog_label", "endomorphism_ring", "isom_label", "degree", "kernel", "degree_rr", "kernel_rr", "degree_rl", "kernel_rl", "degree_lr", "kernel_lr", "degree_ll", "kernel_ll", "aut_group", "geom_aut_group", "is_jacobian", "representative"]) + "\n")
-        _ = F.write(":".join(["text", "text", "text", "text", "smallint", "smallint[]", "text", "text", "boolean", "jsonb"]) + "\n\n")
+        _ = F.write(":".join(["label", "isog_label", "endomorphism_ring", "isom_label", "pol_ctr", "degree", "kernel", "degree_rr", "kernel_rr", "degree_rl", "kernel_rl", "degree_lr", "kernel_lr", "degree_ll", "kernel_ll", "aut_group", "geom_aut_group", "is_jacobian", "representative"]) + "\n")
+        _ = F.write(":".join(["text", "text", "text", "text", "integer", "smallint", "smallint[]", "smallint", "smallint[]", "smallint", "smallint[]", "smallint", "smallint[]", "smallint", "smallint[]", "text", "text", "boolean", "jsonb"]) + "\n\n")
         _ = F.write("".join(poldata))
 
 def compute_diagramx(basefolder, outfile="av_fq_diagramx.update", parallelopts="-j32 --timeout 60"):
