@@ -7,12 +7,12 @@ from sage.all import ZZ
 import subprocess
 
 
-def create_upload_files(basefolders, exclude_gq=[]):
+def create_upload_files(ppolfolder, npolfolder, exclude_gq=[]):
     isodata = []
     poldata = []
     wedata = []
     polcnts = Counter()
-    for base in basefolders:
+    for base in [ppolfolder, npolfolder]:
         for label in os.listdir(opj(base, "av_fq_pol_output")):
             if exclude_gq:
                 g, q, isocls = label.split(".")
@@ -20,7 +20,12 @@ def create_upload_files(basefolders, exclude_gq=[]):
                     continue
             with open(opj(base, "av_fq_pol_output", label)) as F:
                 for line in F:
-                    polcnts[label] += 1
+                    if base == ppolfolder:
+                        polcnts[label] += 1
+                        # Need to insert rr, rl, lr, ll degrees and kernels
+                        pieces = line.split(":")
+                        pieces[6:6] = ["1:{}:1:{}:1:{}:1:{}"]
+                        line = ":".join(pieces)
                     # Some representatives surpass the limit of 131072 digits for a numeric type.  So we make them strings instead, since we're using jsonb.
                     if len(line) > 131072:
                         pieces = line.split(":")
@@ -31,22 +36,23 @@ def create_upload_files(basefolders, exclude_gq=[]):
                             pieces[-1] = f'["{den}",[{num}]]\n'
                             line = ":".join(pieces)
                     poldata.append(line)
-        for label in os.listdir(opj(base, "av_fq_we_output")):
-            if exclude_gq:
-                g, q, isocls = label.split(".")
-                if (g,q) in exclude_gq:
-                    continue
-            with open(opj(base, "av_fq_we_output", label)) as F:
-                for line in F:
-                    wedata.append(line)
-        for label in os.listdir(opj(base, "av_fq_isog_output")):
-            if exclude_gq:
-                g, q, isocls = label.split(".")
-                if (g,q) in exclude_gq:
-                    continue
-            with open(opj(base, "av_fq_isog_output", label)) as F:
-                pic_prime_gens = F.read().strip()
-                isodata.append(f"{label}:{polcnts[label]}:{pic_prime_gens}\n")
+    for label in os.listdir(opj(ppolfolder, "av_fq_we_output")):
+        if exclude_gq:
+            g, q, isocls = label.split(".")
+            if (g,q) in exclude_gq:
+                continue
+        with open(opj(base, "av_fq_we_output", label)) as F:
+            for line in F:
+                # The isogeny label was left off of the label; fortunately it came first
+                wedata.append(f"{label}.line")
+    for label in os.listdir(opj(ppolfolder, "av_fq_isog_output")):
+        if exclude_gq:
+            g, q, isocls = label.split(".")
+            if (g,q) in exclude_gq:
+                continue
+        with open(opj(base, "av_fq_isog_output", label)) as F:
+            pic_prime_gens = F.read().strip()
+            isodata.append(f"{label}:{polcnts[label]}:{pic_prime_gens}\n")
     with open("av_fq_isog.update", "w") as F:
         _ = F.write(":".join(["label", "principal_polarization_count", "pic_prime_gens"]) + "\n")
         _ = F.write(":".join(["text", "integer", "integer[]"]) + "\n\n")
@@ -56,7 +62,7 @@ def create_upload_files(basefolders, exclude_gq=[]):
         _ = F.write(":".join(["text", "integer[]", "integer[]", "boolean", "jsonb", "boolean", "jsonb", "boolean", "boolean"]) + "\n\n")
         _ = F.write("".join(wedata))
     with open("av_fq_pol.update", "w") as F:
-        _ = F.write(":".join(["label", "isog_label", "endomorphism_ring", "isom_label", "degree", "kernel", "aut_group", "geom_aut_group", "is_jacobian", "representative"]) + "\n")
+        _ = F.write(":".join(["label", "isog_label", "endomorphism_ring", "isom_label", "degree", "kernel", "degree_rr", "kernel_rr", "degree_rl", "kernel_rl", "degree_lr", "kernel_lr", "degree_ll", "kernel_ll", "aut_group", "geom_aut_group", "is_jacobian", "representative"]) + "\n")
         _ = F.write(":".join(["text", "text", "text", "text", "smallint", "smallint[]", "text", "text", "boolean", "jsonb"]) + "\n\n")
         _ = F.write("".join(poldata))
 
