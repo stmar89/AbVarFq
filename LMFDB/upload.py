@@ -22,7 +22,7 @@ def create_upload_files(ppolfolder, npolfolder, exclude_gq=[]):
                     continue
             with open(opj(base, "av_fq_pol_output", label)) as F:
                 for line in F:
-                    pieces = line.split(":")
+                    pieces = line.strip().split(":")
                     if base == ppolfolder:
                         polcnts[label] += 1
                         # Need to insert rr, rl, lr, ll degrees and kernels
@@ -50,7 +50,7 @@ def create_upload_files(ppolfolder, npolfolder, exclude_gq=[]):
             for i, (key, pieces) in enumerate(sorted(by_deg[d])):
                 pieces[0] += f".{d}.{i+1}"
                 pieces[4:4] = [str(i+1)]
-                poldata.append(":".join(pieces))
+                poldata.append(":".join(pieces) + "\n")
     for label in os.listdir(opj(ppolfolder, "av_fq_we_output")):
         if exclude_gq:
             g, q, isocls = label.split(".")
