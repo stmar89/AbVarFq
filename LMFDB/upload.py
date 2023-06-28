@@ -8,7 +8,7 @@ from sage.databases.cremona import class_to_int
 import subprocess
 
 def sort_key(label):
-    pieces = re.split("\._", label)
+    pieces = re.split("\.|_", label)
     return [int(c) if c.isdigit() else class_to_int(c) for c in pieces]
 
 def create_upload_files(ppolfolder, npolfolder, exclude_gq=[]):
