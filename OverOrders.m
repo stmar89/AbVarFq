@@ -4,8 +4,8 @@ freeze;
 
 /////////////////////////////////////////////////////
 // OverOrders for Etale Q algebras
-// Stefano Marseglia, Utrecht University, s.marseglia@uu.nl
-// http://www.staff.science.uu.nl/~marse004/
+// Stefano Marseglia, Utrecht University, stefano.marseglia89@gmail.com
+// https://stmar89.github.io/index.html
 // and Edgar Costa, MIT
 /////////////////////////////////////////////////////
 declare attributes AlgAssVOrd : MinimalOverOrders;

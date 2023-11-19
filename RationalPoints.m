@@ -4,8 +4,8 @@ freeze;
 
 /////////////////////////////////////////////////////
 //// Group of rational points
-//// Stefano Marseglia, Utrecht University, s.marseglia@uu.nl
-//// http://www.staff.science.uu.nl/~marse004/
+//// Stefano Marseglia, Utrecht University, stefano.marseglia89@gmail.com
+//// https://stmar89.github.io/index.html
 ///////////////////////////////////////////////////////
 
 intrinsic RationalPoints(A::AbelianVarietyFq,r::RngIntElt)-> GrpAb 

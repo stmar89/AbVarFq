@@ -4,8 +4,8 @@ freeze;
 
 /////////////////////////////////////////////////////
 // Picard Group of orders in etale algebras over \Q
-// Stefano Marseglia, Utrecht University, s.marseglia@uu.nl
-// http://www.staff.science.uu.nl/~marse004/
+// Stefano Marseglia, Utrecht University, stefano.marseglia89@gmail.com
+// https://stmar89.github.io/index.html
 /////////////////////////////////////////////////////
 
 declare attributes AlgAssVOrd:PicardGroup;

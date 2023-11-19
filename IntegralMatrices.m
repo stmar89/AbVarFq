@@ -4,8 +4,8 @@ freeze;
 
 ////////////////////////////////////////////////////////////////////////////////////
 // Z-conjugacy test for integral matrices with square-free characteristic polynomial
-// Stefano Marseglia, Utrecht University, s.marseglia@uu.nl
-// http://www.staff.science.uu.nl/~marse004/
+// Stefano Marseglia, Utrecht University, stefano.marseglia89@gmail.com
+// https://stmar89.github.io/index.html
 ///////////////////////////////////////////////////////////////////////////////////
 
 intrinsic IdealToMatrix( I::AlgAssVOrdIdl )->AlgMatElt

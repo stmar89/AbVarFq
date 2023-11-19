@@ -4,8 +4,8 @@ freeze;
 
 /////////////////////////////////////////////////////
 // Base Field Extension of IsogenyClassesFq and AbelianVarietiesFq
-// Stefano Marseglia, Utrecht University, s.marseglia@uu.nl
-// http://www.staff.science.uu.nl/~marse004/
+// Stefano Marseglia, Utrecht University, stefano.marseglia89@gmail.com
+// https://stmar89.github.io/index.html
 /////////////////////////////////////////////////////
 
 declare verbose BaseFieldExtension, 1;
