@@ -537,7 +537,7 @@ intrinsic CanonicalRepresentativePolarizationGeneral(I::AlgEtQIdl,x0::AlgEtQElt)
     // A priori, I believe that I should act on candidates with the torsion units of the totally real totally positive units in S
     // But there is only 1 (which also the torsion subgroup of sub = < u*\bar u>
 
-    // Now, I sort the candidats with respect to lexicographic order of the coefficients wrt to [V^(g-1),...,V,1,F,...,F^g],
+    // Now, I sort the candidates with respect to lexicographic order of the coefficients wrt to [V^(g-1),...,V,1,F,...,F^g],
     // and take the smallest.
     sort_keys_candidates:=[ AbsoluteCoordinates([c],basis)[1] : c in candidates ];
     ParallelSort(~sort_keys_candidates,~candidates);
