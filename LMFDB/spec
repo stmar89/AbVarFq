@@ -1,0 +1,14 @@
+{
+IsProduct.m
+MonGenOrd.m
+Picardext.m
+example_period_matrix.txt
+isogenies_pols.m
+ker_isog.m
+labelling_wk_classes.m
+lmfdb.m
+padictocc.m
+LoadpAdicPosCMType.m
+polarizations.m
+genus2matching.m
+}

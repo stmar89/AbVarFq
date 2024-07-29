@@ -1,0 +1,37 @@
+/* vim: set syntax=magma :*/
+
+    load "~/999_LMFDB_isogeny_label_functions.txt";
+    // We load the frequencies computed in 2018
+    lines:=Split(Read("~/packages_github/AbVarFq/LMFDB/ord_data_19nov_2018_pretty.txt"));
+    _<x>:=PolynomialRing(Integers());
+    data_old:=AssociativeArray();
+    for line in lines do
+        l:=Split(line,":");
+        data_old[ IsogenyLabel(eval(l[1])) ] := {* c : c in eval(l[2]) *};
+    end for;
+
+    // the next path is to an old version of the computation.
+    // rerun it with the new data when available.
+    fld_data_pol:="/home/roed/avdata/av_fq_pol_output/"; 
+    labels:=Split(Pipe("ls " cat fld_data_pol,""));
+    pass:=0;
+    fail:=0;
+    dont_have_old_data:=0;
+    tot:=#labels; perc:=0; perc_old:=0;
+    for ilabel->label in labels do
+            perc:=Truncate(ilabel*100/tot); if perc gt perc_old then perc_old:=perc; 
+            printf "checked %o%%: pass=%o fail=%o dont_have_old_data=%o\n",perc,pass,fail,dont_have_old_data; end if;
+        t,data_old_label:=IsDefined(data_old,label);
+        if t then
+            test:={* StringToInteger(Split(Split(pol,":")[7],".")[1]) : pol in Split(Read(fld_data_pol cat label)) *} eq 
+                data_old_label;
+            if test then
+                pass +:=1;
+            else
+                fail +:=1;
+            end if;
+        else
+            dont_have_old_data +:=1;
+        end if;
+    end for;
+    // 0 failed.. Yay!
