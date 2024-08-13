@@ -1,3 +1,4 @@
+old_AlgAss
 {
 AbelianVarieties.m
 HomAbelianVarieties.m
