@@ -113,6 +113,7 @@ intrinsic IsPrincPolarized(A::AbelianVarietyFq, phi::AlgAssCMType)->BoolElt, Seq
 	end if;
 end intrinsic;
 
+// TODO bad name here
 intrinsic IsPolarized(A::AbelianVarietyFq, PHI::AlgAssCMType , N::RngIntElt)->BoolElt, SeqEnum[HomAbelianVarietyFq]
 {returns if the abelian variety has a polarization of degree N and if so it returns also all the non isomorphic polarizations}
     
@@ -193,115 +194,9 @@ intrinsic PolarizedAutomorphismGroup(mu::HomAbelianVarietyFq) -> GrpAb
 	return TorsionSubgroup(UnitGroup2(S));
 end intrinsic;
 
-/////////////////////////////////////////////////////
-// OLD functions. Kept for retro-compatibility
-/////////////////////////////////////////////////////
-
-intrinsic IsogeniesMany(IS::SeqEnum[AlgAssVOrdIdl], J::AlgAssVOrdIdl, N::RngIntElt) -> BoolElt, List
-{Given a sequence of source abelian varieties IS, a target abelian varity J and a positive integet N, it returns for each I in IS if there exist an isogeny I->J of degree N. 
- For each I in IS, if there exists and isogeny I->J, it is also returned a list of pairs [*x,K*] where K=xI subset J (up to isomorphism).}
-//by Edgar Costa, modified by Stefano
-	vprintf IsogeniesPolarizations : "IsogeniesMany\n";
-	isogenies_of_degree_N := [* [* *] : i in [1..#IS] *];
-	for K in IdealsOfIndex(J, N) do
-		for i := 1 to #IS do
-			test, x := IsIsomorphic2(K, IS[i]); //x*IS[i]=K
-			if test then
-				Append(~isogenies_of_degree_N[i], [*x, K*]);
-			end if;
-		end for;
-	end for;
-	return isogenies_of_degree_N;
-end intrinsic;
-
-intrinsic Isogenies(I::AlgAssVOrdIdl, J::AlgAssVOrdIdl, N::RngIntElt)->BoolElt, List
-{Given a source abelian variety I, a target abelian varity J and a positive integet N, it returns if there exist an isogeny I->J of degree N.
- If so it is also returned a list of pairs [*x,K*] where K=xI subset J (up to isomorphism).}
-//by Edgar Costa, modified by Stefano
-	isogenies_of_degree_N := IsogeniesMany([I], J, N);
-	return #isogenies_of_degree_N[1] ge 1, isogenies_of_degree_N[1];
-end intrinsic;
-
-intrinsic IsPrincPolarized(I::AlgAssVOrdIdl , phi::SeqEnum[Map])->BoolElt, SeqEnum[AlgAssElt]
-{returns if the abelian variety is principally polarized and if so returns also all the non isomorphic polarizations}
-	S:=MultiplicatorRing(I);
-	if S eq ComplexConjugate(S) then
-		return IsPolarized(I, phi , 1);
-	else
-		return false,[];
-	end if;
-end intrinsic;
-
-intrinsic IsPolarized(I0::AlgAssVOrdIdl, phi::SeqEnum[Map], N::RngIntElt)->BoolElt, SeqEnum[AlgAssElt]
-{returns if the abelian variety has a polarization of degree N and if so it returns also all the non isomorphic polarizations}
-	S := MultiplicatorRing(I0);
-	I := ideal<S|ZBasis(I0)>;
-	A := Algebra(S);
-	prec:=Precision(Codomain(phi[1]));
-	RR := RealField(prec); //precision added
-	Itbar := ComplexConjugate(TraceDualIdeal(I));
-
-	boolean, isogenies_of_degree_N := Isogenies(I, Itbar, N);
-	if not boolean then
-		return false, [];
-	end if;
-
-    zbS:=ZBasis(S);
-    T:=Order(zbS cat [ ComplexConjugate(z) : z in zbS ]);
-    UT,uT:=UnitGroup2(T); //uT:UT->T
-    US, uS := UnitGroup2(S); //uS:US->S
-    gensUinS:=[ uS(US.i) : i in [1..Ngens(US)]];
-    USUSb:=sub< UT | [ (g*ComplexConjugate(g))@@uT : g in gensUinS ]>;
-    USinUT:=sub<UT | [ g@@uT : g in gensUinS ]>;
-    Q,q:=quo< USinUT | USinUT meet USUSb >; // q:=USinUT->Q
-                                            // Q = S*/<v bar(v) : v in S*> meet S*
-    QinT:=[ uT(UT!(b@@q)) : b in Q];
-	pols_deg_N_allKs :=[]; // it will contain pols for each K up to iso. 
-                           // note that given a and a' with aI=K and a'I=K', a and a' might be isomorphic.
-                           // we get rid of these 'doubles' later
-
-	for elt in isogenies_of_degree_N do
-		// x*I = J
-		x := elt[1];
-		J := elt[2];
-		assert J subset Itbar;
-		for uu in QinT do
-			pol := (x*(A ! uu));
-			//pol is a polarization if totally imaginary and \Phi-positive
-			C := [g(pol): g in phi];
-			if (ComplexConjugate(pol) eq (-pol)) and (forall{c : c in C | Im(c) gt (RR ! 0)}) then
-				Append(~pols_deg_N_allKs, pol);
-			end if;
-		end for;
-	end for;
-    
-    // now we remove the isomorphic polarizations with different 'kernels'
-    polarizations_of_degree_N:=[];
-    for a in pols_deg_N_allKs do
-        if not exists{ a1 : a1 in polarizations_of_degree_N | 
-                            (a/a1) in T and (a1/a) in T and // a/a1 is a unit in T=S bar(S) 
-                            ((a/a1)@@uT) in USUSb } then
-            Append(~polarizations_of_degree_N, a);
-        end if;
-    end for;
-
-	if #polarizations_of_degree_N ge 1 then
-		return true, polarizations_of_degree_N;
-	else
-		return false,[];
-	end if;
-end intrinsic;
-
-intrinsic AutomorphismsPol(I::AlgAssVOrdIdl) -> GpAb
-{returns the automorphisms of a polarized abelian variety}
-    // add a map 
-	//require IsFiniteEtale(Algebra(I)): "the algebra of definition must be finite and etale over Q";
-	return TorsionSubgroup(UnitGroup2(MultiplicatorRing(I)));
-end intrinsic;
-
-
 /* TEST
-    
+
+//TODO move this tests somewher else ?
     AttachSpec("~/packages_github/AbVarFq/packages.spec");
     
     //////////////////////////////////

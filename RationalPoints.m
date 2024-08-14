@@ -10,6 +10,7 @@ freeze;
 
 intrinsic RationalPoints(A::AbelianVarietyFq,r::RngIntElt)-> GrpAb 
 { Given an abelian variety over Fq, it returns the group of rational points defined over Fq^r }
+//TODO Only for IsOrdinary and IsCentelegheStix
     F:=MapOnUniverseAlgebras(FrobeniusEndomorphism(A));
     zb:=DeligneModuleZBasis(A);
 	Fr:=FreeAbelianGroup(#zb);
@@ -24,24 +25,6 @@ end intrinsic;
 intrinsic RationalPoints(A::AbelianVarietyFq)-> GrpAb 
 { Given an abelian variety over Fq, it returns the group of rational points defined over Fq }
 	return RationalPoints(A,1);
-end intrinsic;
-
-// Old code kept for retrocompatibility
-
-intrinsic RationalPoints(I::AlgAssVOrdIdl,r::RngIntElt)-> GrpAb , Map
-{Computes the group FF_(q^r) rational points G of the abelian variety determined by I and returns G,g, where g is a surjective map I->G}
-	A:=Algebra(Order(I));
-	F:=PrimitiveElement(A);
-	zb:=ZBasis(I);
-	Fr:=FreeAbelianGroup(#zb);
-	rel:=[ Fr!Eltseq(c) : c in Coordinates( [(1-F^r)*g : g in zb],zb ) ];
-	Q,q:=quo<Fr|rel>;
-	mIQ:=map< A->Q | x:->q(Fr ! Eltseq(Coordinates([x],zb)[1])),
-			   y:->A ! ((&+[ zb[j]*Eltseq(y)[j] : j in [1..#zb]])@@q)>;
-    if r eq 1 then // sanity check for points over field of definition
-        assert #Q eq Evaluate(DefiningPolynomial(A),1);
-    end if;
-	return Q,mIQ;
 end intrinsic;
 
 /* TESTs

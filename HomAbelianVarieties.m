@@ -85,6 +85,7 @@ intrinsic Hom(A::AbelianVarietyFq,B::AbelianVarietyFq,map::Map : Check:=true)->H
 { creates a morphisms of abelian varieties A->B determined by map, where map is a morphisms of the universe algebras of A and B 
   The vararg Check allows to skip the test of the compatibility with the Frobenius
 }
+//TODO this works only for DeligneModules
     if Check then
         FA:=MapOnUniverseAlgebras(FrobeniusEndomorphism(A));
         FB:=MapOnUniverseAlgebras(FrobeniusEndomorphism(B));

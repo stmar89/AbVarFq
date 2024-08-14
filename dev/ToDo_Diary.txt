@@ -1,8 +1,11 @@
 2024072:
 - made new old_AlgAss folder containing all old code, which can be accessed using old_AlgAss.spec
+- moved some stuff from AbelienVarieties.m to IsogenyClasses.m
 
 
 TODO
+- in AbelianVarieteis, DeligneModule should be of type AlgEtQMod, and used only if IsOrdinary or IsCenteleghe-Stix. remove the unused attributes.
+
 - Add Copyright everywhere
 - make a copy of examples (AlgAss)
 - update examples (remind to install the new packages)
