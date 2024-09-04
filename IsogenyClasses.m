@@ -45,7 +45,9 @@ declare attributes IsogenyClassFq :
                             // A sequence of of representatives of the isomorphism classes
            IsSquarefree,    // If the Weil polynomial is squarefree. By a Theorem of Tate this is equivalent to 
                             // to have commutative End^0. In this case, we have End^0 = Algebra(ZFV) = Q[F].
+           IsPurePower,     // If UniverseAlgebra = Q[F]^s for some s. 
            IsPowerOfBass,   // If UniverseAlgebra = Q[F]^s for some s, and ZFV is Bass. 
+           IsCentelegheStix,// If the isogeny class is over Fp and the char poly has no real roots
            pRank;           // The p-rank
 //         Functor, //a string describing which functor is used to describe the category "Deligne", "Centeleghe-Stix", "Oswal-Shankar"
 
@@ -177,14 +179,21 @@ intrinsic IsSquarefree(I::IsogenyClassFq)-> BoolElt
     return I`IsSquarefree;
 end intrinsic;
 
+intrinsic IsPurePower(I::IsogenyClassFq)-> BoolElt
+{Given an isogeny class AV(h) returns whether h is a pure power.}
+    if not assigned I`IsPurePower then
+        h:=WeilPolynomial(I);
+        g:=DefiningPolynomial(Algebra(ZFV));
+        I`IsPurePower:=h eq g^(Degree(h) div Degree(g));
+    end if;
+    return I`IsPurePower;
+end intrinsic;
+
 intrinsic IsPowerOfBass(I::IsogenyClassFq)-> BoolElt
 {Given an isogeny class AV(h) returns whether h is a pure power and ZFV is a Bass Order.}
     if not assigned I`IsPowerOfBass then
-        h:=WeilPolynomial(I);
         ZFV:=ZFVOrder(I);
-        g:=DefiningPolynomial(Algebra(ZFV));
-        I`IsPowerOfBass:=( (Degree(h) mod Degree(g)) eq 0 ) and IsBass(ZFV);
-        assert I`IsPowerOfBass select h eq g^(Degree(h) div Degree(g)) else true;
+        I`IsPowerOfBass:=IsPurePower(I) and IsBass(ZFV);
     end if;
     return I`IsPowerOfBass;
 end intrinsic;
@@ -268,14 +277,17 @@ end intrinsic;
 
 intrinsic IsCentelegheStix(I::IsogenyClassFq : Precision:=30 )->BoolElt 
 {Returns whether the isogeny class is Centeleghe-Stix, that is, defined over Fp and the Weil poly has no real roots.}
-    q:=FiniteField(I);
-    if IsPrime(q) then
-        h:=WeilPolynomial(I);
-        rr:=Roots(h,ComplexField(Precision));
-        return forall{ r : r in rr | not Abs(Im(r[1])) lt 10^-(Precision div 2) }; // no real roots
-    else 
-        return false;
+    if not assigned I`IsCentelegheStix then
+        q:=FiniteField(I);
+        if IsPrime(q) then
+            h:=WeilPolynomial(I);
+            rr:=Roots(h,ComplexField(Precision));
+            I`IsCentelegheStix:=forall{r : r in rr |not Abs(Im(r[1])) lt 10^-(Precision div 2) }; // no real roots
+        else 
+            I`IsCentelegheStix:=false;
+        end if;
     end if;
+    return I`IsCentelegheStix;
 end intrinsic;
 
 intrinsic IsCentelegheStix(I::AbelianVarietyFq : Precision:=30 )->BoolElt
@@ -283,3 +295,12 @@ intrinsic IsCentelegheStix(I::AbelianVarietyFq : Precision:=30 )->BoolElt
     return IsCentelegheStix(IsogenyClass(I));
 end intrinsic;
 
+intrinsic IsPowerOfBass(I::IsogenyClassFq)->BoolElt 
+{Returns whether the V=UniverseAlgebra(I) is of the form K^s, where K=Algebra(ZFVOrder(I)), and ZFVOrder(I) is Bass.}
+    if not assigned I`IsPowerOfBass then
+        R,map:=ZFVOrder(I);
+        I`IsPowerOfBass:=IsBass(R) and is_pure_power_internal(map); 
+        //is_pure_power_internal is from AlgEt/AlgEtQMod/PowerBass.m
+    end if;
+    return I`IsPowerOfBass;
+end intrinsic;
