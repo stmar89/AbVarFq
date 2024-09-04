@@ -82,23 +82,28 @@ end intrinsic;
 /////////////////////////////////////////////////////
 
 intrinsic Hom(A::AbelianVarietyFq,B::AbelianVarietyFq,map::Map : Check:=true)->HomAbelianVarietyFq
-{ creates a morphisms of abelian varieties A->B determined by map, where map is a morphisms of the universe algebras of A and B 
-  The vararg Check allows to skip the test of the compatibility with the Frobenius
-}
-//TODO this works only for DeligneModules
-    if Check then
-        FA:=MapOnUniverseAlgebras(FrobeniusEndomorphism(A));
-        FB:=MapOnUniverseAlgebras(FrobeniusEndomorphism(B));
-        UA:=UniverseAlgebra(A);
-        require UA eq Domain(map) and UniverseAlgebra(B) eq Codomain(map) and 
-                forall{ i : i in [1..Dimension(UA)] | map(FA(UA.i)) eq FB(map(UA.i)) } //the map must be Frobanius-linear
-                          : "the map does not define a morphism of abelian varieties";
-    end if;
-    hom:=New(HomAbelianVarietyFq);
-    hom`Domain:=A;
-    hom`Codomain:=B;
-    hom`MapOnUniverseAlgebras:=map;
-    return hom;
+{Creates a morphisms of abelian varieties A->B determined by map, where map is a morphisms of the universe algebras of A and B. The vararg Check allows to skip the test of the compatibility with the Frobenius.}
+    IA:=IsogenyClass(A);
+    IB:=IsogenyClass(B);
+    if (IsOrdinary(IA) and IsOrdinary(IB)) or (IsCentelgheStix(IA) and IsCentelgheStix(IB)) then
+        if Check then
+            FA:=MapOnUniverseAlgebras(FrobeniusEndomorphism(A));
+            FB:=MapOnUniverseAlgebras(FrobeniusEndomorphism(B));
+            UA:=UniverseAlgebra(A);
+            require UA eq Domain(map) and UniverseAlgebra(B) eq Codomain(map) and 
+                    forall{ i : i in [1..Dimension(UA)] | map(FA(UA.i)) eq FB(map(UA.i)) } //the map must be Frobanius-linear
+                              : "the map does not define a morphism of abelian varieties";
+        end if;
+        hom:=New(HomAbelianVarietyFq);
+        hom`Domain:=A;
+        hom`Codomain:=B;
+        hom`MapOnUniverseAlgebras:=map;
+        return hom;
+     elif IsSquarefree(IA) and IsSquarefree(IB) then
+        error "TODO";
+     else
+        error "not implemented";
+     end if;
 end intrinsic;
 
 /////////////////////////////////////////////////////
@@ -114,6 +119,3 @@ intrinsic FrobeniusEndomorphism(A::AbelianVarietyFq)-> HomAbelianVarietyFq
     return A`FrobeniusEndomorphism;
 end intrinsic;
 
-
-
-// TEST see AbelianVarieties.m

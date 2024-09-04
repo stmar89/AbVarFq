@@ -13,17 +13,23 @@ freeze;
 Example CrvHyp_Find_CM_Curve (H131E48) on the Magma Handbook
 */
 
-intrinsic PeriodMatrix(pol::HomAbelianVarietyFq , PHI::AlgAssCMType ) -> AlgMatElt,AlgMatElt
-{ Given a polarizattion of and abelian variety over a finite field it returns the corresponding big and small period matrices. The precision of the approximation is determined by the precision of the cm-type.}
+intrinsic PeriodMatrix(pol::HomAbelianVarietyFq , PHI::AlgAssCMType : CheckOrdinary:=true ) -> AlgMatElt,AlgMatElt
+{Given a polarizattion of and abelian variety over a finite field it returns the corresponding big and small period matrices. The precision of the approximation is determined by the precision of the cm-type.}
     AV:=Domain(pol);
+    require IsSquarefree(IsogenyClass(AV)) : "implemented only for ordinary squarefree isogeny classes";
+    if CheckOrdinary then
+        require IsOrdinary(AV) : "the input needs to be ordinary.";
+    end if;
     require IsPolarization(pol,PHI) : "the input is not a polarization for the given cm-type";
     A:=UniverseAlgebra(AV);
 	cc:=ComplexConjugate;
-    zb:=DeligneModuleZBasis(AV);
+    zb:=ZBasis(DeligneModule(AV));
 	N:=#zb;
     phi:=Homs(PHI);
 	prec:=Precision(Codomain(phi[1]));
     x0:=MapOnUniverseAlgebras(pol)(1);
+
+    // TODO issues with the next few lines
 	E := Matrix(Integers(),N,N,[Trace(x0*cc(a)*b) : b in zb, a in zb]); // added sign
 	D, C := FrobeniusFormAlternating(E);
 	newb := ElementToSequence(Matrix(A,C)*Matrix(A,N,1,zb));

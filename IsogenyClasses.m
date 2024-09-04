@@ -52,6 +52,64 @@ declare attributes IsogenyClassFq :
 //         Functor, //a string describing which functor is used to describe the category "Deligne", "Centeleghe-Stix", "Oswal-Shankar"
 
 /////////////////////////////////////////////////////
+// Testing if a poly is a Weil/char poly
+/////////////////////////////////////////////////////
+
+intrinsic IsWeil(f::RngUPolElt : Precision:=30) -> BoolElt,RngIntElt,RngIntElt,RngIntElt
+{Returns whether f is a q-WeilPolynomial, q,p and e, where q=p^e is a prime power polynomial. A polynomial is q-Weil if all the roots have complex absolute value q^(1/2). The check is done with precision "Precision" given as optional parameter (default precision is 30)}
+	require forall{c :c in Coefficients(f) | IsIntegral(c)} and IsEven(Degree(f)): "the input must be an integral polynomial of even degree";
+	roots:=Roots(f,ComplexField(Precision));
+	q:=Abs(Integers() ! (Coefficients(f)[1]^(2/Degree(f)))); // the Abs is necessary for poly like (x^2-3), 
+                                                             // which is a Weil poly, but not a Char poly
+    ispp,p,e:=IsPrimePower(q);
+	if not ispp then
+		return false,_,_,_;
+	else
+		if forall{r : r in roots | Abs(r[1]*ComplexConjugate(r[1]) - q) lt 10^(-(Precision/2))} then
+			return true,q,p,e;
+		else 
+			return false,_,_,_;
+		end if;
+	end if;
+end intrinsic;
+
+function is_char_poly_irred(f,p,d : Precision:=100)
+// Given an irreducible q-Weil polynomial f, returns the exponent e, such that there exists a simple abelian variety over \F_q with characteristic polynomial of the Frobenius equal to f^e.
+// This abelian variety exists and it is uniquely determined up to \F_q-isogeny by Honda-Tate theory. For the method used, see [Wat69, paragraph before the last theorem on page 527].}
+	Qp:=pAdicField(p,Precision);
+	Rp<y>:=PolynomialRing(Qp);
+	g:= Rp ! f;
+	gfact:=[h[1] : h in Factorization(g)];
+	if #RealRoots(f,RealField(Precision),10^(2-Precision)) gt 0 then
+		e:=LCM(  [Denominator((Valuation(Coefficients(h)[1])/d)) : h in gfact] cat [2]  ); //the extra 1/2 comes from the real prime, see the reference.
+	else
+		e:=LCM(  [Denominator((Valuation(Coefficients(h)[1])/d)) : h in gfact]  );
+	end if;
+	if e eq 1 then 
+		return true,e; 
+	else 
+		return false,e;
+	end if;
+end function;
+
+intrinsic IsCharacteristicPoly(f::RngUPolElt : Precision:=100) -> BoolElt,RngIntElt
+{ Given polynomial f, returns whether f is the characteristic polynomial of Frobenius of some isogeny class, together with the minimal exponent e, such that there exists a simple abelian variety over \F_q with characteristic polynomial of the Frobenius equal to f^e.
+This abelian variety exists and it is uniquely determined up to \F_q-isogeny by Honda-Tate theory. For the method used, see [Wat69, paragraph before the last theorem on page 527].}
+
+    testWeil,q,p,d:=IsWeil(f : Precision:=Precision);
+	require testWeil: "the input must be a q-Weil polynomial";
+    fac:=Factorization(f);
+    exps:=[];
+    tests:=[];
+    for g in fac do
+        _,eg:=is_char_poly_irred(g[1],p,d);
+        Append(~exps,eg);
+        Append(~tests,g[2] mod eg eq 0);
+    end for;
+    return &and(tests),LCM(exps);
+end intrinsic;
+
+/////////////////////////////////////////////////////
 // Creation and access functions of IsogenyClassFq
 /////////////////////////////////////////////////////
 
@@ -303,4 +361,19 @@ intrinsic IsPowerOfBass(I::IsogenyClassFq)->BoolElt
         //is_pure_power_internal is from AlgEt/AlgEtQMod/PowerBass.m
     end if;
     return I`IsPowerOfBass;
+end intrinsic;
+
+
+/////////////////////////////////////////////////////
+// other useful instrinsics for Weil polynomials
+/////////////////////////////////////////////////////
+
+intrinsic LPolyToWeilPoly(l::RngUPolElt) -> RngUPolElt
+{given an L-polynomial l(T) returns the associated Weil polynomial w(T):=T^(2g)*l(1/T)}
+    return Parent(l)!Reverse(Coefficients(l));
+end intrinsic;
+
+intrinsic WeilPolyToLPoly(w::RngUPolElt) -> RngUPolElt
+{given a Weil polynomial w(T) returns the associated L-polynomial l(T):=T^(2g)*l(1/T)}
+    return Parent(w)!Reverse(Coefficients(w));
 end intrinsic;

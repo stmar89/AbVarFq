@@ -10,16 +10,18 @@ freeze;
 
 intrinsic RationalPoints(A::AbelianVarietyFq,r::RngIntElt)-> GrpAb 
 { Given an abelian variety over Fq, it returns the group of rational points defined over Fq^r }
-//TODO Only for IsOrdinary and IsCentelegheStix
-    F:=MapOnUniverseAlgebras(FrobeniusEndomorphism(A));
-    zb:=DeligneModuleZBasis(A);
-	Fr:=FreeAbelianGroup(#zb);
-	rel:=[ Fr!Eltseq(c) : c in Coordinates( [g-((F^r)(g)) : g in zb],zb ) ];
-	Q,_:=quo<Fr|rel>;
-    if r eq 1 then // sanity check for points over field of definition
-        assert #Q eq Evaluate(WeilPolynomial(A),1);
+    I:=IsogenyClass(A);
+    if IsOrdinary(I) or IsCentelegheStix(I) then
+        F:=MapOnUniverseAlgebras(FrobeniusEndomorphism(A));
+        zb:=ZBasis(DeligneModule(A));
+        Fr:=FreeAbelianGroup(#zb);
+        rel:=[ Fr!Eltseq(c) : c in Coordinates( [g-((F^r)(g)) : g in zb],zb ) ];
+        Q,_:=quo<Fr|rel>;
+        if r eq 1 then // sanity check for points over field of definition
+            assert #Q eq Evaluate(WeilPolynomial(A),1);
+        end if;
+        return Q;
     end if;
-	return Q;
 end intrinsic;
 
 intrinsic RationalPoints(A::AbelianVarietyFq)-> GrpAb 

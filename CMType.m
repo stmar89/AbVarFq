@@ -16,8 +16,8 @@ declare verbose CMAlgAss, 1;
 
 declare attributes IsogenyClassFq : AllCMTypes;
 
-intrinsic AllCMTypes(AVh::IsogenyClassFq : precCC := 30 ) -> SeqEnum[AlgAssCMType]
-{ returns all the AlgAssCMTypes of Q(Frob) }
+intrinsic AllCMTypes(AVh::IsogenyClassFq : precCC := 30 ) -> SeqEnum[AlgEtQCMType]
+{Returns all the AlgEtQCMType of Algebra(ZFVOrder(AVh)).}
     if not assigned AVh`AllCMTypes then
         A:=Algebra(ZFVOrder(AVh));
         cc:=CartesianProduct(Partition([ h: h in HomsToC(A : Precision:=precCC )],2));
@@ -31,14 +31,13 @@ end intrinsic;
 // pAdicPosCMType for ordinary IsogenyClassFq
 /////////////////////////////////////////////////////
 
-declare attributes IsogenyClassFq : pAdicPosCMType; //this will be of type 'AlgAssCMType'
+declare attributes IsogenyClassFq : pAdicPosCMType; //this will be of type 'AlgEtQCMType'
 declare attributes AlgAssCMType : pAdicData; // it stores a tuple < p,rrtspp,rtsCC > where p is a prime and rtspp and rtsCC are p-adic and complex roots of the defining polynomial sorted according to a Galois-equivariant bijection. This boils down to determine the restriction of an embedding \bar Qp into CC.
 
 intrinsic pAdicPosCMType(AVh::IsogenyClassFq : precpAdic := 30, precCC := 30 ) -> AlgAssCMType
-{ given an ordinary isogeny class AVh, it computes a AlgAssCMType of the Algebra determined by the Frobenius of AVh such that the Frobenius has positive p-adic valuation according to some embedding of \barQp in C.
-  The varargs precpAdic and precCC specify (minimum) output padic and complex precision.}
+{Given an ordinary isogeny class AVh, it computes a AlgEtQCMType of the Algebra determined by the Frobenius of AVh such that the Frobenius has positive p-adic valuation according to some embedding of \barQp in C. The varargs precpAdic and precCC specify (minimum) output padic and complex precision.}
     if not assigned AVh`pAdicPosCMType then
-        require IsSquarefree(AVh) and IsOrdinary(WeilPolynomial(AVh)) : "implemented only for squarefree and ordinary isogeny classes";
+        require IsSquarefree(AVh) and IsOrdinary(AVh) : "implemented only for squarefree and ordinary isogeny classes";
         h:=WeilPolynomial(AVh);
         p:=CharacteristicFiniteField(AVh);
         rtspp,rtsCC:=pAdicToComplexRoots(PolynomialRing(Rationals())!h,p : precpAdic := precpAdic, precCC:=precCC ); //from paddictocc.m. works only for ordinary
@@ -56,8 +55,8 @@ intrinsic pAdicPosCMType(AVh::IsogenyClassFq : precpAdic := 30, precCC := 30 ) -
             end if;
         end for;
         assert #cmtype_homs eq (Degree(h) div 2);
-        // creation AlgAssCMType
-        PHI:=CreateCMType(cmtype_homs);
+        // creation AlgEtQCMType 
+        PHI:=CMType(cmtype_homs);
         // if AllCMTypes has already been computed take PHI from there.
         if assigned AVh`AllCMTypes then
             PHI_old:=[ cm : cm in AllCMTypes(AVh) | PHI eq cm ]; 

@@ -16,77 +16,56 @@ declare verbose IsogeniesPolarizations, 1;
 // Isogenies
 /////////////////////////////////////////////////////
 
-intrinsic IsogeniesMany(AIS::SeqEnum[AbelianVarietyFq], AJ::AbelianVarietyFq, N::RngIntElt) -> SeqEnum[HomAbelianVarietyFq]
-{
-    Given a sequence of source squarefree abelian varieties AIS, a target sqaurefree abelian varity AJ and a positive integet N, it returns for each AI in AIS if there exist an isogeny AI->AJ of degree N. 
-    For each AI in AIS, if there exists and isogeny AI->AJ, it is also returned a list of representatives of the isormopshim classes of pairs [*hom_x , K*] where:
-     hom_x:AI->AJ, and
-     K=xI subset J, with I and J the fractional ideals representing AI and AJ and x the element representing the isogeny.
-}
-
+intrinsic IsogeniesManyOfDegree(AIS::SeqEnum[AbelianVarietyFq], AJ::AbelianVarietyFq, N::RngIntElt) -> SeqEnum[HomAbelianVarietyFq]
+{Given a sequence of source squarefree abelian varieties AIS, a target sqaurefree abelian varity AJ and a positive integet N, it returns for each AI in AIS if there exist an isogeny AI->AJ of degree N. For each AI in AIS, if there exists and isogeny AI->AJ, it is also returned a list of representatives of the isomorphism classes of pairs [*hom_x , K*] where: hom_x:AI->AJ, and K=xI subset J, with I and J the fractional ideals representing AI and AJ and x the element representing the isogeny.}
+    
+    I:=IsogenyClass(AJ);
     vprintf IsogeniesPolarizations : "IsogeniesMany AbVarFq\n";
-    require IsSquarefree(IsogenyClass(AJ)) : "implemented only for Squarefree isogeny classes ";
-    DJ:=DeligneModuleAsDirectSum(AJ)[1]; // squarefree case
+    require IsSquarefree(I) and (IsOrdinary(I) or IsCentelegheStix(I)): "implemented only for Squarefree isogeny classes ";
+    DJ:=DirectSumRepresentation(DeligneModule(AJ))[1]; // squarefree case
     J:=DJ[1]; mJ:=DJ[2];
     UA:=UniverseAlgebra(AJ);
 	isogenies_of_degree_N := [* [* *] : i in [1..#AIS] *];
 	for K in IdealsOfIndex(J, N) do
 		for i := 1 to #AIS do
             if IsogenyClass(AIS[i]) eq IsogenyClass(AJ) then
-                DISi:=DeligneModuleAsDirectSum(AIS[i])[1]; //squarefree case
+                DISi:=DirectSumRepresentation(DeligneModule(AIS[i]))[1]; //squarefree case
                 ISi:=DISi[1]; mISi:=DISi[2];
-                test, x := IsIsomorphic2(K, ISi); //x*ISi=K
+                test,x:=IsIsomorphic(K, ISi); //x*ISi=K
+                assert x*ISi eq K;
                 if test then
-                    hom_x:=Hom(AIS[i],AJ, hom<UA->UA | [ x*UA.i : i in [1..Dimension(UA)] ] >);
+                    hom_x:=Hom(AIS[i],AJ, hom<UA->UA | [ x*a : a in AbsoluteBasis(UA) ] >);
                     hom_x`IsIsogeny:=<true, N>;
                     if N eq 1 then
                         hom_x`IsIsomorphism:=true;
                     end if;
                     Append(~isogenies_of_degree_N[i], [*hom_x, K*]);
                 end if;
+            else 
+                Append(~isogenies_of_degree_N[i], [* *]);
             end if;
 		end for;
 	end for;
 	return isogenies_of_degree_N;
 end intrinsic;
 
-intrinsic Isogenies(A::AbelianVarietyFq, B::AbelianVarietyFq, N::RngIntElt)->BoolElt,SeqEnum[HomAbelianVarietyFq]
-{
-    Given a source abelian variety A, a target abelian varity B and a positive integet N, it returns if there exist an isogeny A->B of degree N.
-    If so it is also returned a list of representatives of the isormopshim classes of pairs [*hom_x , K*] where:
-     hom_x:A->A, and
-     K=xI subset J, with I and J the fractional ideals representing A and B and x the element representing the isogeny.
-     At the moment it is implement ed only for squarefree abelin varieties.
-}
-	isogenies_of_degree_N := IsogeniesMany([A], B, N);
+intrinsic IsogeniesOfDegree(A::AbelianVarietyFq, B::AbelianVarietyFq, N::RngIntElt)->BoolElt,SeqEnum[HomAbelianVarietyFq]
+{Given a source abelian variety A, a target abelian varity B and a positive integet N, it returns if there exist an isogeny A->B of degree N. If so it is also returned a list of representatives of the isormopshim classes of pairs [*hom_x , K*] where: hom_x:A->A, and K=xI subset J, with I and J the fractional ideals representing A and B and x the element representing the isogeny. At the moment it is implement ed only for squarefree abelin varieties.}
+	isogenies_of_degree_N := IsogeniesManyOfDegree([A], B, N);
 	return #isogenies_of_degree_N[1] ge 1, isogenies_of_degree_N[1];
-end intrinsic;
-
-/////////////////////////////////////////////////////
-// Dual Abelian Variety 
-/////////////////////////////////////////////////////
-
-intrinsic DualAbelianVariety(A::AbelianVarietyFq)->AbelianVarietyFq
-{ given an abelian vareity A returns the dual abelian variety }
-    // require IsOrdinary(A) : "implemented only for ordinary isogeny classes";
-    B:=DeligneModuleZBasis(A);
-    n:=#B;
-    Q:=MatrixRing(RationalField(), n)![Trace(B[i]*B[j]): i, j in [1..n] ];
-    QQ:=Q^-1;
-    BB:=[&+[ (QQ[i,j]*B[j]): j in [1..n]] : i in [1..n]] ;
-    BBc:=[ ComplexConjugate(b) : b in BB ];
-    Av:=AbelianVariety(IsogenyClass(A),BBc); //the direct sum of ideal is not computed here
-    return Av;
 end intrinsic;
 
 /////////////////////////////////////////////////////
 // Polarizations
 /////////////////////////////////////////////////////
 
-intrinsic IsPolarization(pol::HomAbelianVarietyFq, phi::AlgAssCMType)->BoolElt
-{returns whether the hommorphisms is known to be a polarizations for the CM-type phi }
+intrinsic IsPolarization(pol::HomAbelianVarietyFq, phi::AlgEtQCMType : CheckOrdinary:=true)->BoolElt
+{Returns whether the hommorphisms is known to be a polarizations for the CM-type phi.}
     A:=Domain(pol);
-    require IsSquarefree(IsogenyClass(A)) /*and IsOrdinary(A)*/ : "implemented only for square-free ordinary abelian varieties";
+    require IsSquarefree(IsogenyClass(A)) : "implemented only for square-free ordinary abelian varieties";
+    if CheckOrdinary then
+        require IsOrdinary(A) : "the input needs to be ordinary.";
+    end if;
     x0:=MapOnUniverseAlgebras(pol)(1); //the element of the UniverseAlgebra representing the map
     //pol is a polarization if x0 is totally imaginary and \Phi-positive
     C := [g(x0): g in Homs(phi)];
@@ -97,32 +76,29 @@ intrinsic IsPolarization(pol::HomAbelianVarietyFq, phi::AlgAssCMType)->BoolElt
     end if;
 end intrinsic;
 
-intrinsic IsPrincipallyPolarized(A::AbelianVarietyFq, phi::AlgAssCMType)->BoolElt, SeqEnum[HomAbelianVarietyFq]
-{returns if the abelian variety is principally polarized and if so returns also all the non isomorphic polarizations}
-    return IsPrincPolarized(A,phi);
-end intrinsic;
-
-intrinsic IsPrincPolarized(A::AbelianVarietyFq, phi::AlgAssCMType)->BoolElt, SeqEnum[HomAbelianVarietyFq]
-{returns if the abelian variety is principally polarized and if so returns also all the non isomorphic polarizations}
-    require /*IsOrdinary(A) and*/ IsSquarefree(IsogenyClass(A)) : "implemented only for ordinary squarefree isogeny classes";
+intrinsic IsPrincipallyPolarized(A::AbelianVarietyFq, phi::AlgEtQCMType : CheckOrdinary:=true)->BoolElt, SeqEnum[HomAbelianVarietyFq]
+{Returns if the abelian variety is principally polarized and if so returns also all the non isomorphic polarizations.}
+    require IsSquarefree(IsogenyClass(A)) : "implemented only for squarefree isogeny classes";
+    if CheckOrdinary then
+        require IsOrdinary(A) : "the input needs to be ordinary.";
+    end if;
 	S:=EndomorphismRing(A);
 	if S eq ComplexConjugate(S) then
-		return IsPolarized(A, phi , 1);
+		return IsPolarized(A,phi,1);
 	else
 		return false,[];
 	end if;
 end intrinsic;
 
-// TODO bad name here
-intrinsic IsPolarized(A::AbelianVarietyFq, PHI::AlgAssCMType , N::RngIntElt)->BoolElt, SeqEnum[HomAbelianVarietyFq]
-{returns if the abelian variety has a polarization of degree N and if so it returns also all the non isomorphic polarizations}
-    
-    require /*IsOrdinary(A) and*/ IsSquarefree(IsogenyClass(A)) : "implemented only for ordinary squarefree isogeny classes";
- 
+intrinsic PolarizationsOfDegree(A::AbelianVarietyFq,PHI::AlgEtQCMType,N::RngIntElt : CheckOrdinary:=true)->BoolElt, SeqEnum[HomAbelianVarietyFq]
+{Returns if the abelian variety has a polarization of degree N and if so it returns also all the non isomorphic polarizations.}
+    require IsSquarefree(IsogenyClass(A)) : "implemented only for ordinary squarefree isogeny classes";
+    if CheckOrdinary then
+        require IsOrdinary(A) : "the input needs to be ordinary.";
+    end if;
     if not IsSquare(N) then // the degree of a pol is always a square
         return false,[]; 
     end if;
-
     UA:=UniverseAlgebra(A);
     S:=EndomorphismRing(A);
     assert UA eq Algebra(S);
@@ -130,7 +106,7 @@ intrinsic IsPolarized(A::AbelianVarietyFq, PHI::AlgAssCMType , N::RngIntElt)->Bo
     phi:=Homs(PHI);
     assert Domain(phi[1]) eq UA;
 
-	boolean, isogenies_of_degree_N := Isogenies(A, Av, N);
+	boolean, isogenies_of_degree_N := IsogeniesOfDegree(A, Av, N);
 	if not boolean then
 		return false, [];
 	end if;
@@ -138,11 +114,11 @@ intrinsic IsPolarized(A::AbelianVarietyFq, PHI::AlgAssCMType , N::RngIntElt)->Bo
 
     zbS:=ZBasis(S);
     T:=Order(zbS cat [ ComplexConjugate(z) : z in zbS ]);
-    UT,uT:=UnitGroup2(T); //uT:UT->T
-    US, uS := UnitGroup2(S); //uS:US->S
-    gensUinS:=[ uS(US.i) : i in [1..Ngens(US)]];
-    USUSb:=sub< UT | [ (g*ComplexConjugate(g))@@uT : g in gensUinS ]>;
-    USinUT:=sub<UT | [ g@@uT : g in gensUinS ]>;
+    UT,uT:=UnitGroup(T); //uT:UT->T
+    US,uS:=UnitGroup(S); //uS:US->S
+    gensUinS:=[uS(US.i):i in [1..Ngens(US)]];
+    USUSb:=sub<UT|[(g*ComplexConjugate(g))@@uT:g in gensUinS]>;
+    USinUT:=sub<UT|[g@@uT:g in gensUinS]>;
     Q,q:=quo< USinUT | USinUT meet USUSb >; // q:=USinUT->Q
                                             // Q = S*/<v bar(v) : v in S*> meet S*
     QinT:=[ uT(UT!(b@@q)) : b in Q];
@@ -175,7 +151,7 @@ intrinsic IsPolarized(A::AbelianVarietyFq, PHI::AlgAssCMType , N::RngIntElt)->Bo
     end for;
     output:=[];
     for a in polarizations_of_degree_N do
-        pol:=Hom(A,Av,hom<UA->UA | [ a*UA.i : i in [1..Dimension(UA)]]>);
+        pol:=Hom(A,Av,Hom(UA,UA,[ a*b : b in AbsoluteBasis(UA)]));
         pol`IsIsogeny:=<true,N>;
         Append(~output,pol);
     end for;
@@ -186,10 +162,13 @@ intrinsic IsPolarized(A::AbelianVarietyFq, PHI::AlgAssCMType , N::RngIntElt)->Bo
 	end if;
 end intrinsic;
 
-intrinsic PolarizedAutomorphismGroup(mu::HomAbelianVarietyFq) -> GrpAb
+intrinsic PolarizedAutomorphismGroup(mu::HomAbelianVarietyFq : CheckOrdinary:=true) -> GrpAb
 {returns the automorphisms of a polarized abelian variety}
     A:=Domain(mu);
-    require /*IsOrdinary(A) and*/ IsSquarefree(IsogenyClass(A)) : "implemented only for ordinary squarefree isogeny classes";
+    require IsSquarefree(IsogenyClass(A)) : "implemented only for ordinary squarefree isogeny classes";
+    if CheckOrdinary then
+        require IsOrdinary(A) : "the input needs to be ordinary.";
+    end if;
     S:=EndomorphismRing(A);
 	return TorsionSubgroup(UnitGroup2(S));
 end intrinsic;
