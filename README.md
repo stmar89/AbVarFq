@@ -28,10 +28,11 @@ Details
 For complete descriptions and more details we refer to the [`List of commands`](https://github.com/stmar89/AbVarFq/blob/master/doc/ListOfCommands.md).
 To use them, use the magma command `AttachSpec("spec")`, after opening magma in the folder where you have downloaded the repo.
 
-In the folder [`examples`](https://github.com/stmar89/AbVarFq/blob/main/examples), you will find files containing the code to reproduce the examples from the papers in the references below, which should be of help to get a quick start on the functionalities.
+In the folder [`examples`](https://github.com/stmar89/AbVarFq/blob/master/examples), you will find files containing the code to reproduce the examples from the papers in the references below, which should be of help to get a quick start on the functionalities.
 
 References
 --
+Check my webpage for more up-to-date bibliography info.
 
 Stefano Marseglia,<br>
 *Computing square-free polarized abelian varieties over finite fields*,<br>
