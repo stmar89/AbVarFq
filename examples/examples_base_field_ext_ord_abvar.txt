@@ -2,23 +2,27 @@
 
 ///////////////////////////////////////////////////////////////////////////////////
 //                                                                               //
-// Stefano Marseglia, Utrecht University, stefano.marseglia89@gmail.com                      //
-// https://stmar89.github.io/index.html                                     //
+// Stefano Marseglia, stefano.marseglia89@gmail.com                              //
+// https://stmar89.github.io/index.html                                          //
 //                                                                               //
 // Code to compute the examples in the paper:                                    //
 // "Computing base extensions of ordinary abelian varieties over a finite field" //
-// http://arxiv.org/abs/2003.09977                                               //
+// Int. J. Number Theory, Vol. 18, No. 09, pp. 1957-1974 (2022)                  //
+// https://doi.org/10.1142/S1793042122501007                                     //
 //                                                                               //
 ///////////////////////////////////////////////////////////////////////////////////
 
 //////////////
 // The packages are available at:
-// https://github.com/stmar89/AbVarFq
-//
-// The following examples where computed using the master branch on 21/05/2020
+// https://github.com/stmar89/
 //////////////
 
-    AttachSpec("~/packages_github/AbVarFq/packages.spec");
+    SetDebugOnError(true);
+
+    AttachSpec("~/AlgEt/spec");
+    AttachSpec("~/AlgEt/specMod");
+    AttachSpec("~/AlgEt/specMtrx");
+    AttachSpec("~/AbVarFq/spec");
 
 //////////////
 // Example 5.4
@@ -35,9 +39,9 @@
     PicardGroup(Rh);
     
     //there are 3 isomorphism classes ov abelian varieties
-    iso_h:=ComputeIsomorphismClasses(AVh);
+    iso_h:=IsomorphismClasses(AVh);
     for M in iso_h do
-        DeligneModuleAsDirectSum(M);
+        DirectSumRepresentation(DeligneModule(M));
     end for;
 
     //extend to FF_{2^6}
@@ -51,10 +55,10 @@
     IsMaximal(Rg);
     PicardGroup(Rg);
 
-    iso_h6:=ComputeIsomorphismClasses(AVh6);
+    iso_h6:=IsomorphismClasses(AVh6);
     // as we can see there are 3 isomorphism classes in the extension
     for M in iso_h6 do
-        DeligneModuleAsDirectSum(M);
+        DirectSumRepresentation(DeligneModule(M));
     end for;
     // we check that each isomorphism class in Ih extends to a different class in Ih6.
     IsIsomorphic(BaseFieldExtension(iso_h[1],AVh6,map),iso_h6[1]);
@@ -74,7 +78,7 @@
     Rh:=ZFVOrder(AVh);
     
     //there are 12 isomorphism classes ov abelian varieties
-    iso_h:=ComputeIsomorphismClasses(AVh);
+    iso_h:=IsomorphismClasses(AVh);
     #iso_h;
 
     //extend to FF_{103^2}
@@ -91,7 +95,7 @@
     // we check that there is no other isogeny class over FF_103 other than Ih that extends to Ih2.
     IsBaseFieldExtensionOf(AVh2); 
 
-    iso_h2:=ComputeIsomorphismClasses(AVh2);
+    iso_h2:=IsomorphismClasses(AVh2);
     // as we can see there are 6 isomorphism classes in the extension
     // we see that each isomorphism class has only one non-trivial 2-twist. we print the output in matrix for: 1 stays for true and 0 for false.
     for I in iso_h do
@@ -141,11 +145,11 @@
     //Rg is Bass
     IsBass(Rg);
     #FindOverOrders(Rg);
-    iso_g2:=ComputeIsomorphismClasses(AVg2);
+    iso_g2:=IsomorphismClasses(AVg2);
     //there are 8 isomorphsim classes in AVg2
     #iso_g2;
     //we extend the isormophsim classes of AVh to Avg2
-    ext:=[ BaseFieldExtension(I,AVg2,map) : I in ComputeIsomorphismClasses(AVh) ];
+    ext:=[ BaseFieldExtension(I,AVg2,map) : I in IsomorphismClasses(AVh) ];
     for I in ext do 
         for M in iso_g2 do
             s:=IsIsomorphic(I,M) select "1 " else "0 ";
@@ -156,7 +160,9 @@
     // observe that each isomorphism class in AVh has a unique non-trivial 2-twist.
     // moreover the 1st and 3rd classes over AVg2 are not extension, so they cannot be defined over a FF_169, while all the others are extension from AVh.
 
+/*
 // the following code is useful to write down the modules as in the paper 
+// the order the various intrinsic return their output is not completely deterministic. So the numbering below might need to be adjusted. Use it with a grain of salt ;-)
     S:=FindOverOrders(Rh)[2];
     T:=FindOverOrders(Rh)[3];
     Oh:=FindOverOrders(Rh)[4];
@@ -164,19 +170,19 @@
     IsGorenstein(S); PS,pS:=PicardGroup(S); PS;
     IsGorenstein(T); PT,pT:=PicardGroup(T); PT;
     IsMaximal(Oh); POh,pOh:=PicardGroup(Oh); POh;
-    iso_h:=[ DeligneModuleAsDirectSum(A)[1,1] : A in ComputeIsomorphismClasses(AVh)];
+    iso_h:=[ DirectSumRepresentation(DeligneModule(A))[1,1] : A in IsomorphismClasses(AVh)];
     iso_h[1]@@pRh;
     iso_h[2]@@pRh;
     iso_h[3]@@pRh;
     iso_h[4]@@pRh;
-    IsWeakEquivalent(S!iso_h[5],TraceDualIdeal(S)),IsIsomorphic2(S!iso_h[5],TraceDualIdeal(S)); // PS.1*S^t
-    (S!iso_h[6])@@pS; // S
-    IsIsomorphic2(S!iso_h[7],TraceDualIdeal(S)); // S^t
-    (S!iso_h[8])@@pS; // PS.1
-    (T!iso_h[9])@@pT; // T
-    (T!iso_h[10])@@pT; // PT.1
-    (Oh!iso_h[11])@@pOh; // Oh
-    (Oh!iso_h[12])@@pOh; // POh.1
+    (S!!iso_h[5])@@pS; // S
+    IsWeakEquivalent(S!!iso_h[6],TraceDualIdeal(S)),IsIsomorphic(S!!iso_h[6],TraceDualIdeal(S)); // PS.1*S^t
+    (S!!iso_h[7])@@pS; // PS.1
+    IsIsomorphic(S!!iso_h[8],TraceDualIdeal(S)); // S^t
+    (T!!iso_h[9])@@pT; // T
+    (T!!iso_h[10])@@pT; // PT.1
+    (Oh!!iso_h[11])@@pOh; // Oh
+    (Oh!!iso_h[12])@@pOh; // POh.1
 
     Og:=FindOverOrders(Rg)[2];
     IsMaximal(Og);
@@ -185,25 +191,23 @@
     J:=pRg(PRg.2); // above 87
     POg,pOg:=PicardGroup(Og); POg;
 
-    DeligneModuleAsDirectSum(iso_g2[1])[1,1]@@pRg;
-    DeligneModuleAsDirectSum(iso_g2[1])[2,1]@@pRg;
-    DeligneModuleAsDirectSum(iso_g2[2])[1,1]@@pRg;
-    DeligneModuleAsDirectSum(iso_g2[2])[2,1]@@pRg;
-    DeligneModuleAsDirectSum(iso_g2[3])[1,1]@@pRg;
-    DeligneModuleAsDirectSum(iso_g2[3])[2,1]@@pRg;
-    DeligneModuleAsDirectSum(iso_g2[4])[1,1]@@pRg;
-    DeligneModuleAsDirectSum(iso_g2[4])[2,1]@@pRg;
-    DeligneModuleAsDirectSum(iso_g2[5])[1,1]@@pRg;
-    (Og!DeligneModuleAsDirectSum(iso_g2[5])[2,1])@@pOg;
-    DeligneModuleAsDirectSum(iso_g2[6])[1,1]@@pRg;
-    (Og!DeligneModuleAsDirectSum(iso_g2[6])[2,1])@@pOg;
-    (Og!DeligneModuleAsDirectSum(iso_g2[7])[1,1])@@pOg;
-    (Og!DeligneModuleAsDirectSum(iso_g2[7])[2,1])@@pOg;
-    (Og!DeligneModuleAsDirectSum(iso_g2[8])[1,1])@@pOg;
-    (Og!DeligneModuleAsDirectSum(iso_g2[8])[2,1])@@pOg;
-
-
-
+    DirectSumRepresentation(DeligneModule(iso_g2[1]))[1,1]@@pRg;
+    DirectSumRepresentation(DeligneModule(iso_g2[1]))[2,1]@@pRg;
+    DirectSumRepresentation(DeligneModule(iso_g2[2]))[1,1]@@pRg;
+    DirectSumRepresentation(DeligneModule(iso_g2[2]))[2,1]@@pRg;
+    DirectSumRepresentation(DeligneModule(iso_g2[3]))[1,1]@@pRg;
+    DirectSumRepresentation(DeligneModule(iso_g2[3]))[2,1]@@pRg;
+    DirectSumRepresentation(DeligneModule(iso_g2[4]))[1,1]@@pRg;
+    DirectSumRepresentation(DeligneModule(iso_g2[4]))[2,1]@@pRg;
+    DirectSumRepresentation(DeligneModule(iso_g2[5]))[1,1]@@pRg;
+    (Og!!DirectSumRepresentation(DeligneModule(iso_g2[5]))[2,1])@@pOg;
+    DirectSumRepresentation(DeligneModule(iso_g2[6]))[1,1]@@pRg;
+    (Og!!DirectSumRepresentation(DeligneModule(iso_g2[6]))[2,1])@@pOg;
+    (Og!!DirectSumRepresentation(DeligneModule(iso_g2[7]))[1,1])@@pOg;
+    (Og!!DirectSumRepresentation(DeligneModule(iso_g2[7]))[2,1])@@pOg;
+    (Og!!DirectSumRepresentation(DeligneModule(iso_g2[8]))[1,1])@@pOg;
+    (Og!!DirectSumRepresentation(DeligneModule(iso_g2[8]))[2,1])@@pOg;
+ */
 
 //////////////
 // Example 7.5
@@ -216,7 +220,7 @@
 
     // there are 4 primitive isogeny classes that extend to AVh4, including AVh.
     ext_of:=IsBaseFieldExtensionOfPrimitive(Ah4); ext_of;
-    all_iso:=&cat[ ComputeIsomorphismClasses(I) : I in ext_of ];
+    all_iso:=&cat[ IsomorphismClasses(I) : I in ext_of ];
     all_ext:=BaseFieldExtension(all_iso,Ah4);
     #all_iso,#all_ext;
     // these 4 isogeny classes contain 30 isomorphism classes of abelian varities 
@@ -228,37 +232,40 @@
     // while this is not the case if the the twist is induced by i or -i, which have order 4.
     for i in [1..#all_ext] do
         A:=all_iso[i];
-        UA:=UniverseAlgebra(A);
-        RA,mRA:=ZFVOrder(A);
+        UA,mRA:=DeligneAlgebra(A);
+        RA:=ZFVOrder(A);
         FA_elt:=mRA(PrimitiveElement(Algebra(RA)));
-        FA:=MapOnUniverseAlgebras(FrobeniusEndomorphism(A));
-        U,u:=UnitGroup2(MultiplicatorRing(DeligneModuleAsDirectSum(A)[1,1]));
+        FA:=MapOnDeligneAlgebras(FrobeniusEndomorphism(A));
+        U,u:=UnitGroup(MultiplicatorRing(DirectSumRepresentation(DeligneModule(A))[1,1]));
         Tors:=[ t : t in TorsionSubgroup(U)];
-        TAut:=[ hom<UA->UA|[u(t)*b:b in Basis(UA)]> : t in Tors ];
+        TAut:=[ Hom(UA,UA,[u(t)*b:b in AbsoluteBasis(UA)]) : t in Tors ];
         Ae:=all_ext[i,1];
         mAe:=all_ext[i,2];
-        UAe:=UniverseAlgebra(Ae);
+        UAe:=DeligneAlgebra(Ae);
         TF_mAe:=[ Inverse(mAe)*t*FA*mAe : t in TAut ];
-        TF_mAe_mats:=[Matrix([t(b) :b in Basis(UAe)]) : t in TF_mAe];
+        //TF_mAe_mats:=[Matrix([t(b) :b in AbsoluteBasis(UAe)]) : t in TF_mAe];
+        TF_mAe_mats:=[Matrix([AbsoluteCoordinates(t(b)) :b in AbsoluteBasis(UAe)]) : t in TF_mAe];
         for j in [1..#all_ext] do
             B:=all_iso[j];
             Be:=all_ext[j,1];
             mBe:=all_ext[j,2];
             test,iso:=IsIsomorphic(Ae,Be);            
             if test then
-                iso:=MapOnUniverseAlgebras(iso);
-                RB,mRB:=ZFVOrder(B);
+                iso:=MapOnDeligneAlgebras(iso);
+                _,mRB:=DeligneAlgebra(B);
+                RB:=ZFVOrder(B);
                 FB_elt:=mRB(PrimitiveElement(Algebra(RB)));
-                FB:=MapOnUniverseAlgebras(FrobeniusEndomorphism(B));
+                FB:=MapOnDeligneAlgebras(FrobeniusEndomorphism(B));
                 map:=iso*Inverse(mBe)*FB*mBe*Inverse(iso);
-                map_mat:=Matrix([map(b) : b in Basis(UAe)]);
+                //map_mat:=Matrix([map(b) : b in Basis(UAe)]);
+                map_mat:=Matrix([AbsoluteCoordinates(map(b)) : b in Basis(UAe)]);
                 if exists(a){ a : a in [1..#TF_mAe_mats] | TF_mAe_mats[a] eq map_mat } then 
                     aut:=u(Tors[a]);
                     phi:=HomsToC(Parent(aut))[1];
                     if aut eq 1 then printf "1 ";
                         elif aut eq -1 then printf "-1 "; assert IsTwistOfOrder(A,B,2);
-                        elif aut^2 eq -1 and Im(phi(aut)) gt 0 then printf "i "; assert not IsTwistOfOrder(A,B,2);
-                        elif aut^2 eq -1 and Im(phi(aut)) lt 0 then printf "-i "; assert not IsTwistOfOrder(A,B,2);
+                        elif aut^2 eq -1 and Im(phi(aut)) gt 0 then printf "i ";assert not IsTwistOfOrder(A,B,2);
+                        elif aut^2 eq -1 and Im(phi(aut)) lt 0 then printf "-i ";assert not IsTwistOfOrder(A,B,2);
                     end if;
                 else printf "0 ";
                 end if;
@@ -282,17 +289,17 @@
     // each of these 3 primitive isogeny classes contians only one isomorphism class of elliptic curves.
     AVh4:=ext_of[1];
     FiniteField(AVh4);
-    iso_h4:=ComputeIsomorphismClasses(AVh4); #iso_h4;
+    iso_h4:=IsomorphismClasses(AVh4); #iso_h4;
     NumberOfPoints(AVh4);
 
     AVh2_1:=ext_of[3];
     FiniteField(AVh2_1);
-    iso_h2_1:=ComputeIsomorphismClasses(AVh2_1); #iso_h2_1;
+    iso_h2_1:=IsomorphismClasses(AVh2_1); #iso_h2_1;
     NumberOfPoints(AVh2_1);
     
     AVh2_2:=ext_of[2];
     FiniteField(AVh2_2);
-    iso_h2_2:=ComputeIsomorphismClasses(AVh2_2);
+    iso_h2_2:=IsomorphismClasses(AVh2_2);
     NumberOfPoints(AVh2_2);
 
     // by counting points we can identify an equation that represents the 3 isormopshism classes.
@@ -308,7 +315,7 @@
     #Points(E2_2);
     // E2_1 (resp. E2_2) is the unique isormorphism class in AVh2_1 (resp. AVh2_2)
     //Now we turn our attention to AVh: there are 5 IsomorphismClasses
-    iso_h:=ComputeIsomorphismClasses(AVh); #iso_h;
+    iso_h:=IsomorphismClasses(AVh); #iso_h;
     Rh:=ZFVOrder(AVh);
     Oh:=MaximalOrder(Algebra(Rh));
     // we check which isomorphism class has maximal endomorphism ring and which one has Rh.

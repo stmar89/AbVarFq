@@ -1,0 +1,88 @@
+/* vim: set syntax=magma : */
+
+/*
+
+    magma script to automatically create a .md file with the documentation for all intrinsics.
+
+    input:
+        - input: = a spec file containing a folder and a sequence of .m files to be scanned
+        - output_file:= an output file
+
+*/
+
+
+    clean:=function(str0)
+    // removes "\n" and " " from the beginning and the end of the string;
+    // replace * with \*
+        str:=str0;
+        for i in [1,2] do
+            while str[#str] in {"\n"," "} do
+                Prune(~str);
+            end while;
+            str:=Reverse(str);
+        end for;
+        return str;
+    end function;
+
+    find_next:=function(inp,pos,str);
+        //find the next occurrence in inp of str. returns the position of the character right after str.
+        // if Eof is reached returns 0;
+        assert pos gt 0;
+        if pos eq #inp then
+            return 0;
+        end if;
+        while inp[pos] ne str[1] do
+            pos+:=1;
+            if pos eq #inp then
+                return 0;
+            end if;
+        end while;
+        n:=#str-1;
+        while not inp[pos..pos+n] eq str do
+            if pos+n+1 gt #inp then
+                return 0;
+            end if;
+            pos +:=1;
+        end while;
+        return pos+n+1;
+    end function;
+
+    find_next_intrinsic:=function(inp,pos)
+    // returns name,name_2,descr, pos
+    // where: name is the intrinsic, name_2 is the rest of the line, descr is what is contained b/w {..},
+    // and pos is the position of the next 'intrinsic', if any, or 0 for Eof
+        assert pos gt 0;
+        name_in:=find_next(inp,pos,"intrinsic");
+        if name_in eq 0 then return "","","",0; end if; //we hit the Eof
+        name_out:=find_next(inp,name_in,"(")-2;
+        name:=inp[name_in..name_out];
+        name:=clean(name);
+        end_name:=find_next(inp,name_out+1,"\n")-2;
+        name_2:=clean(inp[name_out+1..end_name]);
+        desc_in:=find_next(inp,name_out,"{");
+        desc_out:=find_next(inp,desc_in,"}")-2;
+        desc:=clean(inp[desc_in..desc_out]);
+        desc:=SubstituteString(desc,"*","\\*");
+        end_int:=find_next(inp,desc_out+1,"intrinsic");
+        return name,name_2,desc,end_int; 
+    end function;
+
+    input:=Split(Read(input),"{\n}");
+    fld:=input[1];
+    for input_file0 in input[2..#input] do
+        input_file:=fld cat "/" cat input_file0;
+        inp:=Read("../" cat input_file);
+        out:="";
+        pos:=1;
+        repeat
+            name,name_2,desc,pos:=find_next_intrinsic(inp,pos);
+            if pos ne 0 then
+                out cat:="> <pre><b>" cat name cat "</b>" cat name_2 cat "</pre>\n" cat 
+                "<em>" cat desc cat "</em>\n\n";
+            end if;
+        until pos eq 0;
+        fprintf output_file,"## List of instrinsics in %o:\n\n%o\n",input_file,out;
+    end for;
+     
+    quit;
+

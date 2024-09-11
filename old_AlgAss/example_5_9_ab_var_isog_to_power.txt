@@ -2,8 +2,8 @@
 
 ///////////////////////////////////////////////////////////////////////////////////
 //                                                                               //
-// Stefano Marseglia, Utrecht University, stefano.marseglia89@gmail.com                      //
-// https://stmar89.github.io/index.html                                     //
+// Stefano Marseglia, stefano.marseglia89@gmail.com                              //
+// https://stmar89.github.io/index.html                                          //
 //                                                                               //
 // Code to compute the examples in the paper:                                    //
 // "Computing abelian varieties over finite fields isogenous to a power"         //
@@ -14,27 +14,26 @@
 
 //////////////
 // The packages are available at:
-// https://github.com/stmar89/AbVarFq
-//
-// The following examples where computed using the master branch on 04/06/2020
+// https://github.com/stmar89/
 //////////////
 
-    AttachSpec("~/packages_github/AbVarFq/packages.spec");
+    AttachSpec("~/AlgEt/spec");
+    AttachSpec("~/AlgEt/specMod");
+    AttachSpec("~/AlgEt/specMtrx");
+    AttachSpec("~/AbVarFq/spec");
 
 //////////////
 // Example 5.9
 //////////////
 
-// This code will eventually be made into intrinsics for AbelianVarietyFq
-
     _<x>:=PolynomialRing(Integers());
     h:=x^2-x+4;
-    A:=AssociativeAlgebra(h);
+    A:=EtaleAlgebra(h);
     O:=MaximalOrder(A);
     icm:=ICM(O);
     O1:=icm[1];
     I:=icm[2];
-    IsIsomorphic2(I^2,O1);
+    IsIsomorphic(I^2,O1);
     It:=TraceDualIdeal(I);
     Ot:=TraceDualIdeal(O);
     phi:=CMType(A)[1];

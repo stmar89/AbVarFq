@@ -3,19 +3,41 @@
 freeze;
 
 /////////////////////////////////////////////////////
-//// Group of rational points
-//// Stefano Marseglia, Utrecht University, stefano.marseglia89@gmail.com
-//// https://stmar89.github.io/index.html
-///////////////////////////////////////////////////////
+// Stefano Marseglia, stefano.marseglia89@gmail.com
+// https://stmar89.github.io/index.html
+// 
+// Distributed under the terms of the GNU Lesser General Public License (L-GPL)
+//      http://www.gnu.org/licenses/
+// 
+// This program is free software; you can redistribute it and/or modify
+// it under the terms of the GNU Lesser General Public License as published by
+// the Free Software Foundation; either version 3.0 of the License, or
+// (at your option) any later version.
+// 
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Lesser General Public License for more details.
+//
+// You should have received a copy of the GNU Lesser General Public License
+// along with this program; if not, write to the Free Software
+// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
+// 
+// Copyright 2024, S. Marseglia
+/////////////////////////////////////////////////////
+
+///////////////////////////////////////////////////
+// Group of rational points
+/////////////////////////////////////////////////////
 
 intrinsic RationalPoints(A::AbelianVarietyFq,r::RngIntElt)-> GrpAb 
-{ Given an abelian variety over Fq, it returns the group of rational points defined over Fq^r }
+{Given an abelian variety over Fq, it returns the group of rational points defined over Fq^r.}
     I:=IsogenyClass(A);
     if IsOrdinary(I) or IsCentelegheStix(I) then
-        F:=MapOnUniverseAlgebras(FrobeniusEndomorphism(A));
+        F:=MapOnDeligneAlgebras(FrobeniusEndomorphism(A));
         zb:=ZBasis(DeligneModule(A));
         Fr:=FreeAbelianGroup(#zb);
-        rel:=[ Fr!Eltseq(c) : c in Coordinates( [g-((F^r)(g)) : g in zb],zb ) ];
+        rel:=[ Fr!Eltseq(c) : c in AbsoluteCoordinates( [g-((F^r)(g)) : g in zb],zb ) ];
         Q,_:=quo<Fr|rel>;
         if r eq 1 then // sanity check for points over field of definition
             assert #Q eq Evaluate(WeilPolynomial(A),1);
@@ -25,40 +47,7 @@ intrinsic RationalPoints(A::AbelianVarietyFq,r::RngIntElt)-> GrpAb
 end intrinsic;
 
 intrinsic RationalPoints(A::AbelianVarietyFq)-> GrpAb 
-{ Given an abelian variety over Fq, it returns the group of rational points defined over Fq }
+{Given an abelian variety over Fq, it returns the group of rational points defined over Fq.}
 	return RationalPoints(A,1);
 end intrinsic;
-
-/* TESTs
-    
-    AttachSpec("~/packages_github/AbVarFq/packages.spec");
-
-    _<x>:=PolynomialRing(Integers());
-    h:=x^6-2*x^5-3*x^4+24*x^3-15*x^2-50*x+125;
-    AVh:=IsogenyClass(h);
-    S1:=ZFVOrder(AVh);
-    O:=MaximalOrder(Algebra(S1));
-    over_orders:=FindOverOrders(S1);
-    for S in over_orders do
-        iso_S:=ComputeIsomorphismClassesWithEndomorphismRing(AVh,S);
-        for r in [1..8] do
-            r,{ ElementaryDivisors(RationalPoints(A,r)) : A in iso_S};
-        end for;
-    end for;
-
-    _<x>:=PolynomialRing(Integers());
-    h:=x^8-5*x^7+13*x^6-25*x^5+44*x^4-75*x^3+117*x^2-135*x+81;
-    AVh:=IsogenyClass(h);
-    S1:=ZFVOrder(AVh);
-    O:=MaximalOrder(Algebra(S1));
-    over_orders:=FindOverOrders(S1);
-    for S in over_orders do if not IsGorenstein(S) then
-        iso_S:=ComputeIsomorphismClassesWithEndomorphismRing(AVh,S);
-        #iso_S;
-        { ElementaryDivisors(RationalPoints(A)) : A in iso_S};
-    end if; end for;
-
-*/
-
-
 

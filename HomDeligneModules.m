@@ -3,10 +3,32 @@
 freeze;
 
 /////////////////////////////////////////////////////
-// Morphisms of Abelian varieties over Finite Fields
-// Stefano Marseglia, Utrecht University, stefano.marseglia89@gmail.com
+// Stefano Marseglia, stefano.marseglia89@gmail.com
 // https://stmar89.github.io/index.html
-// with the help of Edgar Costa
+// 
+// Distributed under the terms of the GNU Lesser General Public License (L-GPL)
+//      http://www.gnu.org/licenses/
+// 
+// This program is free software; you can redistribute it and/or modify
+// it under the terms of the GNU Lesser General Public License as published by
+// the Free Software Foundation; either version 3.0 of the License, or
+// (at your option) any later version.
+// 
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Lesser General Public License for more details.
+//
+// You should have received a copy of the GNU Lesser General Public License
+// along with this program; if not, write to the Free Software
+// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
+// 
+// Copyright 2024, S. Marseglia
+/////////////////////////////////////////////////////
+
+/////////////////////////////////////////////////////
+// Morphisms of Abelian varieties over Finite Fields
+// using Deligne Modules
 /////////////////////////////////////////////////////
 
 declare verbose HomAbelianVarieties, 1;
@@ -19,12 +41,14 @@ declare verbose HomAbelianVarieties, 1;
 // a morphism of abelin varieties over Fq
 /////////////////////////////////////////////////////
 
+declare attributes AbelianVarietyFq : FrobeniusEndomorphism;
+
 declare type HomAbelianVarietyFq;
 declare attributes HomAbelianVarietyFq : Domain,
                                          Codomain,
                                          // Image, //does it makes sense?
                                          // Kernel, //what should this be? 
-                                         MapOnUniverseAlgebras,
+                                         MapOnDeligneAlgebras,
                                          IsIsogeny, // a pair true or false, Degree
                                          IsIsomorphism,
                                          IsEndomorphism;
@@ -48,9 +72,9 @@ intrinsic Codomain(m::HomAbelianVarietyFq)->AbelianVarietyFq
     return m`Codomain;
 end intrinsic;
 
-intrinsic MapOnUniverseAlgebras(m::HomAbelianVarietyFq)->Map
-{returns underlying homormorphism of Deligne Moduels as a Z[F,V]-linear hom on the UniverseAlgebras}
-    return m`MapOnUniverseAlgebras;
+intrinsic MapOnDeligneAlgebras(m::HomAbelianVarietyFq)->Map
+{returns underlying homormorphism of Deligne Moduels as a Z[F,V]-linear hom on the DeligneAlgebras}
+    return m`MapOnDeligneAlgebras;
 end intrinsic;
 
 intrinsic IsEndomorphism(m::HomAbelianVarietyFq)->BoolElt 
@@ -61,20 +85,6 @@ intrinsic IsEndomorphism(m::HomAbelianVarietyFq)->BoolElt
     return m`IsEndomorphism;
 end intrinsic;
 
-// intrinsic IsIsogeny(m::HomAbelianVarietyFq)->BoolElt,RngInt
-// {returns whether the morphism is an isogeny and if so it returns also the degree}
-//     if not assigned m`IsIsogeny then
-//         if IsogenyClass(Domain(m)) ne IsogenyClass(Codomain(m)) then
-//             return false,_;
-//         else
-//             h:=MapOnUniverseAlgebras(m);
-//             A:=UniverseAlgebra(Domain(m));
-//             //TODO
-//         end if;
-//     end if;
-//     return m`IsIsogeny[1],m`IsIsogeny[2];
-// end intrinsic;
-
 // TODO IsIsogeny, Degree, IsIsomorphsim 
 
 /////////////////////////////////////////////////////
@@ -82,28 +92,23 @@ end intrinsic;
 /////////////////////////////////////////////////////
 
 intrinsic Hom(A::AbelianVarietyFq,B::AbelianVarietyFq,map::Map : Check:=true)->HomAbelianVarietyFq
-{Creates a morphisms of abelian varieties A->B determined by map, where map is a morphisms of the universe algebras of A and B. The vararg Check allows to skip the test of the compatibility with the Frobenius.}
+{Creates a morphisms of abelian varieties A->B determined by map, where map is a morphisms of the DeligneAlgebras of A and B. The vararg Check allows to skip the test of the compatibility with the Frobenius.}
     IA:=IsogenyClass(A);
     IB:=IsogenyClass(B);
-    if (IsOrdinary(IA) and IsOrdinary(IB)) or (IsCentelgheStix(IA) and IsCentelgheStix(IB)) then
-        if Check then
-            FA:=MapOnUniverseAlgebras(FrobeniusEndomorphism(A));
-            FB:=MapOnUniverseAlgebras(FrobeniusEndomorphism(B));
-            UA:=UniverseAlgebra(A);
-            require UA eq Domain(map) and UniverseAlgebra(B) eq Codomain(map) and 
-                    forall{ i : i in [1..Dimension(UA)] | map(FA(UA.i)) eq FB(map(UA.i)) } //the map must be Frobanius-linear
-                              : "the map does not define a morphism of abelian varieties";
-        end if;
-        hom:=New(HomAbelianVarietyFq);
-        hom`Domain:=A;
-        hom`Codomain:=B;
-        hom`MapOnUniverseAlgebras:=map;
-        return hom;
-     elif IsSquarefree(IA) and IsSquarefree(IB) then
-        error "TODO";
-     else
-        error "not implemented";
-     end if;
+    require (IsOrdinary(IA) and IsOrdinary(IB)) or (IsCentelegheStix(IA) and IsCentelegheStix(IB)) : "The isogeny classes should both be ordinary or both be CentelegheStix";
+    if Check then
+        FA:=MapOnDeligneAlgebras(FrobeniusEndomorphism(A));
+        FB:=MapOnDeligneAlgebras(FrobeniusEndomorphism(B));
+        UA:=DeligneAlgebra(A);
+        require UA eq Domain(map) and DeligneAlgebra(B) eq Codomain(map) and 
+                forall{z:z in AbsoluteBasis(UA)|map(FA(z)) eq FB(map(z)) } //the map must be Frobanius-linear
+                          : "the map does not define a morphism of abelian varieties";
+    end if;
+    hom:=New(HomAbelianVarietyFq);
+    hom`Domain:=A;
+    hom`Codomain:=B;
+    hom`MapOnDeligneAlgebras:=map;
+    return hom;
 end intrinsic;
 
 /////////////////////////////////////////////////////
@@ -111,9 +116,9 @@ end intrinsic;
 /////////////////////////////////////////////////////
 
 intrinsic FrobeniusEndomorphism(A::AbelianVarietyFq)-> HomAbelianVarietyFq
-{ returns the Frobenius endomorphism (acting on the UniverseAlgebra) }
+{Returns the Frobenius endomorphism (acting on the DeligneAlgebra).}
     if not assigned A`FrobeniusEndomorphism then
-        FUA:=FrobeniusEndomorphism(IsogenyClass(A));
+        FUA:=FrobeniusEndomorphismOnDeligneAlgebra(IsogenyClass(A));
         A`FrobeniusEndomorphism:=Hom(A,A,FUA : Check:=false ); //the Check:=false is necessary to prevent a loop
     end if;
     return A`FrobeniusEndomorphism;

@@ -3,9 +3,31 @@
 freeze;
 
 /////////////////////////////////////////////////////
-// Isogeny functions and polarizations for fractional ideals
-// Stefano Marseglia, Utrecht University, stefano.marseglia89@gmail.com
+// Stefano Marseglia, stefano.marseglia89@gmail.com
 // https://stmar89.github.io/index.html
+// 
+// Distributed under the terms of the GNU Lesser General Public License (L-GPL)
+//      http://www.gnu.org/licenses/
+// 
+// This program is free software; you can redistribute it and/or modify
+// it under the terms of the GNU Lesser General Public License as published by
+// the Free Software Foundation; either version 3.0 of the License, or
+// (at your option) any later version.
+// 
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Lesser General Public License for more details.
+//
+// You should have received a copy of the GNU Lesser General Public License
+// along with this program; if not, write to the Free Software
+// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
+// 
+// Copyright 2024, S. Marseglia
+/////////////////////////////////////////////////////
+
+/////////////////////////////////////////////////////
+// Isogeny functions and polarizations for Deligne Modules
 // with the help of Edgar Costa
 /////////////////////////////////////////////////////
 
@@ -16,7 +38,7 @@ declare verbose IsogeniesPolarizations, 1;
 // Isogenies
 /////////////////////////////////////////////////////
 
-intrinsic IsogeniesManyOfDegree(AIS::SeqEnum[AbelianVarietyFq], AJ::AbelianVarietyFq, N::RngIntElt) -> SeqEnum[HomAbelianVarietyFq]
+intrinsic IsogeniesManyOfDegree(AIS::SeqEnum[AbelianVarietyFq], AJ::AbelianVarietyFq, N::RngIntElt) -> List
 {Given a sequence of source squarefree abelian varieties AIS, a target sqaurefree abelian varity AJ and a positive integet N, it returns for each AI in AIS if there exist an isogeny AI->AJ of degree N. For each AI in AIS, if there exists and isogeny AI->AJ, it is also returned a list of representatives of the isomorphism classes of pairs [*hom_x , K*] where: hom_x:AI->AJ, and K=xI subset J, with I and J the fractional ideals representing AI and AJ and x the element representing the isogeny.}
     
     I:=IsogenyClass(AJ);
@@ -24,7 +46,8 @@ intrinsic IsogeniesManyOfDegree(AIS::SeqEnum[AbelianVarietyFq], AJ::AbelianVarie
     require IsSquarefree(I) and (IsOrdinary(I) or IsCentelegheStix(I)): "implemented only for Squarefree isogeny classes ";
     DJ:=DirectSumRepresentation(DeligneModule(AJ))[1]; // squarefree case
     J:=DJ[1]; mJ:=DJ[2];
-    UA:=UniverseAlgebra(AJ);
+    J:=mJ(1)*J;
+    UA:=DeligneAlgebra(AJ);
 	isogenies_of_degree_N := [* [* *] : i in [1..#AIS] *];
 	for K in IdealsOfIndex(J, N) do
 		for i := 1 to #AIS do
@@ -32,9 +55,10 @@ intrinsic IsogeniesManyOfDegree(AIS::SeqEnum[AbelianVarietyFq], AJ::AbelianVarie
                 DISi:=DirectSumRepresentation(DeligneModule(AIS[i]))[1]; //squarefree case
                 ISi:=DISi[1]; mISi:=DISi[2];
                 test,x:=IsIsomorphic(K, ISi); //x*ISi=K
-                assert x*ISi eq K;
                 if test then
-                    hom_x:=Hom(AIS[i],AJ, hom<UA->UA | [ x*a : a in AbsoluteBasis(UA) ] >);
+                    assert x*ISi eq K;
+                    x:=x/mISi(1);
+                    hom_x:=Hom(AIS[i],AJ,Hom(UA,UA,[ x*a : a in AbsoluteBasis(UA)]));
                     hom_x`IsIsogeny:=<true, N>;
                     if N eq 1 then
                         hom_x`IsIsomorphism:=true;
@@ -49,7 +73,7 @@ intrinsic IsogeniesManyOfDegree(AIS::SeqEnum[AbelianVarietyFq], AJ::AbelianVarie
 	return isogenies_of_degree_N;
 end intrinsic;
 
-intrinsic IsogeniesOfDegree(A::AbelianVarietyFq, B::AbelianVarietyFq, N::RngIntElt)->BoolElt,SeqEnum[HomAbelianVarietyFq]
+intrinsic IsogeniesOfDegree(A::AbelianVarietyFq, B::AbelianVarietyFq, N::RngIntElt)->BoolElt,List
 {Given a source abelian variety A, a target abelian varity B and a positive integet N, it returns if there exist an isogeny A->B of degree N. If so it is also returned a list of representatives of the isormopshim classes of pairs [*hom_x , K*] where: hom_x:A->A, and K=xI subset J, with I and J the fractional ideals representing A and B and x the element representing the isogeny. At the moment it is implement ed only for squarefree abelin varieties.}
 	isogenies_of_degree_N := IsogeniesManyOfDegree([A], B, N);
 	return #isogenies_of_degree_N[1] ge 1, isogenies_of_degree_N[1];
@@ -66,7 +90,7 @@ intrinsic IsPolarization(pol::HomAbelianVarietyFq, phi::AlgEtQCMType : CheckOrdi
     if CheckOrdinary then
         require IsOrdinary(A) : "the input needs to be ordinary.";
     end if;
-    x0:=MapOnUniverseAlgebras(pol)(1); //the element of the UniverseAlgebra representing the map
+    x0:=MapOnDeligneAlgebras(pol)(1); //the element of the DeligneAlgebra representing the map
     //pol is a polarization if x0 is totally imaginary and \Phi-positive
     C := [g(x0): g in Homs(phi)];
     if (x0 eq -ComplexConjugate(x0) and forall{c : c in C | Im(c) gt 0}) then
@@ -84,13 +108,13 @@ intrinsic IsPrincipallyPolarized(A::AbelianVarietyFq, phi::AlgEtQCMType : CheckO
     end if;
 	S:=EndomorphismRing(A);
 	if S eq ComplexConjugate(S) then
-		return IsPolarized(A,phi,1);
+		return HasPolarizationsOfDegree(A,phi,1);
 	else
 		return false,[];
 	end if;
 end intrinsic;
 
-intrinsic PolarizationsOfDegree(A::AbelianVarietyFq,PHI::AlgEtQCMType,N::RngIntElt : CheckOrdinary:=true)->BoolElt, SeqEnum[HomAbelianVarietyFq]
+intrinsic HasPolarizationsOfDegree(A::AbelianVarietyFq,PHI::AlgEtQCMType,N::RngIntElt : CheckOrdinary:=true)->BoolElt, SeqEnum[HomAbelianVarietyFq]
 {Returns if the abelian variety has a polarization of degree N and if so it returns also all the non isomorphic polarizations.}
     require IsSquarefree(IsogenyClass(A)) : "implemented only for ordinary squarefree isogeny classes";
     if CheckOrdinary then
@@ -99,12 +123,11 @@ intrinsic PolarizationsOfDegree(A::AbelianVarietyFq,PHI::AlgEtQCMType,N::RngIntE
     if not IsSquare(N) then // the degree of a pol is always a square
         return false,[]; 
     end if;
-    UA:=UniverseAlgebra(A);
+    UA:=DeligneAlgebra(A);
     S:=EndomorphismRing(A);
-    assert UA eq Algebra(S);
     Av:=DualAbelianVariety(A);
     phi:=Homs(PHI);
-    assert Domain(phi[1]) eq UA;
+    assert Domain(phi[1]) eq Algebra(S);
 
 	boolean, isogenies_of_degree_N := IsogeniesOfDegree(A, Av, N);
 	if not boolean then
@@ -128,7 +151,7 @@ intrinsic PolarizationsOfDegree(A::AbelianVarietyFq,PHI::AlgEtQCMType,N::RngIntE
 
 	for elt in isogenies_of_degree_N do
 		// x*I = J
-		x := (MapOnUniverseAlgebras(elt[1]))(One(UA));
+		x := (MapOnDeligneAlgebras(elt[1]))(One(UA));
 		J := elt[2];
 		for uu in QinT do
 			pol := (x*(UA ! uu));
@@ -155,6 +178,20 @@ intrinsic PolarizationsOfDegree(A::AbelianVarietyFq,PHI::AlgEtQCMType,N::RngIntE
         pol`IsIsogeny:=<true,N>;
         Append(~output,pol);
     end for;
+
+    //tests
+    if GetAssertions() ge 1 then
+        DMA:=DeligneModule(A);
+        DMAv:=DeligneModule(Av);
+        _,m:=UniverseAlgebra(DMA);
+        R:=Order(DMA);
+        for pol in output do
+            image:=Module(R,m,[MapOnDeligneAlgebras(pol)(1)*z:z in ZBasis(DMA)]);
+            assert image subset DMAv;
+            assert Index(DMAv,image) eq N;
+        end for;
+    end if;
+
 	if #output ge 1 then
 		return true, output;
 	else
@@ -170,58 +207,6 @@ intrinsic PolarizedAutomorphismGroup(mu::HomAbelianVarietyFq : CheckOrdinary:=tr
         require IsOrdinary(A) : "the input needs to be ordinary.";
     end if;
     S:=EndomorphismRing(A);
-	return TorsionSubgroup(UnitGroup2(S));
+	return TorsionSubgroup(UnitGroup(S));
 end intrinsic;
-
-/* TEST
-
-//TODO move this tests somewher else ?
-    AttachSpec("~/packages_github/AbVarFq/packages.spec");
-    
-    //////////////////////////////////
-    //Example 7.2
-    //////////////////////////////////
-    
-    _<x>:=PolynomialRing(Integers());
-    h:=x^4+2*x^3-7*x^2+22*x+121;
-    AVh:=IsogenyClass(h);
-    iso:=ComputeIsomorphismClasses(AVh);
-    PHI:=pAdicPosCMType(AVh);
-    for iA in [1..#iso] do
-        A:=iso[iA];
-        N:=0;
-        repeat
-            printf ".";
-            N+:=1;
-            test,pols_deg_N:=IsPolarized(A,PHI,N);
-        until test;
-        for pol in pols_deg_N do
-            PeriodMatrix(pol,PHI);
-            aut:=#PolarizedAutomorphismGroup(pol);
-        end for;
-        iA,#pols_deg_N,N,aut;
-    end for;
-
-    //////////////////////////////////    
-    //Example 7.3
-    //////////////////////////////////
-    
-    _<x>:=PolynomialRing(Integers());
-    h:=x^6-2*x^5-3*x^4+24*x^3-15*x^2-50*x+125;
-    AVh:=IsogenyClass(h);
-    iso:=ComputeIsomorphismClasses(AVh);
-    PHI:=pAdicPosCMType(AVh);
-    for A in iso do
-        A;
-        test,princ_pols:=IsPrincipallyPolarized(A,PHI);
-        for pol in princ_pols do
-            assert IsPolarization(pol,PHI);
-            PolarizedAutomorphismGroup(pol);
-        end for;
-    end for;
-
-*/
-
-
-
 

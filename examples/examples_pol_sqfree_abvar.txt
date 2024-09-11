@@ -1,24 +1,26 @@
 /* vim: set syntax=magma : */
 
-///////////////////////////////////////////////////////////////////////////////////
-//                                                                               //
-// Stefano Marseglia, Utrecht University, stefano.marseglia89@gmail.com                      //
-// https://stmar89.github.io/index.html                                     //
-//                                                                               //
-// Code to compute the examples in the paper:                                    //
-// "Computing square-free polarized abelian varieties over finite fields"        //
-// accepted by Math. Comp. --- https://arxiv.org/abs/1805.10223                  //
-//                                                                               //
-///////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////
+//                                                                         //
+// Stefano Marseglia, stefano.marseglia89@gmail.com                        //
+// https://stmar89.github.io/index.html                                    //
+//                                                                         //
+// Code to compute the examples in the paper:                              //
+// "Computing square-free polarized abelian varieties over finite fields"  //
+// Mathematics of Computation 90 (2021), no. 328, 953–971.                 //
+// https://doi.org/10.1090/mcom/3594                                       //
+//                                                                         //
+/////////////////////////////////////////////////////////////////////////////
 
 //////////////
 // The packages are available at:
-// https://github.com/stmar89/AbVarFq
-//
-// The following examples where computed using the master branch on 20/07/2020
+// https://github.com/stmar89/
 //////////////
 
-    AttachSpec("~/packages_github/AbVarFq/packages.spec");
+    AttachSpec("~/AlgEt/spec");
+    AttachSpec("~/AlgEt/specMod");
+    AttachSpec("~/AlgEt/specMtrx");
+    AttachSpec("~/AbVarFq/spec");
 
 //////////////////////////////////
 //Example 7.2
@@ -27,7 +29,7 @@
     _<x>:=PolynomialRing(Integers());
     h:=x^4+2*x^3-7*x^2+22*x+121;
     AVh:=IsogenyClass(h);
-    iso:=ComputeIsomorphismClasses(AVh);
+    iso:=IsomorphismClasses(AVh);
     PHI:=pAdicPosCMType(AVh);
 
     for iA in [1..#iso] do
@@ -36,7 +38,7 @@
         repeat
             printf ".";
             N+:=1;
-            test,pols_deg_N:=IsPolarized(A,PHI,N);
+            test,pols_deg_N:=HasPolarizationsOfDegree(A,PHI,N);
         until test;
         for pol in pols_deg_N do
             aut:=#PolarizedAutomorphismGroup(pol);
@@ -59,21 +61,21 @@
         "Is Gorenstein?", IsGorenstein(S),
         "\tIs conj. stable?", S eq ComplexConjugate(S),
         "\tIndex in O:",Index(O,S),
-        "\tTors Units:",#TorsionSubgroup(UnitGroup2(S));
+        "\tTors Units:",#TorsionSubgroup(UnitGroup(S));
     end for;
     
-    iso:=ComputeIsomorphismClasses(AVh);
+    iso:=IsomorphismClasses(AVh);
     "There are",#iso, "isomorphism classes.";
     
     for iA in [1..#iso] do
         A:=iso[iA];
-        dir_sum:=DeligneModuleAsDirectSum(A);
+        dir_sum:=DirectSumRepresentation(DeligneModule(A));
         I:=dir_sum[1,1];
         map:=dir_sum[1,2];
         assert map(1) eq 1;
         S:=EndomorphismRing(A);
         assert S eq MultiplicatorRing(I);
-        "Is the ideal representing the",iA,"-th abelian variety invertible in its multiplicator ring?",IsInvertible(S!I);
+        "Is the ideal representing the",iA,"-th abelian variety invertible in its multiplicator ring?",IsInvertible(S!!I);
     end for;
         
     "We compute a CM-type with the prescribed p-adic positivity:";
@@ -104,11 +106,11 @@
         "Is Gorenstein?", IsGorenstein(S),
         "\tIs conj. stable?", S eq ComplexConjugate(S),
         "\tIndex in O:",Index(O,S),
-        "\tTors Units:",#TorsionSubgroup(UnitGroup2(S));
+        "\tTors Units:",#TorsionSubgroup(UnitGroup(S));
     end for;
     
     "We compute the isomorphism classes with endomorphism ring which is conjugate stable";
-    iso:=&cat[ ComputeIsomorphismClassesWithEndomorphismRing(AVh,S) : S in over_orders | ComplexConjugate(S) eq S];
+    iso:=[ A : A in IsomorphismClasses(AVh) | ComplexConjugate(S) eq S where S:=EndomorphismRing(A)];
     "There are",#iso, "such isomorphism classes.";
     
            
@@ -126,8 +128,9 @@
     end for; 
 
     "we notice that there are abelian varieties with the same endomorphism ring whose groups of points are not isomorphic";
+    iso:=IsomorphismClasses(AVh);
     for S in over_orders do if not IsGorenstein(S) then
-        iso_S:=ComputeIsomorphismClassesWithEndomorphismRing(AVh,S);
+        iso_S:=[A: A in iso|EndomorphismRing(A) eq S];
         group_of_points:={ ElementaryDivisors(RationalPoints(A)) : A in iso_S };
         if #group_of_points ne 1 then
             "here are the elementary divisors of the groups we find";
@@ -144,9 +147,8 @@
     AVh:=IsogenyClass(h);
     "The isogeny class determined by the polynomial ",WeilPolynomial(AVh),"is defined over ",FiniteField(AVh)," and has dimension ",Dimension(AVh);
 
-    over_orders:=FindOverOrders(ZFVOrder(AVh));
     "We compute the isomorphism classes with endomorphism ring which is conjugate stable";
-    iso:=&cat[ ComputeIsomorphismClassesWithEndomorphismRing(AVh,S) : S in over_orders | ComplexConjugate(S) eq S];
+    iso:=[ A : A in IsomorphismClasses(AVh) | ComplexConjugate(S) eq S where S:=EndomorphismRing(A)];
     "There are",#iso, "such isomorphism classes.";
     
     "We compute a CM-type with the prescribed p-adic positivity:";
