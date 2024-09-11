@@ -25,7 +25,7 @@ Please send comments and bug reports to `stefano.marseglia89@gmail.com`.
 Details
 --
 
-For complete descriptions and more details we refer to the [`List of commands`](https://github.com/stmar89/AlgEt/blob/main/doc/ListOfCommandsAbVarFq.md).
+For complete descriptions and more details we refer to the [`List of commands`](https://github.com/stmar89/AbVarFq/blob/main/doc/ListOfCommands.md).
 To use them, use the magma command `AttachSpec("spec")`, after opening magma in the folder where you have downloaded the repo.
 
 In the folder [`examples`](https://github.com/stmar89/AbVarFq/blob/main/examples), you will find files containing the code to reproduce the examples from the papers in the references below, which should be of help to get a quick start on the functionalities.
