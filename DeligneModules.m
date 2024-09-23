@@ -41,6 +41,8 @@ declare attributes IsogenyClassFq :
 
 declare attributes AbelianVarietyFq : DeligneModule; //of type AlgEtQMod
 
+forward IsomDataCommEndAlg;
+
 /////////////////////////////////////////////////////
 // New Type AbelianVarietyFq
 /////////////////////////////////////////////////////
@@ -185,7 +187,7 @@ intrinsic 'eq'( A1 :: AbelianVarietyFq , A2 :: AbelianVarietyFq ) -> BoolElt
         if IsOrdinary(I) or IsCentelegheStix(I) then
             return DeligneModule(A1) eq DeligneModule(A2);
         elif IsSquarefree(I) then
-            error "TODO";
+            return IsomDataCommEndAlg(A1) eq IsomDataCommEndAlg(A2);
         else
             error "not implemented yet";
         end if;

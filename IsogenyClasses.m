@@ -236,7 +236,6 @@ end intrinsic;
 intrinsic 'eq'(AVh1::IsogenyClassFq , AVh2::IsogenyClassFq ) -> BoolElt
 {Checks if the Weil polynomials are the same. It controls that the Universe algbras and ZFV orders are equal as well (to avoid double definitions).}
     if WeilPolynomial(AVh1) eq WeilPolynomial(AVh2) then
-        assert DeligneAlgebra(AVh1) eq DeligneAlgebra(AVh2);
         assert ZFVOrder(AVh1) eq ZFVOrder(AVh2);
         return true;
     else

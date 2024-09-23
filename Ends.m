@@ -46,7 +46,7 @@ intrinsic EndomorphismRing(A::AbelianVarietyFq)-> AlgEtQOrd
         if IsOrdinary(I) or IsCentelegheStix(I) then
             A`EndomorphismRing:=compute_multiplicator_overorder(DeligneModule(A));
         elif IsSquarefree(I) then
-            error "TODO"; //from the new paper
+            return A`EndomorphismRing;
         else
             error "not implemented yet";
         end if;

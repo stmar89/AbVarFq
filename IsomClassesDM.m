@@ -26,6 +26,8 @@ freeze;
 // Copyright 2024, S. Marseglia
 /////////////////////////////////////////////////////
 
+forward IsomorphismClassesCommEndAlg;
+
 /////////////////////////////////////////////////////
 // Abelian varieties and Isogeny classes
 /////////////////////////////////////////////////////
@@ -45,7 +47,7 @@ intrinsic IsIsomorphic(A1::AbelianVarietyFq,A2::AbelianVarietyFq) -> BoolElt,Hom
                 return false,_;
             end if;
         elif IsSquarefree(I) then
-            error "TODO"; 
+            error "not implemented"; // as of 20240912 we don't have this functionality implemented. probably it will come in the future.
         else
             error "not implemented"; 
         end if; 
@@ -59,17 +61,16 @@ end intrinsic;
 // Compute all isomorphism classes in a given Isogeny class
 /////////////////////////////////////////////////////
 
-intrinsic IsomorphismClasses( AVh::IsogenyClassFq )->SeqEnum[AbelianVarietyFq]
+intrinsic IsomorphismClasses(AVh::IsogenyClassFq)->SeqEnum[AbelianVarietyFq]
 {Computes a list of representatives of isomorphisms classes of abelian varieties in the given isogeny class.}
     if not assigned AVh`IsomorphismClasses then
-        h:=WeilPolynomial(AVh);
-        _,map:=DeligneAlgebra(AVh);
-        R:=ZFVOrder(AVh);
         if IsOrdinary(AVh) or IsCentelegheStix(AVh) then
+            _,map:=DeligneAlgebra(AVh);
+            R:=ZFVOrder(AVh);
             isom_DMs:=IsomorphismClasses(R,map);
             AVh`IsomorphismClasses:=[AbelianVarietyFromDeligneModule(AVh,M):M in isom_DMs];
         elif IsSquarefree(AVh) then
-            error "TODO"; 
+            AVh`IsomorphismClasses:=IsomorphismClassesCommEndAlg(AVh); 
         else
             error "not implemented for such an isogeny class"; 
         end if;
