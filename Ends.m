@@ -40,13 +40,16 @@ declare attributes AbelianVarietyFq : EndomorphismRing;
 
 intrinsic EndomorphismRing(A::AbelianVarietyFq)-> AlgEtQOrd
 {Returns Endomorphism ring of the abelian variety.}
-    require IsSquarefree(IsogenyClass(A)):"at the moment it is implemented only for squarefree abelian varieties";
     I:=IsogenyClass(A);
     if not assigned A`EndomorphismRing then
         if IsOrdinary(I) or IsCentelegheStix(I) then
-            A`EndomorphismRing:=compute_multiplicator_overorder(DeligneModule(A));
-        elif IsSquarefree(I) then
-            return A`EndomorphismRing;
+            DM:=DeligneModule(A);
+            if IsSquarefree(I) then
+                I:=DirectSumRepresentation(DM)[1,1];
+                A`EndomorphismRing:=MultiplicatorRing(I);
+            else
+                A`EndomorphismRing:=compute_multiplicator_overorder(DM);
+            end if;
         else
             error "not implemented yet";
         end if;
