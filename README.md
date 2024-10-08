@@ -11,9 +11,8 @@ The main functionalities are:
 
 For the theory on which this code is based, see the `References` section at the bottom.
 
-This package requires the package [`AlgEt`](https://github.com/stmar89/AlgEt).
-
-There are two expansions to:
+This package requires the package [`AlgEt`](https://github.com/stmar89/AlgEt) and the two expansions listed below.
+They have been developed to:
 - compute polarizations not just in the ordinary case, but also over a prime field, when the Weil polynomial is squarefree: see [`PolsAbVarFpCanLift`](https://github.com/stmar89/PolsAbVarFpCanLift);
 - compute unpolarized isomorphism classes with squarefree Weil polynomial (i.e. commutative endomorphism algebra) with no further assuptions: see [`IsomClassesAbVarFqComEnd`](https://github.com/stmar89/IsomClassesAbVarFqComEnd).
 We refer to the documention in there for more details.

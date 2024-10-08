@@ -41,8 +41,6 @@ declare attributes IsogenyClassFq :
 
 declare attributes AbelianVarietyFq : DeligneModule; //of type AlgEtQMod
 
-forward IsomDataCommEndAlg;
-
 /////////////////////////////////////////////////////
 // New Type AbelianVarietyFq
 /////////////////////////////////////////////////////
