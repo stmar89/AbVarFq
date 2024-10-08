@@ -6,7 +6,8 @@
     AttachSpec("~/AlgEt/specMod");
     AttachSpec("~/AlgEt/specMtrx");
     AttachSpec("~/AbVarFq/spec");
-    /*
+    AttachSpec("~/IsomClAbVarFqCommEndAlg/spec");
+
     //////////////////////////////////
     // Isomorphism Classes (with Deligne Modules)
     //////////////////////////////////
@@ -47,11 +48,6 @@
     //////////////////////////////////
     // CMTypes
     //////////////////////////////////
-
-    AttachSpec("~/AlgEt/spec");
-    AttachSpec("~/AlgEt/specMod");
-    AttachSpec("~/AlgEt/specMtrx");
-    AttachSpec("~/AbVarFq/spec");
 
     _<x>:=PolynomialRing(Integers());
     polys:=[
@@ -101,11 +97,6 @@
     //////////////////////////////////
     // Polarizations
     //////////////////////////////////
-
-    AttachSpec("~/AlgEt/spec");
-    AttachSpec("~/AlgEt/specMod");
-    AttachSpec("~/AlgEt/specMtrx");
-    AttachSpec("~/AbVarFq/spec");
 
     //Example 7.2
     
@@ -202,19 +193,12 @@
         #iso_S;
         { ElementaryDivisors(RationalPoints(A)) : A in iso_S};
     end if; end for;
-    */
-
     
     //////////////////////////////////
     // Base Field Ext
     //////////////////////////////////
     
     SetDebugOnError(true);
-
-    AttachSpec("~/AlgEt/spec");
-    AttachSpec("~/AlgEt/specMod");
-    AttachSpec("~/AlgEt/specMtrx");
-    AttachSpec("~/AbVarFq/spec");
 
     P<x>:=PolynomialRing(Integers());
 
