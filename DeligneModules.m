@@ -109,7 +109,7 @@ intrinsic AbelianVarietyFromDeligneModule( AVh::IsogenyClassFq , I::AlgEtQIdl )-
     require R eq Order(I):"The fractional ideal is not defined over the order Z[F,V] of the given isogeny class.";
     AV:=New(AbelianVarietyFq);
     AV`IsogenyClass:=AVh;
-    AV`DeligneModule:=ModuleFromDirectSum(R,map,<I,map>);
+    AV`DeligneModule:=ModuleFromDirectSum(R,map,[<I,map>]);
     return AV;
 end intrinsic;
 
