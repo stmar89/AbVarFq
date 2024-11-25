@@ -91,14 +91,16 @@ end intrinsic;
 // Creation
 /////////////////////////////////////////////////////
 
-intrinsic Hom(A::AbelianVarietyFq,B::AbelianVarietyFq,map::Map : Check:=true)->HomAbelianVarietyFq
+intrinsic Hom(A::AbelianVarietyFq,B::AbelianVarietyFq,map::Map : CheckCompatibleWithFrobenius:=true, CheckOrdinaryCentelegheStix:=true)->HomAbelianVarietyFq
 {Creates a morphisms of abelian varieties A->B determined by map, where map is a morphisms of the DeligneAlgebras of A and B. The vararg Check allows to skip the test of the compatibility with the Frobenius.}
     IA:=IsogenyClass(A);
     IB:=IsogenyClass(B);
-    require (IsOrdinary(IA) and IsOrdinary(IB)) or (IsCentelegheStix(IA) and IsCentelegheStix(IB)) : "The isogeny classes should both be ordinary or both be CentelegheStix.";
-    if Check then
-        FA:=MapOnDeligneAlgebras(FrobeniusEndomorphism(A));
-        FB:=MapOnDeligneAlgebras(FrobeniusEndomorphism(B));
+    if CheckOrdinaryCentelegheStix then
+        require (IsOrdinary(IA) and IsOrdinary(IB)) or (IsCentelegheStix(IA) and IsCentelegheStix(IB)) : "The isogeny classes should both be ordinary or both be CentelegheStix.";
+    end if;
+    if CheckCompatibleWithFrobenius then
+        FA:=MapOnDeligneAlgebras(FrobeniusEndomorphism(A : CheckOrdinaryCentelegheStix:=CheckOrdinaryCentelegheStix));
+        FB:=MapOnDeligneAlgebras(FrobeniusEndomorphism(B : CheckOrdinaryCentelegheStix:=CheckOrdinaryCentelegheStix));
         UA:=DeligneAlgebra(A);
         require UA eq Domain(map) and DeligneAlgebra(B) eq Codomain(map) and 
                 forall{z:z in AbsoluteBasis(UA)|map(FA(z)) eq FB(map(z)) } //the map must be Frobanius-linear
@@ -115,11 +117,11 @@ end intrinsic;
 // Frobenius
 /////////////////////////////////////////////////////
 
-intrinsic FrobeniusEndomorphism(A::AbelianVarietyFq)-> HomAbelianVarietyFq
+intrinsic FrobeniusEndomorphism(A::AbelianVarietyFq : CheckOrdinaryCentelegheStix:=true)-> HomAbelianVarietyFq
 {Returns the Frobenius endomorphism (acting on the DeligneAlgebra).}
     if not assigned A`FrobeniusEndomorphism then
         FUA:=FrobeniusEndomorphismOnDeligneAlgebra(IsogenyClass(A));
-        A`FrobeniusEndomorphism:=Hom(A,A,FUA : Check:=false ); //the Check:=false is necessary to prevent a loop
+        A`FrobeniusEndomorphism:=Hom(A,A,FUA : CheckCompatibleWithFrobenius:=false, CheckOrdinaryCentelegheStix:=CheckOrdinaryCentelegheStix ); //the Check:=false is necessary to prevent a loop
     end if;
     return A`FrobeniusEndomorphism;
 end intrinsic;
