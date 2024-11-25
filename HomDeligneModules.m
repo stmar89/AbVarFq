@@ -95,7 +95,7 @@ intrinsic Hom(A::AbelianVarietyFq,B::AbelianVarietyFq,map::Map : Check:=true)->H
 {Creates a morphisms of abelian varieties A->B determined by map, where map is a morphisms of the DeligneAlgebras of A and B. The vararg Check allows to skip the test of the compatibility with the Frobenius.}
     IA:=IsogenyClass(A);
     IB:=IsogenyClass(B);
-    require (IsOrdinary(IA) and IsOrdinary(IB)) or (IsCentelegheStix(IA) and IsCentelegheStix(IB)) : "The isogeny classes should both be ordinary or both be CentelegheStix";
+    require (IsOrdinary(IA) and IsOrdinary(IB)) or (IsCentelegheStix(IA) and IsCentelegheStix(IB)) : "The isogeny classes should both be ordinary or both be CentelegheStix.";
     if Check then
         FA:=MapOnDeligneAlgebras(FrobeniusEndomorphism(A));
         FB:=MapOnDeligneAlgebras(FrobeniusEndomorphism(B));
