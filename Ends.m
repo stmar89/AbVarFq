@@ -42,7 +42,7 @@ intrinsic EndomorphismRing(A::AbelianVarietyFq)-> AlgEtQOrd
 {Returns Endomorphism ring of the abelian variety.}
     I:=IsogenyClass(A);
     if not assigned A`EndomorphismRing then
-        if IsOrdinary(I) or IsCentelegheStix(I) then
+        if IsOrdinary(I) or IsAlmostOrdinary(I) or IsCentelegheStix(I) then
             DM:=DeligneModule(A);
             if IsSquarefree(I) then
                 I:=DirectSumRepresentation(DM)[1,1];
