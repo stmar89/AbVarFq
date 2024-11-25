@@ -50,6 +50,9 @@ intrinsic EndomorphismRing(A::AbelianVarietyFq)-> AlgEtQOrd
             else
                 A`EndomorphismRing:=compute_multiplicator_overorder(DM);
             end if;
+        elif IsSquarefree(I) then
+            _,_,_,S:=IsomDataCommEndAlg(A);
+            A`EndomorphismRing:=S;
         else
             error "not implemented yet";
         end if;

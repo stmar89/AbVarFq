@@ -38,7 +38,7 @@ declare verbose AbelianVarieties, 1;
 
 intrinsic DualAbelianVariety(A::AbelianVarietyFq)->AbelianVarietyFq
 {Given an abelian variety A returns the dual abelian variety. The isogeny class needs to be ordinary or Centelghe-Stix.}
-    require IsOrdinary(A) or IsCentelegheStix(IsogenyClass(A)): "implemented only for ordinary/CentelgehsStix isogeny classes";
+    require IsOrdinary(A) or IsAlmostOrdinary(A) or IsCentelegheStix(A): "Implemented only for ordinary/almost ordinary/CentelgehsStix isogeny classes";
     B:=ZBasis(DeligneModule(A));
     n:=#B;
     Q:=Matrix([[Trace(B[i]*B[j]): i in [1..n] ] : j in [1..n]]);
