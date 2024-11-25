@@ -45,10 +45,9 @@ declare attributes AbelianVarietyFq : DeligneModule; //of type AlgEtQMod
 // New Type AbelianVarietyFq
 /////////////////////////////////////////////////////
 
-intrinsic DeligneAlgebra( I::IsogenyClassFq )-> AlgEtQ,Map
-{Given an isogeny class AV(h), defined by the Weil polynomial h with factorization over Q equal to h=g1^s1*...*gn^sn, it returns the algebra V=prod_i=1^n (Q[x]/gi)^si, where the DeligneModules live, together with the componentwise diagonal action of ZFV}
+intrinsic DeligneAlgebra(I::IsogenyClassFq)-> AlgEtQ,Map
+{Given an isogeny class AV(h), defined by the Weil polynomial h with factorization over Q equal to h=g1^s1*...*gn^sn, it returns the algebra V=prod_i=1^n (Q[x]/gi)^si, where the DeligneModules live (if ordinary of CentelgeheStix), together with the componentwise diagonal action of ZFV.}
     if not assigned I`DeligneAlgebra then
-        require IsOrdinary(I) or IsCentelegheStix(I) : "The isogeny class needs to be ordinary or CentelegheStix";
         E:=Algebra(ZFVOrder(I));
         h:=WeilPolynomial(I);
         if IsSquarefree(h) then

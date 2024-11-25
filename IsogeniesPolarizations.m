@@ -33,7 +33,6 @@ freeze;
 
 declare verbose IsogeniesPolarizations, 1;
 
-
 /////////////////////////////////////////////////////
 // Isogenies
 /////////////////////////////////////////////////////
@@ -53,7 +52,8 @@ intrinsic IsogeniesManyOfDegree(AIS::SeqEnum[AbelianVarietyFq], AJ::AbelianVarie
 		for i := 1 to #AIS do
             if IsogenyClass(AIS[i]) eq IsogenyClass(AJ) then
                 DISi:=DirectSumRepresentation(DeligneModule(AIS[i]))[1]; //squarefree case
-                ISi:=DISi[1]; mISi:=DISi[2];
+                ISi:=DISi[1]; 
+                mISi:=DISi[2];
                 test,x:=IsIsomorphic(K, ISi); //x*ISi=K
                 if test then
                     assert x*ISi eq K;

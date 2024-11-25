@@ -96,9 +96,11 @@ is_pure_product:=function(V)
     return true,embs,projs;
 end function;
 
-intrinsic BaseFieldExtension(I::IsogenyClassFq, Ie::IsogenyClassFq : prec:=3000 )->Map
+intrinsic BaseFieldExtension(I::IsogenyClassFq, Ie::IsogenyClassFq : prec:=3000, CheckIsOrdinary:=true )->Map
 {Given a squarefree ordinary isogeny class I over Fq and Ie which is the base field extension to F_q^r, the map from the DeligneAlgebra of I to the one of Ie. The Weil polynomials of I and of Ie need to be pure powers of squarefree polynomials. The VarArg prec determines the precision to which the complex roots of the Weil polynomial are computed in order to extend it.}
-    require IsOrdinary(I) : "The input isogeny class needs to be ordinary";
+    if CheckIsOrdinary then
+        require IsOrdinary(I) : "The input isogeny class needs to be ordinary";
+    end if;
     r:=Ilog(FiniteField(I),FiniteField(Ie));
     require WeilPolynomial(Ie) eq BaseFieldExtension(WeilPolynomial(I),r : prec:=prec ) : "Ie is not a base field extension of I";
     fac:=Factorization(WeilPolynomial(I));
@@ -139,9 +141,11 @@ intrinsic BaseFieldExtension(I::IsogenyClassFq, Ie::IsogenyClassFq : prec:=3000 
     return Inverse(m);
 end intrinsic;
 
-intrinsic BaseFieldExtension(AVh::IsogenyClassFq, r::RngIntElt : prec:=3000 )->IsogenyClassFq,Map
+intrinsic BaseFieldExtension(AVh::IsogenyClassFq, r::RngIntElt : prec:=3000, CheckIsOrdinary:=true )->IsogenyClassFq,Map
 {Given a squarefree ordinary isogeny class AV(h) and a positive integer r, it returns the isogeny class AV(hr) and maps mUA from the DeligneAlgebra of the AV(h) to the one of AV(hr). The Weil polynomials of AV(h) and of the extension AV(h^r) need to be pure powers of a squarefree polynomials. The VarArg prec determines the precision to which the complex roots of the Weil polynomial are computed in order to extend it.}
-    require IsOrdinary(AVh) : "The input isogeny class needs to be ordinary";
+    if CheckIsOrdinary then
+        require IsOrdinary(I) : "The input isogeny class needs to be ordinary";
+    end if;
     hr:=BaseFieldExtension(WeilPolynomial(AVh),r : prec:=prec);
     AVhr:=IsogenyClass(hr);
     return AVhr,BaseFieldExtension(AVh,AVhr : prec:=prec );
@@ -193,9 +197,11 @@ end intrinsic;
 // Extend AbelianVarietyFq
 // ------------------- //
 
-intrinsic BaseFieldExtension(A::AbelianVarietyFq, Ie::IsogenyClassFq, me::Map)->AbelianVarietyFq
+intrinsic BaseFieldExtension(A::AbelianVarietyFq, Ie::IsogenyClassFq, me::Map: CheckIsOrdinary:=true)->AbelianVarietyFq
 {Given an ordinary abelian variety A in the isogeny class I, the base field extension Ie of I, together with the map me from the DeligneAlgebra(I) to the DeligneAlgebra(Ie), it returns the base field extension Ae of A in Ie. The Weil polynomial of I and of Ie need to be pure powers of squarefree polynomials.}
-    require IsOrdinary(A) : "The abelian variety needs to be ordinary";
+    if CheckIsOrdinary then
+        require IsOrdinary(A) : "The abelian variety needs to be ordinary";
+    end if;
     require WeilPolynomial(Ie) eq BaseFieldExtension(WeilPolynomial(A),Ilog(FiniteField(A),FiniteField(Ie))) : "the given abelin variety does not extend to Ie";
     require Domain(me) eq DeligneAlgebra(IsogenyClass(A)) and Codomain(me) eq DeligneAlgebra(Ie) : "the input does not correspond to a base field extension data"; 
         return AbelianVarietyFromDeligneModule(Ie,[me(g) : g in ZBasis(DeligneModule(A))]);
@@ -217,9 +223,11 @@ end intrinsic;
 // Instrinsic: IsTwistOfOrder
 // ------------------- //
 
-intrinsic IsTwistOfOrder( A1::AbelianVarietyFq, A2::AbelianVarietyFq, r :: RngIntElt )-> BoolElt,HomAbelianVarietyFq
+intrinsic IsTwistOfOrder(A1::AbelianVarietyFq, A2::AbelianVarietyFq, r::RngIntElt : CheckIsOrdinary:=true)-> BoolElt,HomAbelianVarietyFq
 {Given two ordinary abelian varieties A1 and A2 (possibly non isogenous) over Fq checks itf they are twist of order r, that is, if they become isomorphic after a base field extension to F_q^r. The Weil polynomials of A1 and A2 and of their extensions need to be pure power of squarefree polynomials. This is the case, for example, if they are simple.}
-    require IsOrdinary(A1) and IsOrdinary(A2) : "The abelian varieties need to be ordinary";
+    if CheckIsOrdinary then
+        require IsOrdinary(A1) and IsOrdinary(A2) : "The abelian varieties need to be ordinary";
+    end if;
     Ie,me:=BaseFieldExtension(IsogenyClass(A1),r);
     Ie2,_:=BaseFieldExtension(IsogenyClass(A2),r);
     if WeilPolynomial(Ie) eq WeilPolynomial(Ie2) then
