@@ -42,7 +42,7 @@ intrinsic AllCMTypes(AVh::IsogenyClassFq : precCC := 30 ) -> SeqEnum[AlgEtQCMTyp
 {Returns all the AlgEtQCMType of Algebra(ZFVOrder(AVh)).}
     if not assigned AVh`AllCMTypes then
         A:=Algebra(ZFVOrder(AVh));
-        cc:=CartesianProduct(Partition([ h: h in HomsToC(A : Prec:=precCC )],2));
+        cc:=CartesianProduct(Partition([ h: h in HomsToC(A : Precision:=precCC )],2));
         cc:=[ [ci : ci in c] : c in cc ]; //from tuple to seq
         AVh`AllCMTypes:=[ CreateCMType(c) : c in cc ];
     end if;
@@ -65,7 +65,7 @@ intrinsic pAdicPosCMType(AVh::IsogenyClassFq : precpAdic := 30, precCC := 30 ) -
         rtspp,rtsCC:=pAdicToComplexRoots(PolynomialRing(Rationals())!h,p : precpAdic := precpAdic, precCC:=precCC ); //from paddictocc.m. works only for ordinary
         // rtspp and rtsCC are the padic and CC roots of h, sorted G-eqivariantly.
         A:=Algebra(ZFVOrder(AVh));
-        homs:=HomsToC(A : Prec:=precCC );
+        homs:=HomsToC(A : Precision:=precCC );
         FA:=PrimitiveElement(A);
         homs_FA:=[Parent(rtsCC[1])!h(FA) : h in homs ];
         cmtype_homs:=[ ];
