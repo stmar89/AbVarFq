@@ -144,7 +144,7 @@ end intrinsic;
 intrinsic BaseFieldExtension(AVh::IsogenyClassFq, r::RngIntElt : prec:=3000, CheckIsOrdinary:=true )->IsogenyClassFq,Map
 {Given a squarefree ordinary isogeny class AV(h) and a positive integer r, it returns the isogeny class AV(hr) and maps mUA from the DeligneAlgebra of the AV(h) to the one of AV(hr). The Weil polynomials of AV(h) and of the extension AV(h^r) need to be pure powers of a squarefree polynomials. The VarArg prec determines the precision to which the complex roots of the Weil polynomial are computed in order to extend it.}
     if CheckIsOrdinary then
-        require IsOrdinary(I) : "The input isogeny class needs to be ordinary";
+        require IsOrdinary(AVh) : "The input isogeny class needs to be ordinary";
     end if;
     hr:=BaseFieldExtension(WeilPolynomial(AVh),r : prec:=prec);
     AVhr:=IsogenyClass(hr);
