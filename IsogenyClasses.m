@@ -132,9 +132,6 @@ intrinsic IsogenyClass( h::RngUPolElt : Check:=true ) -> IsogenyClassFq
 
     I:=New(IsogenyClassFq);
     I`WeilPolynomial:=h;
-    if assigned fac then
-        I`WeilPolynomialFactorization:=fac;
-    end if;
     return I;
 end intrinsic;
 
