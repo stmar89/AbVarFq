@@ -66,7 +66,7 @@ declare attributes IsogenyClassFq :
 // Testing if a poly is a Weil/char poly
 /////////////////////////////////////////////////////
 
-intrinsic IsWeil(f::RngUPolElt : Precision:=30) -> BoolElt,RngIntElt,RngIntElt,RngIntElt
+intrinsic IsWeil(f::RngUPolElt : Precision:=Precision(GetDefaultRealField())) -> BoolElt,RngIntElt,RngIntElt,RngIntElt
 {Returns whether f is a q-WeilPolynomial, q,p and e, where q=p^e is a prime power polynomial. A polynomial is q-Weil if all the roots have complex absolute value q^(1/2). The check is done with precision "Precision" given as optional parameter (default precision is 30)}
 	require forall{c :c in Coefficients(f) | IsIntegral(c)} and IsEven(Degree(f)): "the input must be an integral polynomial of even degree";
 	roots:=Roots(f,ComplexField(Precision));
@@ -299,7 +299,7 @@ intrinsic IsAlmostOrdinary(A::AbelianVarietyFq)->BoolElt
     return pRank(A) eq Dimension(A)-1;
 end intrinsic;
 
-intrinsic IsCentelegheStix(I::IsogenyClassFq : Precision:=30 )->BoolElt 
+intrinsic IsCentelegheStix(I::IsogenyClassFq : Precision:=Precision(GetDefaultRealField()) )->BoolElt 
 {Returns whether the isogeny class is Centeleghe-Stix, that is, defined over Fp and the Weil poly has no real roots.}
     if not assigned I`IsCentelegheStix then
         q:=FiniteField(I);
@@ -314,7 +314,7 @@ intrinsic IsCentelegheStix(I::IsogenyClassFq : Precision:=30 )->BoolElt
     return I`IsCentelegheStix;
 end intrinsic;
 
-intrinsic IsCentelegheStix(I::AbelianVarietyFq : Precision:=30 )->BoolElt
+intrinsic IsCentelegheStix(I::AbelianVarietyFq : Precision:=Precision(GetDefaultRealField()) )->BoolElt
 {Returns whether the abelian variety is Centeleghe-Stix, that is, defined over Fp and the Weil poly has no real roots.}
     return IsCentelegheStix(IsogenyClass(I));
 end intrinsic;

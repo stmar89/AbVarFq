@@ -38,7 +38,7 @@ declare verbose CMAlgEt, 1;
 
 declare attributes IsogenyClassFq : AllCMTypes;
 
-intrinsic AllCMTypes(AVh::IsogenyClassFq : precCC := 30 ) -> SeqEnum[AlgEtQCMType]
+intrinsic AllCMTypes(AVh::IsogenyClassFq : precCC := Precision(GetDefaultRealField()) ) -> SeqEnum[AlgEtQCMType]
 {Returns all the AlgEtQCMType of Algebra(ZFVOrder(AVh)).}
     if not assigned AVh`AllCMTypes then
         A:=Algebra(ZFVOrder(AVh));
@@ -56,7 +56,7 @@ end intrinsic;
 declare attributes IsogenyClassFq : pAdicPosCMType; //this will be of type 'AlgEtQCMType'
 declare attributes AlgEtQCMType : pAdicData; // it stores a tuple < p,rrtspp,rtsCC > where p is a prime and rtspp and rtsCC are p-adic and complex roots of the defining polynomial sorted according to a Galois-equivariant bijection. This boils down to determine the restriction of an embedding \bar Qp into CC.
 
-intrinsic pAdicPosCMType(AVh::IsogenyClassFq : precpAdic := 30, precCC := 30 ) -> AlgEtQCMType
+intrinsic pAdicPosCMType(AVh::IsogenyClassFq : precpAdic := 30, precCC := Precision(GetDefaultRealField()) ) -> AlgEtQCMType
 {Given an ordinary isogeny class AVh, it computes a AlgEtQCMType of the Algebra determined by the Frobenius of AVh such that the Frobenius has positive p-adic valuation according to some embedding of \barQp in C. The varargs precpAdic and precCC specify (minimum) output padic and complex precision.}
     if not assigned AVh`pAdicPosCMType then
         require IsOrdinary(AVh) : "implemented only for ordinary isogeny classes";
