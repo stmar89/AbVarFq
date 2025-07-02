@@ -151,11 +151,11 @@ intrinsic BaseFieldExtension(AVh::IsogenyClassFq, r::RngIntElt : prec:=3000, Che
     return AVhr,BaseFieldExtension(AVh,AVhr : prec:=prec );
 end intrinsic;
     
-intrinsic IsBaseFieldExtensionOf(Ie::IsogenyClassFq : Precision:=300)->SeqEnum
-{Given an isogeny class over F_(p^r) it returns the sequence of all isogeny classes over FF_(p^s) that extend to Ie. The computations is done by looking at the roots of the Weil polynomial of Ie. The precision of such computations can be set by using the vararg "Precision". }
+intrinsic IsBaseFieldExtensionOf(Ie::IsogenyClassFq : prec:=300)->SeqEnum
+{Given an isogeny class over F_(p^r) it returns the sequence of all isogeny classes over FF_(p^s) that extend to Ie. The computations is done by looking at the roots of the Weil polynomial of Ie. The precision of such computations can be set by using the vararg "prec". }
     if not assigned Ie`IsBaseFieldExtensionOf then
         P:=PolynomialRing(Integers());
-        PC<x>:=PolynomialRing(ComplexField(Precision));
+        PC<x>:=PolynomialRing(ComplexField(prec));
         he:=WeilPolynomial(Ie);
         rr:=Roots(PC!he);
         _,p,r:=IsPrimePower(FiniteField(Ie));
@@ -166,7 +166,7 @@ intrinsic IsBaseFieldExtensionOf(Ie::IsogenyClassFq : Precision:=300)->SeqEnum
             for c in ccsq do 
                 coCC:=Coefficients(&*[ x-cc[1] : cc in c ]); 
                 coZZ:=[ Round(Re(c)) : c in coCC ];
-                if forall{ i : i in [1..#coCC] | Abs(coCC[i] - coZZ[i]) lt 10^(-(Precision div 2)) } then
+                if forall{ i : i in [1..#coCC] | Abs(coCC[i] - coZZ[i]) lt 10^(-(prec div 2)) } then
                     ht:=P!coZZ;
                     Include(~out,ht);
                 end if;
@@ -177,18 +177,18 @@ intrinsic IsBaseFieldExtensionOf(Ie::IsogenyClassFq : Precision:=300)->SeqEnum
     return Ie`IsBaseFieldExtensionOf;
 end intrinsic;
 
-intrinsic IsPrimitive(I::IsogenyClassFq : Precision:=300)->SeqEnum
-{Returns whether the given isogeny class is primitive, that is, if it is not the base extension of an isogeny class defined over a subfield. The computations is done by looking at the roots of the Weil polynomial of I. The precision of such computations can be set by using the vararg "Precision".}
+intrinsic IsPrimitive(I::IsogenyClassFq : prec:=300)->SeqEnum
+{Returns whether the given isogeny class is primitive, that is, if it is not the base extension of an isogeny class defined over a subfield. The computations is done by looking at the roots of the Weil polynomial of I. The precision of such computations can be set by using the vararg "prec".}
     if not assigned I`IsPrimitive then
-        I`IsPrimitive:=#IsBaseFieldExtensionOf(I : Precision:=Precision) eq 1;
+        I`IsPrimitive:=#IsBaseFieldExtensionOf(I : prec:=prec) eq 1;
     end if;
     return I`IsPrimitive;
 end intrinsic;
 
-intrinsic IsBaseFieldExtensionOfPrimitive(Ie::IsogenyClassFq : Precision:=300)->SeqEnum
-{Given an isogeny class over F_(p^r) it returns the sequence of all primitive isogeny classes over FF_(p^s) that extend to Ie. The computations is done by looking at the roots of the Weil polynomial of Ie. The precision of such computations can be set by using the vararg "Precision".}
+intrinsic IsBaseFieldExtensionOfPrimitive(Ie::IsogenyClassFq : prec:=300)->SeqEnum
+{Given an isogeny class over F_(p^r) it returns the sequence of all primitive isogeny classes over FF_(p^s) that extend to Ie. The computations is done by looking at the roots of the Weil polynomial of Ie. The precision of such computations can be set by using the vararg "prec".}
     if not assigned Ie`IsBaseFieldExtensionOfPrimitive then
-        Ie`IsBaseFieldExtensionOfPrimitive:=[ I : I in IsBaseFieldExtensionOf(Ie : Precision:=Precision) | IsPrimitive(I) ];
+        Ie`IsBaseFieldExtensionOfPrimitive:=[ I : I in IsBaseFieldExtensionOf(Ie : prec:=prec) | IsPrimitive(I) ];
     end if;
     return Ie`IsBaseFieldExtensionOfPrimitive;
 end intrinsic;

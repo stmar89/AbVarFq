@@ -66,17 +66,17 @@ declare attributes IsogenyClassFq :
 // Testing if a poly is a Weil/char poly
 /////////////////////////////////////////////////////
 
-intrinsic IsWeil(f::RngUPolElt : Precision:=Precision(GetDefaultRealField())) -> BoolElt,RngIntElt,RngIntElt,RngIntElt
-{Returns whether f is a q-WeilPolynomial, q,p and e, where q=p^e is a prime power polynomial. A polynomial is q-Weil if all the roots have complex absolute value q^(1/2). The check is done with precision "Precision" given as optional parameter (default precision is 30)}
+intrinsic IsWeil(f::RngUPolElt : prec:=Precision(GetDefaultRealField())) -> BoolElt,RngIntElt,RngIntElt,RngIntElt
+{Returns whether f is a q-WeilPolynomial, q,p and e, where q=p^e is a prime power polynomial. A polynomial is q-Weil if all the roots have complex absolute value q^(1/2). The check is done with precision "prec" given as optional parameter (default precision is 30)}
 	require forall{c :c in Coefficients(f) | IsIntegral(c)} and IsEven(Degree(f)): "the input must be an integral polynomial of even degree";
-	roots:=Roots(f,ComplexField(Precision));
+	roots:=Roots(f,ComplexField(prec));
 	q:=Abs(Integers() ! (Coefficients(f)[1]^(2/Degree(f)))); // the Abs is necessary for poly like (x^2-3), 
                                                              // which is a Weil poly, but not a Char poly
     ispp,p,e:=IsPrimePower(q);
 	if not ispp then
 		return false,_,_,_;
 	else
-		if forall{r : r in roots | Abs(r[1]*ComplexConjugate(r[1]) - q) lt 10^(-(Precision/2))} then
+		if forall{r : r in roots | Abs(r[1]*ComplexConjugate(r[1]) - q) lt 10^(-(prec/2))} then
 			return true,q,p,e;
 		else 
 			return false,_,_,_;
@@ -84,14 +84,14 @@ intrinsic IsWeil(f::RngUPolElt : Precision:=Precision(GetDefaultRealField())) ->
 	end if;
 end intrinsic;
 
-function is_char_poly_irred(f,p,d : Precision:=100)
+function is_char_poly_irred(f,p,d : prec:=100)
 // Given an irreducible q-Weil polynomial f, returns the exponent e, such that there exists a simple abelian variety over \F_q with characteristic polynomial of the Frobenius equal to f^e.
 // This abelian variety exists and it is uniquely determined up to \F_q-isogeny by Honda-Tate theory. For the method used, see [Wat69, paragraph before the last theorem on page 527].}
-	Qp:=pAdicField(p,Precision);
+	Qp:=pAdicField(p,prec);
 	Rp<y>:=PolynomialRing(Qp);
 	g:= Rp ! f;
 	gfact:=[h[1] : h in Factorization(g)];
-	if #RealRoots(f,RealField(Precision),10^(2-Precision)) gt 0 then
+	if #RealRoots(f,RealField(prec),10^(2-prec)) gt 0 then
 		e:=LCM(  [Denominator((Valuation(Coefficients(h)[1])/d)) : h in gfact] cat [2]  ); //the extra 1/2 comes from the real prime, see the reference.
 	else
 		e:=LCM(  [Denominator((Valuation(Coefficients(h)[1])/d)) : h in gfact]  );
@@ -103,11 +103,11 @@ function is_char_poly_irred(f,p,d : Precision:=100)
 	end if;
 end function;
 
-intrinsic IsCharacteristicPoly(f::RngUPolElt : Precision:=100) -> BoolElt,RngIntElt
+intrinsic IsCharacteristicPoly(f::RngUPolElt : prec:=100) -> BoolElt,RngIntElt
 { Given polynomial f, returns whether f is the characteristic polynomial of Frobenius of some isogeny class, together with the minimal exponent e, such that there exists a simple abelian variety over \F_q with characteristic polynomial of the Frobenius equal to f^e.
 This abelian variety exists and it is uniquely determined up to \F_q-isogeny by Honda-Tate theory. For the method used, see [Wat69, paragraph before the last theorem on page 527].}
 
-    testWeil,q,p,d:=IsWeil(f : Precision:=Precision);
+    testWeil,q,p,d:=IsWeil(f : prec:=prec);
 	require testWeil: "the input must be a q-Weil polynomial";
     fac:=Factorization(f);
     exps:=[];
@@ -264,9 +264,9 @@ intrinsic IsOrdinary(A::AbelianVarietyFq) -> BoolElt
 	return IsOrdinary(IsogenyClass(A));
 end intrinsic;
 
-intrinsic IsOrdinary(f::RngUPolElt : Precision:=100) -> BoolElt
+intrinsic IsOrdinary(f::RngUPolElt : prec:=100) -> BoolElt
 {Returns if the input polynomial is an Ordinary q-Weil polynomial, where q is a power of a prime number p, that is if the mid coefficient is coprime with p.}
-    testWeil,_,p,_:=IsWeil(f : Precision:=Precision);
+    testWeil,_,p,_:=IsWeil(f : prec:=prec);
 	require testWeil:"the input must be a q-Weil polynomial for some prime power q";
 	deg:=Degree(f);
 	coeff:=Coefficients(f);
@@ -299,14 +299,14 @@ intrinsic IsAlmostOrdinary(A::AbelianVarietyFq)->BoolElt
     return pRank(A) eq Dimension(A)-1;
 end intrinsic;
 
-intrinsic IsCentelegheStix(I::IsogenyClassFq : Precision:=Precision(GetDefaultRealField()) )->BoolElt 
+intrinsic IsCentelegheStix(I::IsogenyClassFq : prec:=Precision(GetDefaultRealField()) )->BoolElt 
 {Returns whether the isogeny class is Centeleghe-Stix, that is, defined over Fp and the Weil poly has no real roots.}
     if not assigned I`IsCentelegheStix then
         q:=FiniteField(I);
         if IsPrime(q) then
             h:=WeilPolynomial(I);
-            rr:=Roots(h,ComplexField(Precision));
-            I`IsCentelegheStix:=forall{r : r in rr |not Abs(Im(r[1])) lt 10^-(Precision div 2) }; // no real roots
+            rr:=Roots(h,ComplexField(prec));
+            I`IsCentelegheStix:=forall{r : r in rr |not Abs(Im(r[1])) lt 10^-(prec div 2) }; // no real roots
         else 
             I`IsCentelegheStix:=false;
         end if;
@@ -314,7 +314,7 @@ intrinsic IsCentelegheStix(I::IsogenyClassFq : Precision:=Precision(GetDefaultRe
     return I`IsCentelegheStix;
 end intrinsic;
 
-intrinsic IsCentelegheStix(I::AbelianVarietyFq : Precision:=Precision(GetDefaultRealField()) )->BoolElt
+intrinsic IsCentelegheStix(I::AbelianVarietyFq : prec:=Precision(GetDefaultRealField()) )->BoolElt
 {Returns whether the abelian variety is Centeleghe-Stix, that is, defined over Fp and the Weil poly has no real roots.}
     return IsCentelegheStix(IsogenyClass(I));
 end intrinsic;
