@@ -202,7 +202,7 @@ intrinsic PeriodMatrix(I::AlgEtQIdl,x0::AlgEtQElt,phi::AlgEtQCMType) -> AlgMatEl
     E := Matrix(Integers(),N,N,[Trace(ComplexConjugate(a*x0)*b) : a in zb, b in zb]); // added sign
     C, B := FrobeniusFormAlternating(E);
     // Check documentation of FrobeniusFormAlternating
-    newb:= [ SumOfProducts(Eltseq(r),zb) : r in Rows(B) ];
+    newb:= [ DotProduct(Eltseq(r),zb) : r in Rows(B) ];
     is_symplectic:=function(basis)
         n := #basis div 2;
         bil:=func<x,y | Trace(ComplexConjugate(y*x0)*x)>;
@@ -316,7 +316,7 @@ intrinsic LoadPPAVs(label, directory : prec := 100) -> SeqEnum
         rep := Split(jsonb, ",[]");
         den := atoi(rep[1]);
         nums := atoii(Sprint(rep[2..#rep]));
-        return SumOfProducts([c/den : c in nums], basis);
+        return DotProduct([c/den : c in nums], basis);
     end function;
 
     reps_pp := [zb_in_A(rec[10]) : rec in recs];

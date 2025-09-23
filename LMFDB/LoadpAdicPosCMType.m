@@ -6,7 +6,7 @@ intrinsic LoadpAdicPosCMType(basis::SeqEnum[AlgEtQElt], str::MonStgElt)->AlgEtQC
     str:=str[2..#str-1];
     str:=[ StringToInteger(s) : s in Split(str,",") ];
     A:=Algebra(basis[1]);
-    b:=SumOfProducts(str,basis);
+    b:=DotProduct(str,basis);
     assert b eq -ComplexConjugate(b);
     PHI:=CMType(b);
     A`pAdicPosCMType:=PHI;

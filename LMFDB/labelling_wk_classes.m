@@ -341,7 +341,7 @@ two_generating_set:=function(I,basis)
                     rndm_coeffs:=[ Random(-k,k) : i in [1..#basis] ];
                     elt_coeffs:=[ [ rndm_coeffs[i]*z : z in ElementToSequence(zbI[i]) ] : i in [1..#basis] ];
                     elt_coeffs:=[ &+[ e[i] : e in elt_coeffs] : i in [1..#basis] ];
-                    elt:=SumOfProducts(elt_coeffs,basis);
+                    elt:=DotProduct(elt_coeffs,basis);
                     assert elt in I;
                     stop:=Ideal(S,[A!M,elt]) eq I;
                 until stop or j eq 30;
@@ -561,7 +561,7 @@ intrinsic LoadSchemaWKClasses(str::MonStgElt)->AlgEtQOrd
     basis:=ZFVBasis(A);
 
     zb_in_A:=function(nums,den)
-        return [SumOfProducts([c/den : c in n ],basis) : n in nums ];
+        return [DotProduct([c/den : c in n ],basis) : n in nums ];
     end function;
 
     braces_to_seq_of_seqs:=function(str)
